@@ -5,3 +5,6 @@
 - Esri terrain optional; endpoint copied from V0.2; API documentation https://cesium.com/learn/cesiumjs/ref-doc/ArcGISTiledElevationTerrainProvider.html. Access, service terms, actual elevation and coverage not validated; no tokens published. Attribution and usage terms to verify before release.
 - Wikipedia links open a user-selected search; no automatic article/image reproduction yet. Original V0.2 wiki search and Ollama server withheld pending source attribution, origin validation and security review.
 - CDN and maps transmit requests to third parties. Local browser visit counts only; no analytics or cloud synchronization implemented.
+
+- GEBCO_2025 WMS pinned layer gebco_2025, HTTPS endpoint https://wms.gebco.net/2025/mapserv? ; official documentation https://www.gebco.net/data-products/gebco-web-services/previous-wms. Official WMS 1.3.0 GetMap example returned an image during this iteration. Attribution displayed in Cesium credits. Shaded relief is a raster visualization, not a mesh or quantitative bathymetry; no nautical use. Browser CORS/tile behavior and service terms for deployment still require verification.
+- Esri point sampling uses Cesium sampleTerrain at level 10, reports the camera-coordinate location only, never substitutes ellipsoid zero. Vertical datum and measured accuracy not yet validated. No claim of successful live sampling.

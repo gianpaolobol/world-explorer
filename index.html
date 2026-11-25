@@ -4,11 +4,11 @@
 <link rel="stylesheet" href="./src/style.css"></head>
 <body><main id="globe" aria-label="Globo geografico interattivo"></main>
 <header><strong>WORLD EXPLORER</strong><span id="status" role="status">Avvio…</span></header>
-<aside id="panel"><small>ATLANTE VIVENTE · ANTEPRIMA V0.2</small><h1 id="name"></h1>
-<p id="facts"></p><p id="notice">Dati iniziali non revisionati: superfici, capitali e coordinate possono richiedere correzioni.</p>
+<aside id="panel"><small>ATLANTE VIVENTE · ANTEPRIMA V0.3</small><h1 id="name"></h1>
+<p id="facts"></p><p id="elevation" role="status"></p><button id="probe">Campiona quota</button><p id="notice">Dati iniziali non revisionati: superfici, capitali e coordinate possono richiedere correzioni.</p>
 <p><a id="source" target="_blank" rel="noopener noreferrer">Approfondisci su Wikipedia</a></p>
 <label for="place">Destinazione</label><select id="place"></select><label for="lang">Lingua dei nomi e della voce</label><select id="lang"></select>
 <p id="progress"></p><button id="reset">Cancella memoria</button>
 <p class="credits">© 2026 Gian Paolo Franceschini · <a href="https://github.com/gianpaolobol/world-explorer/blob/main/docs/SOURCES.md">Fonti e limiti</a></p></aside>
-<footer><button id="prev">←</button><button id="next">→</button><button id="auto">Viaggio automatico</button><label>Intervallo <select id="interval"><option value="60">1 min</option><option value="180" selected>3 min</option><option value="600">10 min</option></select></label><button id="voice">Ascolta il nome</button><button id="stopVoice">Silenzio</button><button id="terrain">Attiva rilievo Esri</button><button id="ambient">Modalità ambientale</button><button id="full">Schermo intero</button></footer>
+<footer><button id="prev">←</button><button id="next">→</button><button id="auto">Viaggio automatico</button><button id="pause" disabled>Pausa</button><span id="tourState" role="status"></span><label>Intervallo <select id="interval"><option value="60">1 min</option><option value="180" selected>3 min</option><option value="600">10 min</option></select></label><button id="voice">Ascolta il nome</button><button id="stopVoice">Silenzio</button><button id="bathy">Mostra fondali GEBCO</button><button id="terrain">Attiva rilievo Esri</button><button id="ambient">Modalità ambientale</button><button id="full">Schermo intero</button></footer>
 <script src="https://cdn.jsdelivr.net/npm/cesium@1.127.0/Build/Cesium/Cesium.js"></script><script type="module" src="./src/app.mjs"></script></body></html>
