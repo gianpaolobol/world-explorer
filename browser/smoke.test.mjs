@@ -63,6 +63,8 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(Object.keys(saved).length,1);
   await page.reload();
   await page.waitForFunction(()=>document.querySelector('#quizStats').textContent.includes('1 / 195'));
+  // Reload intentionally resets the selected country; select Italy for the scoped corpus.
+  await page.locator('#place').selectOption(it);
   await page.locator('#guide summary').click();
   await page.locator('#guideQuestion').fill('Regione statistica');
   await page.locator('#guideAsk').click();
