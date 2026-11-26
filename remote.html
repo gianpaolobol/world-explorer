@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>World Explorer — Telecomando</title></head>
+<body><main><h1>World Explorer — Telecomando</h1><p>Inserisci il codice temporaneo mostrato sul computer. Non viene salvato nel browser. Scadenza 15 minuti.</p>
+<label for="token">Codice temporaneo</label><input id="token" type="password" maxlength="48" autocomplete="off" autocapitalize="none" spellcheck="false">
+<div><button data-command="prev">Precedente</button> <button data-command="next">Successivo</button></div>
+<div><button data-command="auto">Avvia / ferma viaggio</button> <button data-command="pause">Pausa / riprendi</button></div>
+<div><button data-command="voice">Narrazione</button> <button data-command="stopVoice">Silenzio</button></div>
+<div><button data-command="ambient">Modalità ambientale</button> <button id="forget">Dimentica codice</button></div>
+<p id="status" role="status"></p><p>L'accettazione di un comando non conferma che il computer l'abbia eseguito.</p></main><script type="module" src="/remote-client.mjs"></script></body></html>
