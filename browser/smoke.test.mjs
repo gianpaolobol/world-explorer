@@ -92,6 +92,12 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#guideAsk').click();
   await page.waitForFunction(()=>document.querySelector('#guideStatus').textContent.includes('insufficienti'));
   assert.equal(await page.locator('#guideAnswer a').count(),0);
+  await page.locator('#place').selectOption(fr);
+  await page.locator('#guideQuestion').fill('popolazione');
+  await page.locator('#guideAsk').click();
+  await page.waitForFunction(()=>document.querySelector('#guideAnswer').textContent.includes('68.551.653'));
+  assert.equal(await page.locator('#guideAnswer a').first().getAttribute('href'),'https://data.worldbank.org/indicator/SP.POP.TOTL');
+  await page.locator('#place').selectOption(it);
   await page.locator('#numericRelief summary').click();
   await page.locator('#reliefFile').setInputFiles({name:'synthetic.asc',mimeType:'text/plain',buffer:Buffer.from('ncols 2\nnrows 2\nxllcorner 10\nyllcorner 40\ncellsize 0.004166666667\n-100 20\n30 40\n')});
   await page.locator('#reliefCanvas').waitFor({state:'visible'});
