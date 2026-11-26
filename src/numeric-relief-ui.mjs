@@ -47,6 +47,13 @@ function control(label,id,min,max,value,step){
 }
 const lon=control('Longitudine vista','globalLon',-180,180,0,5),lat=control('Latitudine vista','globalLat',-90,90,0,5);
 const exLabel=element('label','Esagerazione verticale',controls),ex=element('select','',exLabel);ex.id='globalScale';for(const v of [1,20,50])ex.add(new Option(v+'×',String(v)));ex.disabled=true;
+const mainToggle=element('button','Mostra sul globo principale');mainToggle.id='globalMainToggle';mainToggle.disabled=true;
+const mainStatus=element('p');mainStatus.id='globalMainStatus';mainStatus.setAttribute('role','status');
+let mainHandler=null,mainActive=false;
+export function configureMainRelief(handler){mainHandler=handler;mainToggle.disabled=!globalGrid||!handler;}
+export function stopMainRelief(){if(mainActive){mainHandler?.(null);mainActive=false;mainToggle.textContent='Mostra sul globo principale';mainStatus.textContent='Globo cartografico ripristinato.';}}
+mainToggle.onclick=()=>{if(mainActive){stopMainRelief();return;}if(!globalGrid||!mainHandler)return;try{mainHandler(globalGrid,Number(ex.value));mainActive=true;mainToggle.textContent='Ripristina globo cartografico';mainStatus.textContent='Geometria numerica attivata; verifica rendering in corso.';}catch{mainStatus.textContent='Globo numerico non disponibile in questa vista.';}};
+export function reportMainRelief(text){mainStatus.textContent=text;}
 const globalClear=element('button','Rimuovi griglia globale');globalClear.id='globalClear';globalClear.disabled=true;
 const globalCanvas=element('canvas');globalCanvas.id='globalCanvas';globalCanvas.width=440;globalCanvas.height=440;globalCanvas.style.width='100%';globalCanvas.style.height='auto';globalCanvas.hidden=true;globalCanvas.setAttribute('aria-label','Globo numerico con rilievi e fondali');
 const globalStatus=element('p');globalStatus.id='globalStatus';globalStatus.setAttribute('role','status');
@@ -55,7 +62,7 @@ $('numericRelief').after(globalPanel);
 const gc=globalCanvas.getContext('2d');
 let globalGrid=null,globalEpoch=0,mesh=null;
 function clearGlobal(){
- globalGrid=null;mesh=null;globalCanvas.hidden=true;for(const c of [lon,lat,ex,globalClear])c.disabled=true;
+ stopMainRelief();mainToggle.disabled=true;globalGrid=null;mesh=null;globalCanvas.hidden=true;for(const c of [lon,lat,ex,globalClear])c.disabled=true;
  gc?.clearRect(0,0,globalCanvas.width,globalCanvas.height);
 }
 function drawGlobal(rebuild=false){
@@ -78,8 +85,8 @@ globalInput.onchange=async()=>{
   if(!gc)throw new Error('Canvas 2D non disponibile');
   if(file.size>GLOBAL_MAX_BYTES)throw new Error('File troppo grande');
   const grid=parseGlobalGrid(await file.text());if(epoch!==globalEpoch)return;
-  globalGrid=grid;for(const c of [lon,lat,ex,globalClear])c.disabled=false;drawGlobal(true);
+  globalGrid=grid;mainToggle.disabled=!mainHandler;for(const c of [lon,lat,ex,globalClear])c.disabled=false;drawGlobal(true);
  }catch(e){if(epoch===globalEpoch){clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale non valida: '+e.message;}}
 };
-lon.onchange=lat.onchange=()=>drawGlobal();ex.onchange=()=>drawGlobal(true);
+lon.onchange=lat.onchange=()=>drawGlobal();ex.onchange=()=>{stopMainRelief();drawGlobal(true);};
 globalClear.onclick=()=>{globalEpoch++;clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale rimossa dalla memoria.';};
