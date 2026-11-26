@@ -51,7 +51,7 @@ export function statisticsFor(snapshot,code,locale='it'){
  const language=locale==='it'?'it':'en';
  return INDICATORS.flatMap(i=>{
   const v=snapshot.values?.[i.id]?.[code];if(!validValue(i.id,v))return [];
-  const nf=new Intl.NumberFormat(language,{maximumFractionDigits:i.unit==='%'?2:0});
+  const nf=new Intl.NumberFormat(language,{useGrouping:'always',maximumFractionDigits:i.unit==='%'?2:0});
   return [{id:i.id,language,label:i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved:snapshot.retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
  });
 }
