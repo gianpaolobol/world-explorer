@@ -32,31 +32,46 @@ const narrator=createNarrator({synthesis:window.speechSynthesis,Utterance:window
 }});
 function speak(done){return narrator.speak(cinematicNarrationFor(countries[index].code,lang),typeof done==='function'?done:undefined);}
 const quizKey='world-explorer-region-quiz-v1';
-let quizMemory=loadMemory(null),question=null,answered=false;
-try{quizMemory=loadMemory(localStorage.getItem(quizKey));}catch{}
+let quizMemory=loadMemory(null),question=null,answered=false,quizCorrect=null,quizStorageFailed=false,quizExhausted=false;
+try{quizMemory=loadMemory(localStorage.getItem(quizKey));}catch{quizStorageFailed=true;}
+const quizLocale=()=>lang==='it'?'it':'en';
+const quizText=(it,en)=>quizLocale()==='it'?it:en;
 function updateQuizStats(){
  const s=quizStats(quizMemory);
- $('quizStats').textContent='Paesi esercitati: '+s.practiced+' / '+s.total+' · Disponibili: '+s.due;
+ $('quizStats').lang=quizLocale();
+ $('quizStats').textContent=quizText('Paesi esercitati: ','Countries practiced: ')+s.practiced+' / '+s.total+
+  quizText(' · Disponibili: ',' · Due: ')+s.due+quizText(' · Consolidati (3 risposte consecutive): ',' · Mastered (3 consecutive correct): ')+s.mastered+
+  quizText(' · Errori da ripassare: ',' · Mistakes due: ')+s.retryDue;
+ if(!s.due&&s.nextDue!==null)$('quizStats').textContent+=quizText(' · Prossimo ripasso: ',' · Next review: ')+new Date(s.nextDue).toLocaleString(quizLocale());
 }
 function saveQuiz(){
- try{localStorage.setItem(quizKey,JSON.stringify(quizMemory));}
- catch{$('quizStorage').textContent='Memoria non salvata: esporta i risultati prima di chiudere.';}
+ try{localStorage.setItem(quizKey,JSON.stringify(quizMemory));quizStorageFailed=false;}
+ catch{quizStorageFailed=true;}
+ updateQuizStorage();
+}
+function updateQuizStorage(){
+ $('quizStorage').lang=quizLocale();
+ $('quizStorage').textContent=quizStorageFailed?quizText('Memoria locale non disponibile: esporta i risultati prima di chiudere.','Local memory unavailable: export your results before closing.'):'';
 }
 function renderQuiz(){
- $('quizOptions').replaceChildren();updateQuizStats();
- if(!question){$('quizQuestion').textContent='Premi Nuova domanda per esercitarti.';return;}
- $('quizQuestion').textContent='In quale regione statistica ONU si trova '+name({code:question.code})+'?';
+ $('quizOptions').replaceChildren();updateQuizStats();updateQuizStorage();
+ for(const id of ['quizQuestion','quizFeedback','quizOptions','quizNext','quizReset','quizExport'])$(id).lang=quizLocale();
+ $('quizNext').textContent=quizText('Nuova domanda','New question');
+ $('quizReset').textContent=quizText('Cancella quiz','Reset quiz');
+ $('quizExport').textContent=quizText('Esporta quiz','Export quiz');
+ $('quizFeedback').textContent='';
+ if(!question){$('quizQuestion').textContent=quizExhausted?quizText('Nessun ripasso disponibile ora. Riprova più tardi.','No reviews due now. Try again later.'):quizText('Premi Nuova domanda per esercitarti.','Select New question to practise.');return;}
+ $('quizQuestion').textContent=quizText('In quale regione statistica ONU si trova ','Which UN statistical region contains ')+name({code:question.code})+'?';
  for(const option of question.options){
-  const b=document.createElement('button');b.type='button';b.textContent=regionName(option,lang);b.disabled=answered;
-  b.onclick=()=>{if(answered)return;answered=true;const ok=gradeQuestion(question,option,quizMemory);saveQuiz();
-   $('quizFeedback').textContent=(ok?'Corretto! ':'Risposta da ripassare. ')+regionName(question.answer,lang)+' · Fonte ONU M49';
-   for(const el of $('quizOptions').children)el.disabled=true;updateQuizStats();};
+  const b=document.createElement('button');b.type='button';b.lang=lang;b.textContent=regionName(option,lang);b.disabled=answered;
+  b.onclick=()=>{if(answered)return;answered=true;quizCorrect=gradeQuestion(question,option,quizMemory);saveQuiz();
+   renderQuiz();};
   $('quizOptions').append(b);
  }
- if(answered)$('quizFeedback').textContent='Risposta corretta: '+regionName(question.answer,lang)+' · Fonte ONU M49';
+ if(answered)$('quizFeedback').textContent=(quizCorrect?quizText('Corretto! ','Correct! '):quizText('Risposta da ripassare. ','Review this answer. '))+regionName(question.answer,lang)+quizText(' · Fonte ONU M49',' · UN M49 source');
 }
-$('quizNext').onclick=()=>{question=makeQuestion(quizMemory);answered=false;$('quizFeedback').textContent='';renderQuiz();if(!question)$('quizQuestion').textContent='Nessun ripasso disponibile ora. Riprova più tardi.';};
-$('quizReset').onclick=()=>{if(!confirm('Eliminare la memoria locale dei quiz?'))return;quizMemory=loadMemory(null);question=null;answered=false;$('quizFeedback').textContent='';saveQuiz();renderQuiz();};
+$('quizNext').onclick=()=>{question=makeQuestion(quizMemory);answered=false;quizCorrect=null;quizExhausted=!question;renderQuiz();};
+$('quizReset').onclick=()=>{if(!confirm(quizText('Eliminare la memoria locale dei quiz?','Delete local quiz memory?')))return;quizMemory=loadMemory(null);question=null;answered=false;quizCorrect=null;quizExhausted=false;saveQuiz();renderQuiz();};
 $('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 renderQuiz();
 function renderProfile(code){
