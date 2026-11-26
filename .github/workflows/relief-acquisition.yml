@@ -1,0 +1,41 @@
+name: GEBCO subset acquisition
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-ceda-relief.py'
+      - 'tests/ceda_acquisition_test.py'
+      - '.github/workflows/relief-acquisition.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.2.6
+      - run: python -m unittest discover -s tests -p ceda_acquisition_test.py -v
+  live:
+    needs: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.2.6 netCDF4==1.7.2
+      - run: timeout 180s python scripts/acquire-ceda-relief.py global-relief.json > relief-report.json
+      - run: cat relief-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gebco-2025-coarse-validated
+          path: |
+            global-relief.json
+            relief-report.json
+          if-no-files-found: error
+          retention-days: 7
