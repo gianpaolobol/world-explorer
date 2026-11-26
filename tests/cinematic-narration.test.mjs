@@ -25,7 +25,7 @@ test('Italy combines sourced landforms and river with clearly dated WDI observat
 test('France does not inherit Italy facts; absent Vatican observations stay absent',()=>{
  const n=cinematicNarrationFor('FR','en');
  assert.match(n.text,/68,551,653/);assert.match(n.text,/reference year 2024/);
- assert.ok(n.facts.every(f=>f.id.startsWith('wdi-')));
+ assert.deepEqual(n.facts.filter(f=>!f.id.startsWith('wdi-')).map(f=>f.id),['fr-orography','fr-hydrology']);assert.match(n.text,/Pyrenees/);
  const va=cinematicNarrationFor('VA','it');assert.deepEqual(va.facts,[]);assert.equal(va.text,narrationFor('VA','it').text);
 });
 test('guide M49 evidence remains uncontaminated by narrative statistics',()=>{

@@ -12,7 +12,7 @@ test('pilot covers the twelve disciplines once with unique IDs and explicit sour
  for(const x of a){assert.match(x.source,/^https:\/\//);assert.ok(x.label&&x.text);assert.equal(x.checked,'2026-11-26');assert.equal(x.review,'source-checked-not-independent');}
 });
 test('pilot never transfers Italian evidence to any other country',()=>{
- for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
+ for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(c.code!=='FR')assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
 });
 test('both supported pilot languages have complete distinct texts, others disclose English fallback',()=>{
  const it=pilotEvidence('IT','it'),en=pilotEvidence('IT','en');
@@ -43,4 +43,17 @@ test('model cannot select an Italian pilot ID for a different country or inject 
  const b=await answerGuide(input,async()=> '{"ids":["it-orography"],"url":"https://bad.test"}');
  assert.equal(b.mode,'fallback');assert.equal(b.evidence[0].id,'it-orography');
  assert.equal(evidenceFor(input).length,18);
+});
+
+
+test('France partial corpus is scoped, bilingual, sourced and never presented as complete',async()=>{
+ const it=pilotEvidence('FR','it'),en=pilotEvidence('FR','en');
+ assert.equal(it.length,6);assert.equal(new Set(it.map(f=>f.discipline)).size,6);
+ assert.deepEqual(it.map(f=>f.id),en.map(f=>f.id));
+ for(let i=0;i<it.length;i++){assert.ok(it[i].id.startsWith('fr-'));assert.notEqual(it[i].text,en[i].text);assert.equal(it[i].source,en[i].source);assert.match(it[i].source,/^https:\/\//);assert.equal(it[i].review,'source-checked-not-independent');}
+ for(const [language,questions] of [['it',['orografia','idrografia','geologia','biogeografia','popolazione 2026','storia']],['en',['orography','hydrology','geology','biogeography','population 2026','historical geography']]])for(let i=0;i<questions.length;i++){const a=await answerGuide({code:'FR',language,question:questions[i]});assert.equal(a.evidence.length,1);assert.equal(a.evidence[0].id,it[i].id);}
+ assert.equal((await answerGuide({code:'FR',language:'it',question:'popolazione 2026'})).evidence[0].period,'2026-01-01');
+ assert.equal((await answerGuide({code:'FR',language:'it',question:'popolazione'})).evidence[0].id,'wdi-SP.POP.TOTL');
+ assert.equal((await answerGuide({code:'DE',language:'it',question:'geologia'})).status,'insufficient');
+ assert.deepEqual(pilotEvidence('FR','fr'),en);
 });

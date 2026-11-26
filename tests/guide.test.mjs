@@ -7,7 +7,7 @@ import {statisticsFor} from '../src/world-statistics.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'Regione statistica'};
 test('guide validates all registry countries and supported languages',()=>{
- for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,(c.code==='IT'?14:2)+statisticsFor(snapshot,c.code,language).length);}
+ for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,(c.code==='IT'?14:c.code==='FR'?8:2)+statisticsFor(snapshot,c.code,language).length);}
 });
 test('guide rejects unknown fields, codes, languages and long questions',()=>{
  for(const x of [null,[],{...input,model:'remote'},{...input,code:'XX'},{...input,language:'zz'},{...input,question:'x'.repeat(501)},{...input,question:' '}])assert.equal(validateGuideInput(x),null);

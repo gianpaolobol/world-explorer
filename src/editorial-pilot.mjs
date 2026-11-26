@@ -1,6 +1,6 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
 // Original short factual summaries; primary sources consulted 2026-11-26.
-// Pilot only: no independent editorial approval and no other country inferred.
+// Pilot only: no independent editorial approval; facts are scoped to their country.
 export const disciplines=Object.freeze(['physical','orography','hydrology','oceanography','geology','climatology','biogeography','political','human','economic','urban','historical']);
 const yearbook='https://www.istat.it/wp-content/uploads/2026/03/Italian-Statistical-Yearbook-2025-Executive-summary.pdf';
 const rows=[
@@ -17,16 +17,25 @@ const rows=[
  ['urban','città','urban geography','Al 31 dicembre 2024 solo 11 comuni italiani superavano i 250.000 residenti, ospitando il 14,7% della popolazione nazionale.','On 31 December 2024, just 11 Italian municipalities had over 250,000 residents, representing 14.7% of the national population.',yearbook,'ISTAT, Annuario 2025, cap. 1','2024-12-31'],
  ['historical','storia','historical geography','Venezia si sviluppò su isole lagunari dal V secolo e acquisì un ruolo marittimo di primo piano nel X secolo; città e laguna sono patrimonio UNESCO dal 1987.','Venice developed on lagoon islands from the fifth century and rose as a maritime power in the tenth; the city and lagoon became a UNESCO World Heritage property in 1987.','https://whc.unesco.org/en/list/394','UNESCO, Venice and its Lagoon','1987']
 ];
+const franceRows=[
+ ['orography','orografia','orography','Nei Pirenei, sul versante francese del sito transfrontaliero del Monte Perdido, si trovano grandi circhi glaciali.','On the French side of the transboundary Mont Perdu site in the Pyrenees, large glacial cirques shape the mountain landscape.','https://whc.unesco.org/en/list/773/','UNESCO, Pyrénées – Mont Perdu',null],
+ ['hydrology','idrografia','hydrology','Il tratto della Loira tutelato come paesaggio culturale UNESCO si estende per circa 280 km fra Sully-sur-Loire e Chalonnes, lungo il corso medio del fiume.','The UNESCO cultural landscape along the middle Loire spans about 280 km between Sully-sur-Loire and Chalonnes.','https://whc.unesco.org/en/list/933/','UNESCO, Loire Valley',null],
+ ['geology','geologia','geology','In Alvernia, la faglia di Limagne e i vulcani della Chaîne des Puys documentano la distensione della crosta continentale.','In Auvergne, the Limagne fault and Chaîne des Puys volcanoes provide geological evidence of continental extension.','https://whc.unesco.org/en/list/1434','UNESCO, Chaîne des Puys – Limagne fault',null],
+ ['biogeography','biogeografia','biogeography','La riserva corsa di Scandola comprende ambienti marini e costieri con macchia mediterranea e habitat per uccelli marini.','Corsica’s Scandola reserve contains coastal and marine habitats, including Mediterranean scrub and seabird habitat.','https://whc.unesco.org/en/list/258/','UNESCO, Gulf of Porto',null],
+ ['human','popolazione 2026','population 2026','Al 1º gennaio 2026, INSEE stimava 69,1 milioni di residenti: la Francia metropolitana e i cinque dipartimenti d’oltremare.','On 1 January 2026, INSEE estimated 69.1 million residents in metropolitan France and the five overseas departments.','https://www.insee.fr/fr/statistiques/8996934','INSEE, Démographie : évolutions récentes et à venir','2026-01-01'],
+ ['historical','storia','historical geography','Nel 2000 il Comitato del patrimonio mondiale iscrisse il paesaggio culturale della Valle della Loira; i suoi castelli testimoniano fra l’altro il Rinascimento francese.','In 2000 the World Heritage Committee listed the Loire Valley cultural landscape, whose castles include notable examples of French Renaissance heritage.','https://whc.unesco.org/en/decisions/2459/','UNESCO, Decision 24 COM X.C.1','2000']
+];
+const corpus=new Map([['IT',rows],['FR',franceRows]]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
- if(code!=='IT')return [];
+ const records=corpus.get(code);if(!records)return [];
  const locale=language==='it'?'it':'en';
- return rows.map(([discipline,itQuery,enQuery,it,en,source,label,period])=>({id:'it-'+discipline,discipline,text:locale==='it'?it:en,language:locale,source,label,period,checked:'2026-11-26',review:'source-checked-not-independent'}));
+ return records.map(([discipline,itQuery,enQuery,it,en,source,label,period])=>({id:code.toLowerCase()+'-'+discipline,discipline,text:locale==='it'?it:en,language:locale,source,label,period,checked:'2026-11-26',review:'source-checked-not-independent'}));
 }
 export function pilotSelection(input){
- if(input.code!=='IT'||!['it','en'].includes(input.language))return [];
+ const records=corpus.get(input.code);if(!records||!['it','en'].includes(input.language))return [];
  const q=normalize(input.question);
  const alias=input.language==='it'?{'qual è la capitale':'capitale','qual è la popolazione':'popolazione','geografia fisica':'territorio','idrologia':'idrografia','climatologia':'clima','geografia politica':'capitale','geografia umana':'popolazione','geografia economica':'economia','geografia urbana':'città','geografia storica':'storia'}:{'what is the capital':'capital','what is the population':'population','climate':'climatology'};
  const key=Object.hasOwn(alias,q)?alias[q]:q;
- return rows.filter(r=>r[input.language==='it'?1:2]===key).map(r=>'it-'+r[0]);
+ return records.filter(r=>r[input.language==='it'?1:2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
 }

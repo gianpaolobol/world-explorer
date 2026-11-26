@@ -77,7 +77,7 @@ renderQuiz();
 function renderProfile(code){
  const box=$('profileFacts'),stats=$('profileStats');box.replaceChildren();stats.replaceChildren();
  const facts=pilotEvidence(code,lang);
- $('profileStatus').textContent=facts.length?'12 / 12 discipline con un fatto pilota ciascuna; revisione indipendente mancante.':'Profilo multidisciplinare non ancora disponibile per questa destinazione.';
+ $('profileStatus').textContent=facts.length?new Set(facts.map(f=>f.discipline)).size+' / 12 discipline con almeno un fatto pilota; revisione indipendente mancante.':'Profilo multidisciplinare non ancora disponibile per questa destinazione.';
  for(const item of facts){
   const p=document.createElement('p');p.lang=item.language;p.dir='auto';
   p.append(document.createTextNode(item.text+' '),creditLink(item.label,item.source));
