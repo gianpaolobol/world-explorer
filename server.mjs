@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {answerGuide,validateGuideInput,ollamaSelector} from './src/guide.mjs';
 const root=new URL('./',import.meta.url);
-const assets=new Set(['/index.html','/src/style.css',...['app','countries','travel','cinematic','geography','boundaries','photos','narration','regions','region-quiz','learning'].map(x=>'/src/'+x+'.mjs')]);
+const assets=new Set(['/index.html','/src/style.css',...['app','countries','travel','cinematic','geography','numeric-relief','numeric-relief-ui','boundaries','photos','narration','regions','region-quiz','learning'].map(x=>'/src/'+x+'.mjs')]);
 const MAX_BODY=4096;
 function send(res,status,value,type='application/json; charset=utf-8'){
  res.writeHead(status,{'Content-Type':type,'X-Content-Type-Options':'nosniff','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Cross-Origin-Resource-Policy':'same-origin'});
