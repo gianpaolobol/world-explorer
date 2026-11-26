@@ -13,3 +13,26 @@ test('grading persists and respects spaced repetition',()=>{const memory=loadMem
 test('wrong answer schedules short retry',()=>{const m=loadMemory('{}'),q=makeQuestion(m,0,()=>0.5);assert.equal(gradeQuestion(q,q.options.find(x=>x!==q.answer),m,0),false);assert.equal(m[q.code].due,600000);assert.equal(m[q.code].wrong,1)});
 test('corrupt and foreign data ignored',()=>{assert.deepEqual(Object.keys(loadMemory('{')),[]);assert.deepEqual(Object.keys(loadMemory('{"ZZ":{"streak":1,"correct":1,"wrong":0,"due":0},"IT":{"streak":2,"correct":1,"wrong":0,"due":0}}')),[])});
 test('all future reviews gives empty quiz',()=>{const m=Object.fromEntries(countries.map(c=>[c.code,{due:100}]));assert.equal(makeQuestion(m,0),null)});
+
+test('overdue mistakes take priority over other reviews and unseen countries',()=>{
+ const m=loadMemory(JSON.stringify({IT:{streak:0,correct:1,wrong:2,due:100},FR:{streak:1,correct:1,wrong:0,due:10},DE:{streak:0,correct:0,wrong:1,due:200}}));
+ assert.equal(makeQuestion(m,100,()=>0.5).code,'IT');
+ assert.equal(makeQuestion(m,99,()=>0.5).code,'FR');
+ assert.notEqual(makeQuestion(m,99,()=>0.5).code,'DE');
+});
+test('earliest due mistake takes precedence regardless of shuffle',()=>{
+ const m=loadMemory(JSON.stringify({IT:{streak:0,correct:0,wrong:1,due:100},FR:{streak:0,correct:0,wrong:1,due:20}}));
+ for(const v of [0,0.5,0.99])assert.equal(makeQuestion(m,100,()=>v).code,'FR');
+});
+test('mastery and due retry statistics survive local storage roundtrip',()=>{
+ const m=loadMemory(JSON.stringify({IT:{streak:3,correct:3,wrong:0,due:1000},FR:{streak:0,correct:1,wrong:2,due:10},DE:{streak:2,correct:2,wrong:0,due:500}}));
+ assert.deepEqual(quizStats(m,20),{total:195,practiced:3,due:193,mastered:1,retryDue:1,nextDue:500});
+ assert.deepEqual(quizStats(loadMemory(JSON.stringify(m)),20),quizStats(m,20));
+});
+test('empty quiz exposes next review without presenting future questions',()=>{
+ const m=Object.fromEntries(countries.map(c=>[c.code,{streak:1,correct:1,wrong:0,due:100}]));
+ assert.equal(makeQuestion(m,99),null);
+ assert.equal(quizStats(m,99).nextDue,100);
+ assert.equal(quizStats(m,99).due,0);
+ assert.equal(quizStats(m,100).due,195);
+});
