@@ -6,6 +6,7 @@ import {makeServer} from '../server.mjs';
 import {once} from 'node:events';
 import {resolve,extname,sep} from 'node:path';
 import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {countries} from '../src/countries.mjs';
 
 const root=resolve('node_modules/cesium/Build/Cesium');
@@ -132,3 +133,43 @@ test('Chromium real Cesium WebGL with offline tile fixture: globe and tour contr
   assert.equal(await page.locator('#auto').textContent(),'Viaggio automatico');
  });
 });
+
+ // Explicit live-data mode: regular offline checks do not require a download.
+if(process.env.WORLD_EXPLORER_REAL_RELIEF==='1'){
+ test('Chromium renders acquired global and native coastal GEBCO data',{timeout:120000},async t=>{
+  const [global,regional,globalReport,regionalReport]=await Promise.all([
+   readFile('global-relief.json'),readFile('regional-relief.asc'),
+   readFile('relief-report.json','utf8').then(JSON.parse),readFile('regional-report.json','utf8').then(JSON.parse)
+  ]);
+  for(const [bytes,report] of [[global,globalReport],[regional,regionalReport]])assert.equal(createHash('sha256').update(bytes).digest('hex'),report.sha256);
+  assert.equal(globalReport.valid_samples,16200);
+  assert.ok(globalReport.min_m < -4000 && globalReport.max_m > 4000);
+  assert.ok(regionalReport.valid_samples>=16057 && regionalReport.min_m<0 && regionalReport.max_m>0);
+  await runBrowser(t,true,async page=>{
+   await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Globo 3D'),{},{timeout:30000});
+   await page.locator('#numericRelief summary').click();
+   await page.locator('#reliefFile').setInputFiles({name:'regional-relief.asc',mimeType:'text/plain',buffer:regional});
+   await page.locator('#reliefCanvas').waitFor({state:'visible'});
+   assert.match(await page.locator('#reliefStatus').textContent(),/campioni validi/);
+   const colors=await page.locator('#reliefCanvas').evaluate(c=>{
+    const p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+    const unique=new Set();for(let i=0;i<p.length;i+=4)unique.add(p[i]+256*p[i+1]+65536*p[i+2]);return unique.size;
+   });
+   assert.ok(colors>10,'regional canvas has varied rendered pixels');
+   await page.locator('#reliefCanvas').screenshot({path:'regional-render.png'});
+   await page.locator('#globalRelief summary').click();
+   await page.locator('#globalReliefFile').setInputFiles({name:'global-relief.json',mimeType:'application/json',buffer:global});
+   await page.locator('#globalCanvas').waitFor({state:'visible'});
+   assert.ok((await page.locator('#globalStatus').textContent()).includes('16200/16200'));
+   await page.locator('#globalScale').selectOption('20');
+   await page.locator('#globalMainToggle').click();
+   await page.waitForFunction(()=>document.querySelector('#globalMainStatus').textContent.includes('Cesium pronta'),{},{timeout:30000});
+   assert.equal(await page.locator('#mainReliefCredit').isVisible(),true);
+   await page.locator('#globe canvas').screenshot({path:'global-render.png'});
+   await page.locator('#next').click();
+   await page.locator('#globalClear').click();
+   assert.equal(await page.locator('#mainReliefCredit').isVisible(),false);
+   assert.equal(await page.locator('#terrain').isDisabled(),false);
+  });
+ });
+}

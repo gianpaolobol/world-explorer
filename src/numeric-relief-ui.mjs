@@ -39,7 +39,7 @@ const globalPanel=document.createElement('details');
 globalPanel.id='globalRelief';
 function element(tag,text,parent=globalPanel){const e=document.createElement(tag);if(text)e.textContent=text;parent.append(e);return e;}
 element('summary','Globo numerico GEBCO (anteprima 2°)');
-element('p','Importa il JSON prodotto da scripts/prepare-global-relief.py a partire dal NetCDF GEBCO 2025 ice surface. Il globo separato mostra quote e fondali numerici campionati ogni 2°, non il rilievo ad alta risoluzione del globo principale. File locale non autenticato; non per navigazione.');
+element('p','Importa il JSON prodotto da scripts/acquire-ceda-relief.py (acquisizione selettiva) o scripts/prepare-global-relief.py (NetCDF locale). Puoi visualizzare quote e fondali campionati ogni 2° anche sul globo principale. Per una zona a 15 secondi d’arco, usa scripts/acquire-ceda-region.py e importa il file ASCII nel pannello regionale. File locali non autenticati; non per navigazione.');
 const globalInput=element('input');globalInput.type='file';globalInput.accept='.json';globalInput.id='globalReliefFile';globalInput.setAttribute('aria-label','Griglia globale GEBCO JSON');
 const controls=element('div');
 function control(label,id,min,max,value,step){
