@@ -99,6 +99,12 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#quizOptions button').first().click();
   assert.equal(await page.locator('#quizOptions button:disabled').count(),4);
   assert.match(await page.locator('#quizFeedback').textContent(),/Fonte ONU M49/);
+  await page.locator('#lang').selectOption('en');
+  assert.match(await page.locator('#quizFeedback').textContent(),/UN M49 source/);
+  assert.match(await page.locator('#quizStats').textContent(),/Mastered/);
+  assert.equal(await page.locator('#quizOptions button:disabled').count(),4);
+  await page.locator('#lang').selectOption('it');
+  assert.match(await page.locator('#quizFeedback').textContent(),/Fonte ONU M49/);
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('world-explorer-region-quiz-v1')));
   assert.equal(Object.keys(saved).length,1);
   await page.reload();
