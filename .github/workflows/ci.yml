@@ -27,18 +27,20 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node --test browser/smoke.test.mjs
   offline-inference:
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/ollama-')
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.head_ref, 'feat/ollama-')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feat/ollama-'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       OLLAMA_HOST: 127.0.0.1:11434
       OLLAMA_NO_CLOUD: '1'
-      OLLAMA_MODELS: ${{ runner.temp }}/world-explorer-models
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Set disposable model directory
+        shell: bash
+        run: echo "OLLAMA_MODELS=$RUNNER_TEMP/world-explorer-models" >> "$GITHUB_ENV"
       - name: Verify and extract pinned upstream release
         shell: bash
         run: |
