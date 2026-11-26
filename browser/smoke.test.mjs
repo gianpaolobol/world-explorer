@@ -87,6 +87,18 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.match(await page.locator('#reliefStatus').textContent(),/5×/);
   await page.locator('#reliefClear').click();
   assert.equal(await page.locator('#reliefCanvas').isVisible(),false);
+  await page.locator('#globalRelief summary').click();
+  const values=Array(16200).fill(0);values[100]=-5000;values[200]=4000;values[300]=null;
+  await page.locator('#globalReliefFile').setInputFiles({name:'synthetic-global.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:90,cols:180,values}))});
+  await page.locator('#globalCanvas').waitFor({state:'visible'});
+  assert.match(await page.locator('#globalStatus').textContent(),/16199\/16200.*-5000 m, max 4000 m/);
+  await page.locator('#globalScale').selectOption('50');
+  assert.match(await page.locator('#globalStatus').textContent(),/50×/);
+  await page.locator('#globalLon').fill('180');
+  await page.locator('#globalLon').dispatchEvent('change');
+  assert.match(await page.locator('#globalStatus').textContent(),/vista 180°/);
+  await page.locator('#globalClear').click();
+  assert.equal(await page.locator('#globalCanvas').isVisible(),false);
   await page.locator('summary').filter({hasText:'Telecomando iPhone'}).click();
   await page.locator('#remotePair').click();
   await page.waitForFunction(()=>document.querySelector('#remoteStatus').textContent.includes('non configurato'));
