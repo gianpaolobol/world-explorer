@@ -10,7 +10,7 @@ import {nearbyPhotos} from './photos.mjs';
 import {narrationFor} from './narration.mjs';
 import {regionName,M49_SOURCE} from './regions.mjs';
 import {pilotEvidence} from './editorial-pilot.mjs';
-import {statisticsFor,TERMS} from './world-statistics.mjs';
+import {statisticsFor,statisticsEvidence,TERMS} from './world-statistics.mjs';
 import {snapshot} from './world-statistics-data.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from './region-quiz.mjs';
 const $=id=>document.getElementById(id), key='world-explorer-visits-v1';
@@ -167,10 +167,12 @@ $('guideForm').onsubmit=async e=>{
   for(const item of Array.isArray(data.evidence)?data.evidence:[]){
    if(!item||typeof item.text!=='string')continue;
    const pilot=pilotEvidence(countries[index].code,lang).find(x=>x.id===item.id&&x.source===item.source&&x.text===item.text);
-   if(!pilot&&item.source!==M49_SOURCE)continue;
+   const wdi=statisticsEvidence(snapshot,countries[index].code,lang).find(x=>x.id===item.id&&x.source===item.source&&x.text===item.text);
+   if(!pilot&&!wdi&&item.source!==M49_SOURCE)continue;
    const p=document.createElement('p');p.dir='auto';p.lang=languages.includes(item.language)?item.language:'en';
-   p.append(document.createTextNode(item.text+' '),creditLink(pilot?pilot.label:'Fonte ONU M49',item.source));
-   if(pilot){const meta=document.createElement('small');meta.textContent=' · '+(pilot.period?'Riferimento: '+pilot.period+' · ':'')+'Controllo fonte: '+pilot.checked+' · revisione indipendente mancante'+(pilot.language!==lang?' · testo in inglese':'');p.append(meta);}
+   p.append(document.createTextNode(item.text+' '),creditLink(pilot?pilot.label:wdi?wdi.label:'Fonte ONU M49',item.source));
+   const evidenceMeta=pilot||wdi;
+   if(evidenceMeta){const meta=document.createElement('small');meta.textContent=' · '+(evidenceMeta.period?'Riferimento: '+evidenceMeta.period+' · ':'')+'Controllo fonte: '+evidenceMeta.checked+' · revisione indipendente mancante'+(evidenceMeta.language!==lang?' · testo in inglese':'');p.append(meta);}
    $('guideAnswer').append(p);
   }
  }catch{if(guideRequest===request)$('guideStatus').textContent='Guida non disponibile. Avvia il server locale con npm start; consulta il README.';}
