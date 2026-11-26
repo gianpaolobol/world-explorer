@@ -7,7 +7,7 @@ import {createTour} from './cinematic.mjs';
 import {bathymetryProvider,ESRI_URL,sampleElevation,elevationLabel} from './geography.mjs';
 import {fetchBoundaries} from './boundaries.mjs';
 import {nearbyPhotos} from './photos.mjs';
-import {narrationFor} from './narration.mjs';
+import {cinematicNarrationFor} from './narration.mjs';
 import {regionName,M49_SOURCE} from './regions.mjs';
 import {pilotEvidence} from './editorial-pilot.mjs';
 import {statisticsFor,statisticsEvidence,TERMS} from './world-statistics.mjs';
@@ -27,7 +27,7 @@ function options(){
 for(const l of languages)$('lang').add(new Option(new Intl.DisplayNames([l],{type:'language'}).of(l),l));
 $('lang').value=lang;options();
 function speak(){
- const n=narrationFor(countries[index].code,lang);
+ const n=cinematicNarrationFor(countries[index].code,lang);
  if(!n||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
  window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(n.text);u.lang=n.language;
  const v=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().split('-')[0]===n.language);
@@ -82,7 +82,15 @@ function render(fly=true,read=false){
  clearPhotos();clearGuide();
  probeEpoch++;$('elevation').textContent='';
  const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);renderProfile(c.code);
- const n=narrationFor(c.code,lang);$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
+ const n=cinematicNarrationFor(c.code,lang);$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
+ const credits=$('narrationCredits');credits.replaceChildren();
+ for(const fact of n?.facts||[]){
+  const item=document.createElement('li');item.append(creditLink(fact.label,fact.source));
+  if(fact.period)item.append(document.createTextNode(' · '+fact.period));
+  credits.append(item);
+ }
+ $('narrationCoverage').textContent=n?.facts.length?'Approfondimenti con fonti · revisione indipendente in attesa.':n?.extended?'Nessun approfondimento narrativo verificato per questa destinazione.':'Narrazione regionale; approfondimenti disponibili in italiano e inglese.';
+ if(n?.facts.some(x=>x.id.startsWith('wdi-'))){const item=document.createElement('li');item.append(creditLink('Condizioni dati WDI / CC BY 4.0',TERMS));credits.append(item);}
  $('facts').textContent='Capitale (dato iniziale): '+c.capital+' · Superficie indicativa: '+new Intl.NumberFormat(lang).format(c.area)+' km²';
  $('source').href='https://'+lang+'.wikipedia.org/w/index.php?search='+encodeURIComponent(name(c));
  $('progress').textContent='Destinazioni visitate: '+Object.keys(visits).filter(k=>visits[k]>0).length+' / '+countries.length;
@@ -102,7 +110,7 @@ $('auto').onclick=()=>tour.state==='idle'?tour.start():tour.stop();
 $('pause').onclick=()=>tour.state==='paused'?tour.resume():tour.pause();
 function manual(i){tour.stop();visit(i);}
 $('place').onchange=e=>manual(Number(e.target.value));$('prev').onclick=()=>manual(index-1);$('next').onclick=()=>manual(index+1);
-$('lang').onchange=e=>{lang=e.target.value;options();render(false);renderQuiz();};
+$('lang').onchange=e=>{window.speechSynthesis?.cancel();lang=e.target.value;options();render(false);renderQuiz();};
 $('voice').onclick=speak;$('stopVoice').onclick=()=>window.speechSynthesis?.cancel();
 $('reset').onclick=()=>{if(confirm('Eliminare tutte le visite memorizzate su questo browser?')){visits={};save();render(false);}};
 $('ambient').onclick=()=>{$('ambient').setAttribute('aria-pressed',String(document.body.classList.toggle('ambient')));};
