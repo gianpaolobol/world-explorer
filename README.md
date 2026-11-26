@@ -1,12 +1,12 @@
 # World Explorer — Atlante Vivente
 
-Anteprima V0.6.0, non una release definitiva.
+Anteprima V0.6.1, non una release definitiva.
 
 ## Avvio locale
 Dal repository, con Node 22, eseguire `npm start`. Il server ascolta solo su 127.0.0.1. Non esporlo tramite proxy o su LAN. Aprire http://127.0.0.1:8765/ in Chrome o Edge. Internet e WebGL necessari per il globo. Usare Schermo intero per proiettare. Il rilievo Esri è opzionale e non collaudato; il viaggio automatico privilegia le destinazioni meno visitate.
 
 ## Test
-Node 22: `npm test`. La CI esegue i test unitari e controlla la sintassi del modulo browser. Non sostituisce il collaudo WebGL o sul proiettore.
+Node 22: `npm test`. La CI esegue i test unitari, la sintassi del modulo browser e una suite Chromium con Cesium reale in WebGL software e tessere sintetiche, oltre alla modalità testuale senza rete. Per riprodurre: `npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 cesium@1.127.0`, `npx playwright install chromium`, `node --test browser/smoke.test.mjs`. Nessun test di rete live, Safari o proiettore implicato.
 
 195 voci iniziali, tutte non revisionate; 20 lingue per nomi e voce (dipende dal browser). Le capitali e superfici non sono ancora validate. Disponibile il livello visuale GEBCO 2025 (non mesh 3D), campionamento quota Esri sperimentale e viaggio con pausa/ripresa e narrazione dopo l’arrivo. Narrazione introduttiva e quiz adattivi sulla classificazione geografica ONU M49 dei 195 Stati integrati, con 20 modelli linguistici di testo e voce dipendente dal dispositivo. Il quiz salva solo in locale, permette esportazione e cancellazione. La revisione linguistica e il collaudo browser restano aperti. Narrazione approfondita e batimetria globale 3D restano da implementare. Vedi [fonti](docs/SOURCES.md) e [roadmap](docs/IMPLEMENTATION_PLAN.md).
 
