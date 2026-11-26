@@ -81,7 +81,7 @@ $('place').onchange=e=>manual(Number(e.target.value));$('prev').onclick=()=>manu
 $('lang').onchange=e=>{lang=e.target.value;options();render(false);renderQuiz();};
 $('voice').onclick=speak;$('stopVoice').onclick=()=>window.speechSynthesis?.cancel();
 $('reset').onclick=()=>{if(confirm('Eliminare tutte le visite memorizzate su questo browser?')){visits={};save();render(false);}};
-$('ambient').onclick=()=>document.body.classList.toggle('ambient');
+$('ambient').onclick=()=>{$('ambient').setAttribute('aria-pressed',String(document.body.classList.toggle('ambient')));};
 $('full').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('status').textContent='Schermo intero non disponibile';}};
 $('terrain').onclick=async()=>{if(!viewer||terrainBusy)return;terrainBusy=true;probeEpoch++;$('elevation').textContent='';$('terrain').disabled=true;
  try{if(terrainOn){viewer.terrainProvider=new Cesium.EllipsoidTerrainProvider();terrainOn=false;$('status').textContent='Globo 3D · ellissoide';}
