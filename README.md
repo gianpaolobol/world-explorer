@@ -1,6 +1,6 @@
 # World Explorer — Atlante Vivente
 
-Anteprima V0.6.2, non una release definitiva.
+Anteprima V0.6.3, non una release definitiva.
 
 ## Avvio locale
 Dal repository, con Node 22, eseguire `npm start`. Il server ascolta solo su 127.0.0.1. Non esporlo tramite proxy o su LAN. Aprire http://127.0.0.1:8765/ in Chrome o Edge. Internet e WebGL necessari per il globo. Usare Schermo intero per proiettare. Il rilievo Esri è opzionale e non collaudato; il viaggio automatico privilegia le destinazioni meno visitate.
@@ -29,3 +29,6 @@ Nel pannello Telecomando genera il codice temporaneo, apri sul telefono l'URL HT
 
 ### Corpus geografico pilota V0.6.2
 Per l’Italia, chiedere uno dei temi indicati nel pannello guida. Dodici brevi fatti (uno per disciplina), fonti primarie, data di controllo e periodo quando applicabile. Italiano e inglese; altre lingue ricevono eventuali estratti pilota in inglese se scelti da Ollama, non traduzioni convalidate. Le risposte senza modello riconoscono solo temi esatti e pochi sinonimi. Gli altri 194 Stati conservano esclusivamente M49. Non usare il corpus come profilo enciclopedico, serie statistica aggiornata o revisione indipendente.
+
+### Profili geografici e statistiche WDI (anteprima V0.6.3)
+Il pannello profilo mostra tutti i fatti pilota documentati della destinazione, senza Ollama. Per gli indicatori WDI è predisposto uno snapshot offline del 2024 (popolazione, PIL corrente USD, urbanizzazione, quota forestale). Nessun dato è incluso finché l'acquisizione non è verificata. Per acquisire esplicitamente lo snapshot con Node 22: `node scripts/fetch-world-statistics.mjs --write`. La procedura interroga esclusivamente l'API pubblica WDI, non invia dati personali e non contatta il servizio durante la navigazione. Prima di redistribuire dati generati, verificare l'esito, la copertura e le licenze specifiche degli indicatori. I dati mancanti non sono imputati. La vista usa italiano/inglese, con fallback dichiarato. Non costituisce revisione indipendente del corpus.

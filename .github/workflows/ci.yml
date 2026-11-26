@@ -25,3 +25,13 @@ jobs:
       - run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 cesium@1.127.0
       - run: npx playwright install --with-deps chromium
       - run: node --test browser/smoke.test.mjs
+  wdi-acquisition:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/fetch-world-statistics.mjs
