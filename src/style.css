@@ -2,3 +2,5 @@
 #quiz{border-top:1px solid #57707d;margin-top:12px;padding-top:10px}#quiz summary{cursor:pointer}#quizOptions{display:grid;gap:6px}#quiz button{margin:3px 0}#quizFeedback{font-weight:600}button:disabled{opacity:.65;cursor:default}#narration{font-size:.9em}
 
 #photoResults figure{margin:12px 0}#photoResults img{display:block;width:100%;height:auto;border-radius:6px}#photoResults figcaption{font-size:.75em;overflow-wrap:anywhere}aside details summary{cursor:pointer}
+
+#guide textarea{width:100%;background:#183744;color:#fff;border:1px solid #78909c;border-radius:7px;padding:8px;font:inherit;resize:vertical}#guide textarea:focus-visible{outline:3px solid #ffca69;outline-offset:2px}#guideAnswer{font-size:.9em;overflow-wrap:anywhere}
