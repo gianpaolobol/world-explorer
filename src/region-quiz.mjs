@@ -1,7 +1,7 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
 import {countries} from './countries.mjs';
 import {regionOf,regionCodes} from './regions.mjs';
-import {review,nextReview,exportMemory} from './learning.mjs';
+import {review,exportMemory} from './learning.mjs';
 const registry=countries.filter(c=>regionOf(c.code));
 const known=new Set(registry.map(c=>c.code));
 function shuffle(items,random){
@@ -17,7 +17,12 @@ export function loadMemory(raw){
  return clean;
 }
 export function makeQuestion(memory,now=Date.now(),random=Math.random){
- const c=nextReview(shuffle(registry,random),memory,now);if(!c)return null;
+ // Review overdue mistakes first, then other due reviews, then unseen countries.
+ // Never present a future review. Randomize ties without overriding urgency.
+ const due=shuffle(registry,random).filter(c=>(memory[c.code]?.due||0)<=now);
+ const priority=c=>{const v=memory[c.code];return !v?2:v.streak===0&&v.wrong>0?0:1;};
+ due.sort((a,b)=>priority(a)-priority(b)||(memory[a.code]?.due||0)-(memory[b.code]?.due||0));
+ const c=due[0];if(!c)return null;
  const answer=regionOf(c.code);
  const others=shuffle(regionCodes.filter(x=>x!==answer),random).slice(0,3);
  return Object.freeze({code:c.code,answer,options:Object.freeze(shuffle([answer,...others],random))});
@@ -32,6 +37,11 @@ export function gradeQuestion(question,choice,memory,now=Date.now()){
  return correct;
 }
 export function quizStats(memory,now=Date.now()){
- return {total:registry.length,practiced:registry.filter(c=>memory[c.code]).length,due:registry.filter(c=>(memory[c.code]?.due||0)<=now).length};
+ const records=registry.map(c=>memory[c.code]).filter(Boolean);
+ const scheduled=records.filter(v=>v.due>now).map(v=>v.due);
+ return {total:registry.length,practiced:records.length,due:registry.filter(c=>(memory[c.code]?.due||0)<=now).length,
+  mastered:records.filter(v=>v.streak>=3).length,
+  retryDue:records.filter(v=>v.streak===0&&v.wrong>0&&v.due<=now).length,
+  nextDue:scheduled.length?Math.min(...scheduled):null};
 }
 export function quizExport(memory){return exportMemory(memory);}
