@@ -112,6 +112,17 @@ test('Chromium real Cesium WebGL with offline tile fixture: globe and tour contr
   await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Globo 3D'),{},{timeout:30000});
   assert.equal(await page.locator('#globe canvas').count(),1);
   assert.equal(await page.locator('#terrain').isDisabled(),false);
+  await page.locator('#globalRelief summary').click();
+  const values=Array.from({length:16200},(_,i)=>i<8100?-4500:2300);
+  await page.locator('#globalReliefFile').setInputFiles({name:'synthetic-main.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:90,cols:180,values}))});
+  await page.locator('#globalMainToggle').click();
+  await page.waitForFunction(()=>document.querySelector('#globalMainStatus').textContent.includes('Cesium pronta'),{},{timeout:30000});
+  assert.equal(await page.locator('#mainReliefCredit').isVisible(),true);
+  assert.equal(await page.locator('#terrain').isDisabled(),true);
+  await page.locator('#next').click();
+  await page.locator('#globalClear').click();
+  assert.equal(await page.locator('#mainReliefCredit').isVisible(),false);
+  assert.equal(await page.locator('#terrain').isDisabled(),false);
   await page.locator('#auto').click();
   await page.locator('#pause').click();
   assert.equal(await page.locator('#pause').textContent(),'Riprendi');
