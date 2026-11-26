@@ -1,5 +1,5 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
-import {randomBytes,timingSafeEqual} from 'node:crypto';
+import {randomBytes,timingSafeEqual,X509Certificate} from 'node:crypto';
 import {createServer as createHttpsServer} from 'node:https';
 import {readFile} from 'node:fs/promises';
 import {isIPv4} from 'node:net';
@@ -56,7 +56,11 @@ export function remoteHandler(state,host,{allowPeer=privateIPv4}={}){
 export async function startRemote({ip,certPath,keyPath,state,port=8766}){
  if(!privateIPv4(ip)||!certPath||!keyPath||!Number.isInteger(port)||port<1024||port>65535)throw new Error('remote requires explicit private IPv4 and TLS certificate/key');
  const host=ip+':'+port;
- const server=createHttpsServer({cert:await readFile(certPath),key:await readFile(keyPath),minVersion:'TLSv1.2',requestTimeout:5000,headersTimeout:4000,maxHeaderSize:4096},remoteHandler(state,host));
+ const cert=await readFile(certPath),key=await readFile(keyPath);
+ const identity=new X509Certificate(cert);
+ const now=Date.now();
+ if(!identity.checkIP(ip)||!(Date.parse(identity.validFrom)<=now&&now<Date.parse(identity.validTo)))throw new Error('remote certificate requires a current IP SAN for the configured address');
+ const server=createHttpsServer({cert,key,minVersion:'TLSv1.2',requestTimeout:5000,headersTimeout:4000,maxHeaderSize:4096},remoteHandler(state,host));
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,ip,()=>{server.removeListener('error',reject);resolve();});});
  return {server,url:'https://'+host+'/'};
 }
