@@ -4,6 +4,7 @@ import {configureMainRelief,stopMainRelief,reportMainRelief} from './numeric-rel
 import {countries,languages,countryName} from './countries.mjs';
 import {wrapIndex,chooseDestination,cameraHeight} from './travel.mjs';
 import {createTour} from './cinematic.mjs';
+import {createNarrator} from './speech.mjs';
 import {bathymetryProvider,ESRI_URL,sampleElevation,elevationLabel} from './geography.mjs';
 import {fetchBoundaries} from './boundaries.mjs';
 import {nearbyPhotos} from './photos.mjs';
@@ -26,13 +27,10 @@ function options(){
 }
 for(const l of languages)$('lang').add(new Option(new Intl.DisplayNames([l],{type:'language'}).of(l),l));
 $('lang').value=lang;options();
-function speak(){
- const n=cinematicNarrationFor(countries[index].code,lang);
- if(!n||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
- window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(n.text);u.lang=n.language;
- const v=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().split('-')[0]===n.language);
- if(v)u.voice=v;window.speechSynthesis.speak(u);
-}
+const narrator=createNarrator({synthesis:window.speechSynthesis,Utterance:window.SpeechSynthesisUtterance,onStatus:s=>{
+ $('speechStatus').textContent=({unavailable:'Sintesi vocale non disponibile', 'no-local-voice':'Voce locale assente per questa lingua; installala sul dispositivo',speaking:'Narrazione in corso',ended:'',stopped:'',error:'Narrazione interrotta o non disponibile'})[s]||'';
+}});
+function speak(done){return narrator.speak(cinematicNarrationFor(countries[index].code,lang),typeof done==='function'?done:undefined);}
 const quizKey='world-explorer-region-quiz-v1';
 let quizMemory=loadMemory(null),question=null,answered=false;
 try{quizMemory=loadMemory(localStorage.getItem(quizKey));}catch{}
@@ -102,7 +100,7 @@ const tour=createTour({
  choose:()=>chooseDestination(countries,visits,countries[index].code),
  visit:c=>{index=countries.indexOf(c);visits[c.code]=(visits[c.code]||0)+1;save();render(false);},
  fly:(c,complete,cancel)=>{if(!viewer){complete();return;}viewer.camera.cancelFlight();viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(c.lon,c.lat,flightHeight(c)),orientation:{heading:0,pitch:Cesium.Math.toRadians(-75),roll:0},duration:5,complete,cancel});},
- speak:()=>speak(),cancel:()=>{viewer?.camera.cancelFlight();window.speechSynthesis?.cancel();},
+ speak:(_,done)=>speak(done),stopSpeech:()=>narrator.stop(),cancel:()=>{viewer?.camera.cancelFlight();narrator.stop();},
  delay:()=>Number($('interval').value)*1000,
  onState:s=>{$('auto').textContent=s==='idle'?'Viaggio automatico':'Ferma viaggio';$('pause').disabled=s==='idle';$('pause').textContent=s==='paused'?'Riprendi':'Pausa';$('tourState').textContent=({idle:'',flying:'Sorvolo',dwelling:'Sosta',paused:'In pausa'})[s];}
 });
@@ -110,8 +108,8 @@ $('auto').onclick=()=>tour.state==='idle'?tour.start():tour.stop();
 $('pause').onclick=()=>tour.state==='paused'?tour.resume():tour.pause();
 function manual(i){tour.stop();visit(i);}
 $('place').onchange=e=>manual(Number(e.target.value));$('prev').onclick=()=>manual(index-1);$('next').onclick=()=>manual(index+1);
-$('lang').onchange=e=>{window.speechSynthesis?.cancel();lang=e.target.value;options();render(false);renderQuiz();};
-$('voice').onclick=speak;$('stopVoice').onclick=()=>window.speechSynthesis?.cancel();
+$('lang').onchange=e=>{tour.pause();narrator.stop();lang=e.target.value;options();render(false);renderQuiz();};
+$('voice').onclick=()=>{tour.pause();speak();};$('stopVoice').onclick=()=>narrator.stop();
 $('reset').onclick=()=>{if(confirm('Eliminare tutte le visite memorizzate su questo browser?')){visits={};save();render(false);}};
 $('ambient').onclick=()=>{$('ambient').setAttribute('aria-pressed',String(document.body.classList.toggle('ambient')));};
 $('full').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('status').textContent='Schermo intero non disponibile';}};
