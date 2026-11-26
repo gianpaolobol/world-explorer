@@ -79,6 +79,20 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#prev').click();
   assert.equal(await page.locator('#place').inputValue(),it);
   await page.locator('#lang').selectOption('it');
+  // Deterministic browser speech contract; not a test of physical audio.
+  await page.evaluate(()=>{
+   const engine=window.speechSynthesis;
+   if(!engine)throw Error('speech API unavailable in Chromium');
+   window.__spoken=[];
+   const voice={lang:'it-IT',localService:true};
+   // A real utterance requires a native SpeechSynthesisVoice; instead verify the
+   // no-local-voice path using the existing captured browser engine.
+   engine.getVoices=()=>[{...voice,localService:false}];
+   engine.speak=u=>window.__spoken.push(u.text);
+  });
+  await page.locator('#voice').click();
+  assert.match(await page.locator('#speechStatus').textContent(),/Voce locale assente/);
+  assert.deepEqual(await page.evaluate(()=>window.__spoken),[]);
   await page.locator('#quiz summary').click();
   await page.locator('#quizNext').click();
   assert.equal(await page.locator('#quizOptions button').count(),4);
