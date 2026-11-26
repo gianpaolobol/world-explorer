@@ -4,6 +4,11 @@ on:
     paths:
       - 'scripts/acquire-ceda-relief.py'
       - 'tests/ceda_acquisition_test.py'
+      - 'scripts/acquire-ceda-region.py'
+      - 'tests/ceda_region_test.py'
+      - 'browser/smoke.test.mjs'
+      - 'src/numeric-relief*.mjs'
+      - 'src/global-relief-cesium.mjs'
       - '.github/workflows/relief-acquisition.yml'
   workflow_dispatch:
 permissions:
@@ -18,7 +23,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install numpy==2.2.6
-      - run: python -m unittest discover -s tests -p ceda_acquisition_test.py -v
+      - run: python -m unittest discover -s tests -p 'ceda_*_test.py' -v
   live:
     needs: contract
     runs-on: ubuntu-24.04
@@ -30,12 +35,40 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install numpy==2.2.6 netCDF4==1.7.2
       - run: timeout 180s python scripts/acquire-ceda-relief.py global-relief.json > relief-report.json
-      - run: cat relief-report.json
+      - run: timeout 180s python scripts/acquire-ceda-region.py 40.77 14.25 regional-relief.asc > regional-report.json
+      - run: cat relief-report.json regional-report.json
       - uses: actions/upload-artifact@v4
         with:
           name: gebco-2025-coarse-validated
           path: |
             global-relief.json
             relief-report.json
+            regional-relief.asc
+            regional-report.json
+          if-no-files-found: error
+          retention-days: 7
+  real-browser:
+    needs: live
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gebco-2025-coarse-validated
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 cesium@1.127.0
+      - run: npx playwright install --with-deps chromium
+      - run: node --test --test-name-pattern='acquired global and native coastal' browser/smoke.test.mjs
+        env:
+          WORLD_EXPLORER_REAL_RELIEF: '1'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gebco-real-render
+          path: |
+            global-render.png
+            regional-render.png
           if-no-files-found: error
           retention-days: 7
