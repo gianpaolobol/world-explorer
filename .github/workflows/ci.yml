@@ -26,3 +26,46 @@ jobs:
       - run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 cesium@1.127.0
       - run: npx playwright install --with-deps chromium
       - run: node --test browser/smoke.test.mjs
+  offline-inference:
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/ollama-')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      OLLAMA_HOST: 127.0.0.1:11434
+      OLLAMA_NO_CLOUD: '1'
+      OLLAMA_MODELS: ${{ runner.temp }}/world-explorer-models
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify and extract pinned upstream release
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/ollama.tar.zst"
+          mkdir -p "$RUNNER_TEMP/ollama"
+          curl --fail --show-error --silent --location --retry 2 --max-time 300 https://github.com/ollama/ollama/releases/download/v0.40.18/ollama-linux-amd64.tar.zst -o "$archive"
+          echo "b82649006cb5b54ed1237fa2d1a26a7f939a4fd03150033759acbff7ff315adf  $archive" | sha256sum -c -
+          tar --zstd -xf "$archive" -C "$RUNNER_TEMP/ollama"
+          rm "$archive"
+          echo "$RUNNER_TEMP/ollama/bin" >> "$GITHUB_PATH"
+      - name: Fetch Apache-2.0 model into disposable runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          ollama serve >"$RUNNER_TEMP/ollama-pull.log" 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS --max-time 2 http://127.0.0.1:11434/api/version >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS --max-time 5 http://127.0.0.1:11434/api/version
+          timeout 300s ollama pull qwen2.5:1.5b
+          ollama list
+      - name: Run production adapter without external network
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo unshare --net -- bash -c 'set -e; ip link set lo up; exec runuser -u "$SUDO_USER" -- env PATH="$2" OLLAMA_MODELS="$3" bash "$1"' _ "$PWD/scripts/test-ollama-offline.sh" "$PATH" "$OLLAMA_MODELS"
