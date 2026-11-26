@@ -74,3 +74,13 @@ test('model selections cannot retrieve unavailable WDI IDs',async()=>{
  const a=await answerGuide({code:'VA',language:'en',question:'population'},async()=> '{"ids":["wdi-SP.POP.TOTL"]}');
  assert.equal(a.mode,'fallback');assert.equal(a.status,'insufficient');
 });
+
+
+test('lightweight local model is allowed without changing the fixed endpoint',async()=>{
+ const fn=ollamaSelector('qwen2.5:1.5b',async(url,options)=>{
+  assert.equal(url,'http://127.0.0.1:11434/api/chat');
+  assert.equal(JSON.parse(options.body).model,'qwen2.5:1.5b');
+  return new Response(JSON.stringify({message:{content:'{"ids":["region"]}'}}));
+ });
+ assert.equal(await fn(input,evidenceFor(input)),'{"ids":["region"]}');
+});
