@@ -1,6 +1,9 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
 import {countryName} from './countries.mjs';
 import {regionOf,regionName,M49_SOURCE} from './regions.mjs';
+import {pilotEvidence} from './editorial-pilot.mjs';
+import {statisticsEvidence} from './world-statistics.mjs';
+import {snapshot} from './world-statistics-data.mjs';
 // Deliberately limited to sourced statistical geography. No unreviewed capital/area claims.
 const templates=Object.freeze({
  it:(c,r)=>`${c}. Secondo la classificazione statistica delle Nazioni Unite, questa destinazione appartiene alla regione: ${r}. Osserva il territorio sul globo.`,
@@ -28,4 +31,22 @@ export function narrationFor(code,locale='it'){
  const region=regionOf(code);if(!region)return null;
  const language=Object.hasOwn(templates,locale)?locale:'en';
  return {language,text:templates[language](countryName(code,language),regionName(region,language)),source:M49_SOURCE};
+}
+
+// A separate presentation itinerary: the guide's M49 evidence must stay M49-only.
+// Never mix languages or infer values when the source snapshot has gaps.
+export function cinematicNarrationFor(code,locale='it'){
+ const base=narrationFor(code,locale);
+ if(!base)return null;
+ const local=base.language;
+ const extended=['it','en'].includes(local);
+ const facts=extended?[
+  ...pilotEvidence(code,local).filter(x=>['it-orography','it-hydrology'].includes(x.id)),
+  ...statisticsEvidence(snapshot,code,local).filter(x=>['wdi-SP.POP.TOTL','wdi-SP.URB.TOTL.IN.ZS','wdi-AG.LND.FRST.ZS'].includes(x.id))
+ ]:[];
+ const introduction=local==='it'?'Dati della Banca Mondiale, anno 2024.':'World Bank data, reference year 2024.';
+ const stats=facts.filter(x=>x.id.startsWith('wdi-'));
+ const editorial=facts.filter(x=>!x.id.startsWith('wdi-'));
+ const text=[base.text,...editorial.map(x=>x.text),...(stats.length?[introduction,...stats.map(x=>x.text)]:[])].join(' ');
+ return {language:local,text,facts,extended,source:base.source};
 }

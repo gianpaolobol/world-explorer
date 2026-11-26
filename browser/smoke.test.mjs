@@ -47,6 +47,9 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   const it=String(countries.findIndex(c=>c.code==='IT'));
   await page.locator('#place').selectOption(it);
   assert.equal(await page.locator('#name').textContent(),'Italia');
+  assert.match(await page.locator('#narration').textContent(),/Monviso/);
+  assert.match(await page.locator('#narration').textContent(),/Banca Mondiale, anno 2024/);
+  assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),3);
   await page.locator('#profile summary').click();
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
@@ -57,6 +60,16 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(await page.locator('#profileFacts a').count(),0);
   assert.match(await page.locator('#profileStatus').textContent(),/non ancora disponibile/);
   assert.match(await page.locator('#profileStats').textContent(),/68\.551\.653/);
+  assert.match(await page.locator('#narration').textContent(),/68\.551\.653/);
+  assert.equal(await page.locator('#narrationCredits a[href^="https://www.adbpo.it/"]').count(),0);
+  await page.locator('#lang').selectOption('fr');
+  assert.equal(await page.locator('#narration').getAttribute('lang'),'fr');
+  assert.equal(await page.locator('#narrationCredits a').count(),0);
+  await page.locator('#lang').selectOption('it');
+  const va=String(countries.findIndex(c=>c.code==='VA'));
+  await page.locator('#place').selectOption(va);
+  assert.equal(await page.locator('#narrationCredits a').count(),0);
+  assert.match(await page.locator('#narrationCoverage').textContent(),/Nessun approfondimento/);
   await page.locator('#place').selectOption(it);
   await page.locator('#profile summary').click();
   await page.locator('#lang').selectOption('en');
