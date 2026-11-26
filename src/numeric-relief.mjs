@@ -63,3 +63,58 @@ export function projectMesh(mesh){
  }).sort((a,b)=>a.depth-b.depth);
  return triangles;
 }
+
+ // Coarse local GEBCO preview: sample native pixel centres at fixed stride 480.
+ // Not a terrain provider or a survey-grade model. No inferred polar cap values.
+export const GLOBAL_ROWS=90,GLOBAL_COLS=180,GLOBAL_STRIDE=480,GLOBAL_FIRST=239,GLOBAL_MAX_BYTES=512*1024;
+export function parseGlobalGrid(text){
+ if(typeof text!=='string'||text.length>GLOBAL_MAX_BYTES)throw new Error('Global grid too large');
+ const g=JSON.parse(text);
+ if(!g||g.format!=='gebco-2025-ice-surface-stride480-v1'||g.rows!==GLOBAL_ROWS||g.cols!==GLOBAL_COLS||
+ !Array.isArray(g.values)||g.values.length!==GLOBAL_ROWS*GLOBAL_COLS)throw new Error('Invalid global grid format');
+ let min=Infinity,max=-Infinity,count=0;
+ for(const z of g.values){
+  if(z===null)continue;
+  if(!Number.isInteger(z)||z< -12000||z>10000)throw new Error('Invalid global elevation');
+  min=Math.min(min,z);max=Math.max(max,z);count++;
+ }
+ if(!count)throw new Error('No valid global samples');
+ return {values:g.values,min,max,count};
+}
+export function globalMesh(g,exaggeration=1){
+ if(![1,20,50].includes(exaggeration))throw new Error('Invalid global exaggeration');
+ const vertices=g.values.map((z,i)=>{
+  if(z===null)return null;
+  const row=Math.floor(i/GLOBAL_COLS),col=i%GLOBAL_COLS;
+  const lat=(-90+(GLOBAL_FIRST+row*GLOBAL_STRIDE+.5)/240)*Math.PI/180;
+  const lon=(-180+(GLOBAL_FIRST+col*GLOBAL_STRIDE+.5)/240)*Math.PI/180;
+  const radius=1+z*exaggeration/6371008.8;
+  return {x:radius*Math.cos(lat)*Math.cos(lon),y:radius*Math.cos(lat)*Math.sin(lon),z:radius*Math.sin(lat),height:z};
+ });
+ const faces=[];
+ for(let row=0;row<GLOBAL_ROWS-1;row++)for(let col=0;col<GLOBAL_COLS;col++){
+  const a=row*GLOBAL_COLS+col,b=row*GLOBAL_COLS+(col+1)%GLOBAL_COLS,c=a+GLOBAL_COLS,d=b+GLOBAL_COLS;
+  // Keep actual data gaps open; close the longitude seam, not the poles.
+  if([a,b,c,d].some(i=>vertices[i]===null))continue;
+  faces.push([a,b,c],[b,d,c]);
+ }
+ return {vertices,faces};
+}
+export function projectGlobalMesh(mesh,longitude=0,latitude=0){
+ if(!Number.isFinite(longitude)||Math.abs(longitude)>180||!Number.isFinite(latitude)||Math.abs(latitude)>90)throw new Error('Invalid view');
+ const l=longitude*Math.PI/180,p=latitude*Math.PI/180,cl=Math.cos(l),sl=Math.sin(l),cp=Math.cos(p),sp=Math.sin(p);
+ const vertices=mesh.vertices.map(v=>{
+  if(!v)return null;
+  const radial=v.x*cl+v.y*sl;
+  return {x:-v.x*sl+v.y*cl,y:-radial*sp+v.z*cp,depth:radial*cp+v.z*sp,height:v.height};
+ });
+ const triangles=[];
+ for(const f of mesh.faces){
+  const points=f.map(i=>vertices[i]),[a,b,c]=points;
+  // Back-face culling in projected east/north coordinates.
+  const cross=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+  if(cross<=0)continue;
+  triangles.push({points,depth:(a.depth+b.depth+c.depth)/3,height:(a.height+b.height+c.height)/3});
+ }
+ return triangles.sort((a,b)=>a.depth-b.depth);
+}
