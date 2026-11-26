@@ -63,12 +63,19 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(Object.keys(saved).length,1);
   await page.reload();
   await page.waitForFunction(()=>document.querySelector('#quizStats').textContent.includes('1 / 195'));
+  // Reload intentionally resets the selected country; select Italy for the scoped corpus.
+  await page.locator('#place').selectOption(it);
   await page.locator('#guide summary').click();
   await page.locator('#guideQuestion').fill('Regione statistica');
   await page.locator('#guideAsk').click();
   await page.locator('#guideAnswer a').waitFor();
   assert.equal(await page.locator('#guideAnswer a').first().getAttribute('href'),'https://unstats.un.org/unsd/methodology/m49/overview/');
   await page.locator('#guideQuestion').fill('qual è la popolazione?');
+  await page.locator('#guideAsk').click();
+  await page.waitForFunction(()=>document.querySelector('#guideAnswer').textContent.includes('58.943.464'));
+  assert.match(await page.locator('#guideAnswer').textContent(),/2024-12-31/);
+  assert.match(await page.locator('#guideAnswer a').first().getAttribute('href'),/^https:\/\/www\.istat\.it\//);
+  await page.locator('#guideQuestion').fill('Qual è il monte più alto?');
   await page.locator('#guideAsk').click();
   await page.waitForFunction(()=>document.querySelector('#guideStatus').textContent.includes('insufficienti'));
   assert.equal(await page.locator('#guideAnswer a').count(),0);
