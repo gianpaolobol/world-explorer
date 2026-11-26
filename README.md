@@ -33,3 +33,7 @@ Per l’Italia, chiedere uno dei temi indicati nel pannello guida. Dodici brevi 
 
 ### Profili documentati e statistiche WDI (anteprima)
 Il pannello profilo mostra i fatti pilota disponibili senza Ollama. Gli indicatori WDI 2024 non sono distribuiti fino alla validazione dell'acquisizione: nessuna imputazione dei mancanti. Il comando esplicito `node scripts/fetch-world-statistics.mjs --write` interroga l'API ufficiale, con retry limitati, e scrive lo snapshot locale soltanto dopo quattro indicatori validati. Prima di redistribuire verificare copertura e licenze dei fornitori. La navigazione non interroga WDI. La vista italiano/inglese non costituisce revisione scientifica indipendente.
+
+
+### Collaudo guida locale (candidato)
+È disponibile anche `qwen2.5:1.5b` (Apache 2.0, circa 986 MB di pesi quantizzati); il modello si installa separatamente, senza download automatico da parte dell'app. Il precedente `qwen2.5:3b` ha una licenza di ricerca non commerciale: non utilizzarlo in un prodotto commerciale senza i diritti appropriati. La nuova CI dedicata verifica l'archivio ufficiale Ollama v0.40.18 via SHA-256, scarica soltanto il modello 1.5B nel runner temporaneo e tenta il collaudo HTTP della guida in un namespace di rete con sola interfaccia loopback. Non salva pesi nel repository, non richiede account/API a pagamento. Risultati da verificare prima dell'integrazione; non è una certificazione generale di sicurezza o accuratezza.
