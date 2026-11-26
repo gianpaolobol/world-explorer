@@ -1,0 +1,26 @@
+name: WDI source acquisition (separate from offline regression)
+on:
+  pull_request:
+    paths:
+      - 'scripts/fetch-world-statistics.mjs'
+      - 'src/world-statistics.mjs'
+      - '.github/workflows/wdi-acquisition.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acquisition:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/fetch-world-statistics.mjs --write
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wdi-2024-candidate
+          path: src/world-statistics-data.mjs
+          if-no-files-found: error
+          retention-days: 7
