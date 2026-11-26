@@ -5,7 +5,7 @@ import {validateGuideInput,evidenceFor,parseSelection,answerGuide,ollamaSelector
 import {makeServer} from '../server.mjs';
 const input={code:'IT',language:'it',question:'Regione statistica'};
 test('guide validates all registry countries and supported languages',()=>{
- for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,2);}
+ for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,c.code==='IT'?14:2);}
 });
 test('guide rejects unknown fields, codes, languages and long questions',()=>{
  for(const x of [null,[],{...input,model:'remote'},{...input,code:'XX'},{...input,language:'zz'},{...input,question:'x'.repeat(501)},{...input,question:' '}])assert.equal(validateGuideInput(x),null);
@@ -14,7 +14,7 @@ test('guide source-only answer is deterministic',async()=>{
  const a=await answerGuide(input);assert.equal(a.mode,'atlas');assert.equal(a.status,'evidence');assert.equal(a.evidence[0].id,'region');assert.match(a.evidence[0].source,/^https:\/\/unstats\.un\.org\//);
 });
 test('guide abstains for unreviewed questions',async()=>{
- const a=await answerGuide({...input,question:'Qual è la capitale?'});assert.equal(a.status,'insufficient');assert.deepEqual(a.evidence,[]);
+ const a=await answerGuide({...input,question:'Qual è il monte più alto?'});assert.equal(a.status,'insufficient');assert.deepEqual(a.evidence,[]);
 });
 test('guide rejects invented IDs, repeated IDs and arbitrary prose',()=>{
  const items=evidenceFor(input);for(const x of ['hello','{"ids":["invented"]}','{"ids":["region","region"]}','{"ids":["region"],"url":"https://bad.test"}','null','{"ids":[1]}'])assert.equal(parseSelection(x,items),null);
