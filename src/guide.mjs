@@ -56,7 +56,7 @@ export async function answerGuide(input,select){
 }
 export function ollamaSelector(model,fetcher=fetch){
  // Explicit local model allowlist; never accept URL/model from a browser request.
- if(!['gemma3:4b','qwen2.5:3b','llama3.2:3b'].includes(model))throw new TypeError('Unsupported local model');
+ if(!['gemma3:4b','qwen2.5:1.5b','qwen2.5:3b','llama3.2:3b'].includes(model))throw new TypeError('Unsupported local model');
  return async (input,items)=>{
   const response=await fetcher('http://127.0.0.1:11434/api/chat',{
    method:'POST',redirect:'error',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(30000),
