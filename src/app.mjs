@@ -6,7 +6,8 @@ import {bathymetryProvider,ESRI_URL,sampleElevation,elevationLabel} from './geog
 import {fetchBoundaries} from './boundaries.mjs';
 import {nearbyPhotos} from './photos.mjs';
 import {narrationFor} from './narration.mjs';
-import {regionName} from './regions.mjs';
+import {regionName,M49_SOURCE} from './regions.mjs';
+import {pilotEvidence} from './editorial-pilot.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from './region-quiz.mjs';
 const $=id=>document.getElementById(id), key='world-explorer-visits-v1';
 let visits={},lang='it',index=0,viewer=null,terrainOn=false,terrainBusy=false,bathyLayer=null,probeEpoch=0;
@@ -141,9 +142,13 @@ $('guideForm').onsubmit=async e=>{
   const mode=({atlas:'Solo atlante',ollama:'Selezione Ollama',fallback:'Ollama non disponibile: solo atlante'})[data.mode]||'Guida';
   $('guideStatus').textContent=mode+' · '+(data.status==='evidence'?'Estratti pertinenti da verificare; non una risposta enciclopedica.':'Fonti disponibili insufficienti per rispondere.');
   for(const item of Array.isArray(data.evidence)?data.evidence:[]){
-   if(item.source!=='https://unstats.un.org/unsd/methodology/m49/overview/'||typeof item.text!=='string')continue;
+   if(!item||typeof item.text!=='string')continue;
+   const pilot=pilotEvidence(countries[index].code,lang).find(x=>x.id===item.id&&x.source===item.source&&x.text===item.text);
+   if(!pilot&&item.source!==M49_SOURCE)continue;
    const p=document.createElement('p');p.dir='auto';p.lang=languages.includes(item.language)?item.language:'en';
-   p.append(document.createTextNode(item.text+' '),creditLink('Fonte ONU M49',item.source));$('guideAnswer').append(p);
+   p.append(document.createTextNode(item.text+' '),creditLink(pilot?pilot.label:'Fonte ONU M49',item.source));
+   if(pilot){const meta=document.createElement('small');meta.textContent=' · '+(pilot.period?'Riferimento: '+pilot.period+' · ':'')+'Controllo fonte: '+pilot.checked+' · revisione indipendente mancante'+(pilot.language!==lang?' · testo in inglese':'');p.append(meta);}
+   $('guideAnswer').append(p);
   }
  }catch{if(guideRequest===request)$('guideStatus').textContent='Guida non disponibile. Avvia il server locale con npm start; consulta il README.';}
  finally{clearTimeout(timer);if(guideRequest===request){guideRequest=null;$('guideAsk').disabled=false;}}
