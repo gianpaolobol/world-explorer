@@ -51,7 +51,7 @@ test('production LAN HTTPS startup, trusted IP certificate, command and revocati
  assert.equal(home.headers['cache-control'],'no-store');
  assert.equal((await call(ip,port,'/remote-client.mjs',{ca})).status,200);
  for(const path of ['/api/guide','/api/remote/pair','/server.mjs'])assert.equal((await call(ip,port,path,{ca})).status,404);
- assert.equal((await call(ip,port,'/',{ca,headers:{Host:'untrusted.example'}})).status,403);
+ assert.equal((await call(ip,port,'/',{ca,headers:{Host:ip+':'+(port===65535?65534:port+1)}})).status,403);
  const origin='https://'+ip+':'+port;
  const post=(token,source=origin,command='next')=>call(ip,port,'/command',{ca,method:'POST',headers:{Origin:source,Authorization:'Bearer '+token,'Content-Type':'application/json','Sec-Fetch-Site':'same-origin'},body:JSON.stringify({command})});
  const {token}=state.pair();
