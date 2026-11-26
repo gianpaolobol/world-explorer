@@ -10,7 +10,7 @@ export function createNarrator({synthesis,Utterance,onStatus=()=>{}}){
  function stop(){
   const entry=active;
   if(!entry)return;
-  try{ synthesis.cancel(); }finally{finish(entry,'stopped');}
+  try{ synthesis.cancel(); }catch{/* unavailable engine */}finally{finish(entry,'stopped');}
  }
  function speak(n,done=()=>{}){
   stop();
