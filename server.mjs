@@ -6,7 +6,7 @@ import {resolve} from 'node:path';
 import {answerGuide,validateGuideInput,ollamaSelector} from './src/guide.mjs';
 import {createRemoteState,startRemote} from './src/remote.mjs';
 const root=new URL('./',import.meta.url);
-const assets=new Set(['/index.html','/src/style.css',...['app','remote-host-ui','countries','travel','cinematic','geography','numeric-relief','numeric-relief-ui','global-relief-cesium','boundaries','photos','narration','regions','region-quiz','learning','editorial-pilot'].map(x=>'/src/'+x+'.mjs')]);
+const assets=new Set(['/index.html','/src/style.css',...['app','remote-host-ui','countries','travel','cinematic','geography','numeric-relief','numeric-relief-ui','global-relief-cesium','boundaries','photos','narration','regions','region-quiz','learning','editorial-pilot','world-statistics','world-statistics-data'].map(x=>'/src/'+x+'.mjs')]);
 const MAX_BODY=4096;
 function send(res,status,value,type='application/json; charset=utf-8'){
  res.writeHead(status,{'Content-Type':type,'X-Content-Type-Options':'nosniff','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Cross-Origin-Resource-Policy':'same-origin'});
