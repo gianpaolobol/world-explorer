@@ -22,3 +22,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+- Natural Earth boundary data: public domain, https://www.naturalearthdata.com/about/terms-of-use/ (v5.1.2 pinned upstream commit; fetched at runtime).
+- Wikimedia Commons photographs: individual third-party licenses shown alongside each thumbnail; the proprietary license of this project does not apply to them. See original file page and license for reuse conditions.
