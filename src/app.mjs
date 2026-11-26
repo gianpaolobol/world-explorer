@@ -55,7 +55,7 @@ $('quizReset').onclick=()=>{if(!confirm('Eliminare la memoria locale dei quiz?')
 $('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 renderQuiz();
 function render(fly=true,read=false){
- clearPhotos();
+ clearPhotos();clearGuide();
  probeEpoch++;$('elevation').textContent='';
  const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);
  const n=narrationFor(c.code,lang);$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
@@ -124,6 +124,29 @@ $('photos').onclick=async()=>{
   $('photoStatus').textContent=photos.length?'Immagini geolocalizzate vicino al punto camera: contenuto e posizione da verificare.':'Nessuna immagine con metadati e licenza accettati.';
  }catch{if(photoRequest===request)$('photoStatus').textContent='Ricerca immagini non disponibile.';}
  finally{clearTimeout(timer);if(photoRequest===request){photoRequest=null;$('photos').disabled=false;}}
+};
+let guideRequest=null;
+function clearGuide(){
+ guideRequest?.abort();guideRequest=null;$('guideAnswer').replaceChildren();$('guideStatus').textContent='';$('guideAsk').disabled=false;$('guideQuestion').value='';
+}
+$('guideForm').onsubmit=async e=>{
+ e.preventDefault();guideRequest?.abort();$('guideAnswer').replaceChildren();
+ const question=$('guideQuestion').value.trim();if(!question)return;
+ const request=new AbortController();guideRequest=request;$('guideAsk').disabled=true;$('guideStatus').textContent='Consultazione delle fonti…';
+ const timer=setTimeout(()=>request.abort(),35000);
+ try{
+  const res=await fetch('./api/guide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:countries[index].code,language:lang,question}),signal:request.signal,redirect:'error'});
+  if(!res.ok)throw new Error('Guide unavailable');
+  const data=await res.json();if(guideRequest!==request||request.signal.aborted)return;
+  const mode=({atlas:'Solo atlante',ollama:'Selezione Ollama',fallback:'Ollama non disponibile: solo atlante'})[data.mode]||'Guida';
+  $('guideStatus').textContent=mode+' · '+(data.status==='evidence'?'Estratti pertinenti da verificare; non una risposta enciclopedica.':'Fonti disponibili insufficienti per rispondere.');
+  for(const item of Array.isArray(data.evidence)?data.evidence:[]){
+   if(item.source!=='https://unstats.un.org/unsd/methodology/m49/overview/'||typeof item.text!=='string')continue;
+   const p=document.createElement('p');p.dir='auto';p.lang=languages.includes(item.language)?item.language:'en';
+   p.append(document.createTextNode(item.text+' '),creditLink('Fonte ONU M49',item.source));$('guideAnswer').append(p);
+  }
+ }catch{if(guideRequest===request)$('guideStatus').textContent='Guida non disponibile. Avvia il server locale con npm start; consulta il README.';}
+ finally{clearTimeout(timer);if(guideRequest===request){guideRequest=null;$('guideAsk').disabled=false;}}
 };
 let boundaryLayers=[],boundaryBusy=false;
 $('boundaries').onclick=async()=>{
