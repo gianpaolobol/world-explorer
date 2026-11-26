@@ -12,3 +12,6 @@ Node 22: `npm test`. La CI esegue i test unitari e controlla la sintassi del mod
 
 ## Diritti / Copyright
 **Copyright © 2026 Gian Paolo Franceschini** — Tutti i diritti riservati esclusivamente sui contributi originali di sua legittima titolarità, nei limiti delle licenze applicabili e delle concessioni preesistenti. Restano salvi i diritti di terzi. Vedi [LICENSE](LICENSE), [RIGHTS_NOTICE.md](RIGHTS_NOTICE.md), [COPYRIGHT.md](COPYRIGHT.md) e [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+### V0.4.1 preview
+Optional Natural Earth land/disputed lines and nearby Wikimedia Commons photographs with per-file credits. Both require network and are not editorially verified; see docs/SOURCES.md. Photographs are opt-in and do not use device location.

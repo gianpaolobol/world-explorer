@@ -3,6 +3,8 @@ import {countries,languages,countryName} from './countries.mjs';
 import {wrapIndex,chooseDestination,cameraHeight} from './travel.mjs';
 import {createTour} from './cinematic.mjs';
 import {bathymetryProvider,ESRI_URL,sampleElevation,elevationLabel} from './geography.mjs';
+import {fetchBoundaries} from './boundaries.mjs';
+import {nearbyPhotos} from './photos.mjs';
 import {narrationFor} from './narration.mjs';
 import {regionName} from './regions.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from './region-quiz.mjs';
@@ -53,6 +55,7 @@ $('quizReset').onclick=()=>{if(!confirm('Eliminare la memoria locale dei quiz?')
 $('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 renderQuiz();
 function render(fly=true,read=false){
+ clearPhotos();
  probeEpoch++;$('elevation').textContent='';
  const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);
  const n=narrationFor(c.code,lang);$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
@@ -98,10 +101,48 @@ $('probe').onclick=async()=>{
  try{const height=await sampleElevation(Cesium,provider,c.lon,c.lat);if(id!==probeEpoch)return;$('elevation').textContent=height===null?'Quota non disponibile':'Quota del punto camera (Esri, livello 10): '+elevationLabel(height,lang)+' · non quota della capitale';}
  catch{if(id===probeEpoch)$('elevation').textContent='Campionamento non disponibile';}
 };
+
+// Optional imagery: request only on an explicit click; cancel on country change.
+let photoRequest=null;
+function clearPhotos(){
+ photoRequest?.abort();photoRequest=null;$('photoResults').replaceChildren();$('photoStatus').textContent='';$('photos').disabled=false;
+}
+function creditLink(label,url){const a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
+$('photos').onclick=async()=>{
+ clearPhotos();const c=countries[index],request=new AbortController();photoRequest=request;$('photos').disabled=true;$('photoStatus').textContent='Ricerca su Wikimedia Commons…';
+ const timer=setTimeout(()=>request.abort(),12000);
+ try{
+  const photos=await nearbyPhotos(c.lat,c.lon,fetch,request.signal);
+  if(photoRequest!==request||request.signal.aborted)return;
+  for(const p of photos){
+   const figure=document.createElement('figure'),img=document.createElement('img'),caption=document.createElement('figcaption');
+   img.alt=p.title;img.loading='lazy';img.referrerPolicy='no-referrer';img.src=p.image;
+   img.onerror=()=>{img.remove();};
+   caption.append(creditLink(p.title,p.source),document.createTextNode(' · '+[p.author,p.attribution,p.credit].filter((x,i,a)=>x&&a.indexOf(x)===i).join(' · ')+' · '),creditLink(p.license,p.licenseUrl),document.createTextNode(' · Miniatura ridimensionata da Commons, nessun ritaglio applicato.'));
+   figure.append(img,caption);$('photoResults').append(figure);
+  }
+  $('photoStatus').textContent=photos.length?'Immagini geolocalizzate vicino al punto camera: contenuto e posizione da verificare.':'Nessuna immagine con metadati e licenza accettati.';
+ }catch{if(photoRequest===request)$('photoStatus').textContent='Ricerca immagini non disponibile.';}
+ finally{clearTimeout(timer);if(photoRequest===request){photoRequest=null;$('photos').disabled=false;}}
+};
+let boundaryLayers=[],boundaryBusy=false;
+$('boundaries').onclick=async()=>{
+ if(!viewer||boundaryBusy)return;
+ if(boundaryLayers.length){for(const layer of boundaryLayers)viewer.dataSources.remove(layer,true);boundaryLayers=[];$('boundaries').textContent='Mostra confini';return;}
+ boundaryBusy=true;$('boundaries').disabled=true;const request=new AbortController(),timer=setTimeout(()=>request.abort(),20000);const added=[];
+ try{
+  const data=await fetchBoundaries(fetch,request.signal);
+  const prepared=await Promise.all(data.map((geo,i)=>Cesium.GeoJsonDataSource.load(geo,{stroke:i?Cesium.Color.ORANGE:Cesium.Color.WHITE,strokeWidth:i?3:2,clampToGround:true})));
+  for(const layer of prepared){await viewer.dataSources.add(layer);added.push(layer);}
+  boundaryLayers=added;$('boundaries').textContent='Nascondi confini';$('status').textContent='Natural Earth 1:50M · bianco: linee terrestri; arancio: aree contese (linee) · rappresentazione de facto';
+ }catch{for(const layer of added)viewer.dataSources.remove(layer,true);$('status').textContent='Confini Natural Earth non disponibili';}
+ finally{clearTimeout(timer);boundaryBusy=false;$('boundaries').disabled=false;}
+};
+
 try{if(!window.Cesium)throw new Error('Cesium non disponibile');
  viewer=new Cesium.Viewer('globe',{baseLayer:false,baseLayerPicker:false,geocoder:false,animation:false,timeline:false,sceneModePicker:true,homeButton:true});
  const osm=new Cesium.UrlTemplateImageryProvider({url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',maximumLevel:19,credit:'© OpenStreetMap contributors'});
  osm.errorEvent.addEventListener(()=>{$('status').textContent='Cartografia OSM: errore di rete o tessere';});
  viewer.imageryLayers.addImageryProvider(osm);$('status').textContent='Globo 3D · ellissoide · OSM';}
-catch{$('status').textContent='Globo non disponibile: modalità atlante testuale';$('terrain').disabled=true;$('bathy').disabled=true;$('probe').disabled=true;}
+catch{$('status').textContent='Globo non disponibile: modalità atlante testuale';$('terrain').disabled=true;$('bathy').disabled=true;$('probe').disabled=true;$('boundaries').disabled=true;}
 visit(index);
