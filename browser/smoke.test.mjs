@@ -47,6 +47,16 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   const it=String(countries.findIndex(c=>c.code==='IT'));
   await page.locator('#place').selectOption(it);
   assert.equal(await page.locator('#name').textContent(),'Italia');
+  await page.locator('#profile summary').click();
+  assert.equal(await page.locator('#profileFacts a').count(),12);
+  assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
+  assert.match(await page.locator('#statisticsStatus').textContent(),/indicatori|indicatore/);
+  const fr=String(countries.findIndex(c=>c.code==='FR'));
+  await page.locator('#place').selectOption(fr);
+  assert.equal(await page.locator('#profileFacts a').count(),0);
+  assert.match(await page.locator('#profileStatus').textContent(),/non ancora disponibile/);
+  await page.locator('#place').selectOption(it);
+  await page.locator('#profile summary').click();
   await page.locator('#lang').selectOption('en');
   assert.equal(await page.locator('#name').textContent(),'Italy');
   await page.locator('#next').click();
