@@ -55,3 +55,23 @@ export function statisticsFor(snapshot,code,locale='it'){
   return [{id:i.id,language,label:i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved:snapshot.retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
  });
 }
+
+export function statisticsEvidence(snapshot,code,locale){
+ return statisticsFor(snapshot,code,locale).map(x=>({
+  id:'wdi-'+x.id,language:x.language,source:x.source,label:x.attribution,
+  text:x.label+' ('+x.year+'): '+x.value+'.',period:x.year,checked:x.retrieved,
+  review:'source-checked-not-independent'
+ }));
+}
+const queries={
+ it:{'popolazione':'SP.POP.TOTL','qual è la popolazione':'SP.POP.TOTL','popolazione totale':'SP.POP.TOTL','pil':'NY.GDP.MKTP.CD','popolazione urbana':'SP.URB.TOTL.IN.ZS','superficie forestale':'AG.LND.FRST.ZS'},
+ en:{'population':'SP.POP.TOTL','what is the population':'SP.POP.TOTL','total population':'SP.POP.TOTL','gdp':'NY.GDP.MKTP.CD','urban population':'SP.URB.TOTL.IN.ZS','forest area':'AG.LND.FRST.ZS'}
+};
+export function statisticsSelection(snapshot,input){
+ if(!Object.hasOwn(queries,input.language))return [];
+ const q=input.question.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
+ const aliases=queries[input.language];
+ if(!Object.hasOwn(aliases,q))return [];
+ const id='wdi-'+aliases[q];
+ return statisticsEvidence(snapshot,input.code,input.language).filter(x=>x.id===id).map(x=>x.id);
+}

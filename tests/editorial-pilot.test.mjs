@@ -42,5 +42,5 @@ test('model cannot select an Italian pilot ID for a different country or inject 
  assert.equal(a.mode,'fallback');assert.equal(a.status,'insufficient');
  const b=await answerGuide(input,async()=> '{"ids":["it-orography"],"url":"https://bad.test"}');
  assert.equal(b.mode,'fallback');assert.equal(b.evidence[0].id,'it-orography');
- assert.equal(evidenceFor(input).length,14);
+ assert.equal(evidenceFor(input).length,18);
 });

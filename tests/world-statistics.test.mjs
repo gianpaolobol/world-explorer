@@ -44,3 +44,20 @@ test('WDI retries timeout but not invalid JSON, with bounded attempts',async()=>
  calls=0;await assert.rejects(get('country',{}, {request:async()=>{calls++;throw timeout();},wait:async()=>{},report:()=>{}}),{name:'TimeoutError'});assert.equal(calls,3);
  calls=0;await assert.rejects(get('country',{}, {request:async()=>{calls++;return new Response('not json');},wait:async()=>assert.fail('invalid data retried')}),SyntaxError);assert.equal(calls,1);
 });
+
+import {snapshot} from '../src/world-statistics-data.mjs';
+import {countries} from '../src/countries.mjs';
+test('verified CI snapshot contains 766 dated observations from 194 registry destinations',()=>{
+ assert.equal(snapshot.year,'2024');assert.equal(snapshot.retrieved,'2026-11-26');
+ assert.deepEqual(Object.keys(snapshot.values),INDICATORS.map(i=>i.id));
+ assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191]);
+ const allowed=new Set(countries.map(c=>c.code));
+ const union=new Set(Object.values(snapshot.values).flatMap(Object.keys));
+ assert.equal(union.size,194);assert.ok([...union].every(c=>allowed.has(c)));
+ assert.deepEqual(statisticsFor(snapshot,'VA'),[]);
+ assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),766);
+ for(const [id,values] of Object.entries(snapshot.values))for(const [code,v] of Object.entries(values)){
+  assert.ok(Number.isFinite(v)&&v>=0);if(id.endsWith('.ZS'))assert.ok(v<=100);
+  if(id==='SP.POP.TOTL')assert.ok(Number.isSafeInteger(v));
+ }
+});

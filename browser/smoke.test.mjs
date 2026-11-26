@@ -50,11 +50,13 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#profile summary').click();
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
-  assert.match(await page.locator('#statisticsStatus').textContent(),/indicatori|indicatore/);
+  assert.match(await page.locator('#statisticsStatus').textContent(),/4 \/ 4 indicatori/);
+  assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),4);
   const fr=String(countries.findIndex(c=>c.code==='FR'));
   await page.locator('#place').selectOption(fr);
   assert.equal(await page.locator('#profileFacts a').count(),0);
   assert.match(await page.locator('#profileStatus').textContent(),/non ancora disponibile/);
+  assert.match(await page.locator('#profileStats').textContent(),/68\.551\.653/);
   await page.locator('#place').selectOption(it);
   await page.locator('#profile summary').click();
   await page.locator('#lang').selectOption('en');
@@ -90,6 +92,12 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#guideAsk').click();
   await page.waitForFunction(()=>document.querySelector('#guideStatus').textContent.includes('insufficienti'));
   assert.equal(await page.locator('#guideAnswer a').count(),0);
+  await page.locator('#place').selectOption(fr);
+  await page.locator('#guideQuestion').fill('popolazione');
+  await page.locator('#guideAsk').click();
+  await page.waitForFunction(()=>document.querySelector('#guideAnswer').textContent.includes('68.551.653'));
+  assert.equal(await page.locator('#guideAnswer a').first().getAttribute('href'),'https://data.worldbank.org/indicator/SP.POP.TOTL');
+  await page.locator('#place').selectOption(it);
   await page.locator('#numericRelief summary').click();
   await page.locator('#reliefFile').setInputFiles({name:'synthetic.asc',mimeType:'text/plain',buffer:Buffer.from('ncols 2\nnrows 2\nxllcorner 10\nyllcorner 40\ncellsize 0.004166666667\n-100 20\n30 40\n')});
   await page.locator('#reliefCanvas').waitFor({state:'visible'});

@@ -25,3 +25,5 @@ SOFTWARE.
 
 - Natural Earth boundary data: public domain, https://www.naturalearthdata.com/about/terms-of-use/ (v5.1.2 pinned upstream commit; fetched at runtime).
 - Wikimedia Commons photographs: individual third-party licenses shown alongside each thumbnail; the proprietary license of this project does not apply to them. See original file page and license for reuse conditions.
+
+- World Bank: World Development Indicators: UN Population Division, national statistical offices, Eurostat, UN Statistics Division (population); national statistical organizations/central banks, OECD and World Bank (GDP); UN Population Division (urban population); FAO FAOSTAT (forest area). 2024 observations acquired 2026-11-26, CC BY 4.0 with additional terms https://data.worldbank.org/summary-terms-of-use and https://www.worldbank.org/ext/en/legal/terms-conditions/datasets ; https://creativecommons.org/licenses/by/4.0/ . Filtered to registry codes, reformatted for presentation; no endorsement implied. Proprietary license does not apply to these observations.

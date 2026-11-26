@@ -3,6 +3,8 @@ import {countries,languages} from './countries.mjs';
 import {narrationFor} from './narration.mjs';
 import {M49_SOURCE} from './regions.mjs';
 import {pilotEvidence,pilotSelection} from './editorial-pilot.mjs';
+import {statisticsEvidence,statisticsSelection} from './world-statistics.mjs';
+import {snapshot} from './world-statistics-data.mjs';
 
 const codes=new Set(countries.map(c=>c.code));
 export function validateGuideInput(input){
@@ -19,7 +21,8 @@ export function evidenceFor(input){
  return [
   {id:'region',text:n.text,language:n.language,source:M49_SOURCE,label:'ONU / UN M49'},
   {id:'method',text:it?'Le regioni M49 sono raggruppamenti statistici delle Nazioni Unite; non rappresentano una decisione sullo status giuridico di un territorio.':'M49 regions are United Nations statistical groupings; they do not determine the legal status of a territory.',language:it?'it':'en',source:M49_SOURCE,label:'ONU / UN M49'},
-  ...pilotEvidence(input.code,input.language)
+  ...pilotEvidence(input.code,input.language),
+  ...statisticsEvidence(snapshot,input.code,input.language)
  ];
 }
 export function parseSelection(content,items){
@@ -35,7 +38,8 @@ function fallback(input){
  const q=input.question.toLowerCase().replace(/[?!.]+$/,'').trim();
  if((input.language==='it'&&['in quale regione statistica si trova questo paese','qual è la regione statistica','regione statistica'].includes(q))||
     (input.language==='en'&&['which statistical region is this country in','statistical region'].includes(q)))return ['region'];
- return pilotSelection(input);
+ const pilot=pilotSelection(input);
+ return pilot.length?pilot:statisticsSelection(snapshot,input);
 }
 export async function answerGuide(input,select){
  const valid=validateGuideInput(input);

@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {countries,languages} from '../src/countries.mjs';
 import {validateGuideInput,evidenceFor,parseSelection,answerGuide,ollamaSelector} from '../src/guide.mjs';
 import {makeServer} from '../server.mjs';
+import {statisticsFor} from '../src/world-statistics.mjs';
+import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'Regione statistica'};
 test('guide validates all registry countries and supported languages',()=>{
- for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,c.code==='IT'?14:2);}
+ for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,(c.code==='IT'?14:2)+statisticsFor(snapshot,c.code,language).length);}
 });
 test('guide rejects unknown fields, codes, languages and long questions',()=>{
  for(const x of [null,[],{...input,model:'remote'},{...input,code:'XX'},{...input,language:'zz'},{...input,question:'x'.repeat(501)},{...input,question:' '}])assert.equal(validateGuideInput(x),null);
@@ -58,3 +60,17 @@ test('HTTP static allowlist excludes source control, server and arbitrary paths'
  for(const path of ['/.git/config','/server.mjs','/src/guide.mjs','/package.json','/docs/PROGRESS.md','/src/%2e%2e/server.mjs'])assert.equal((await fetch(base+path)).status,404);
  assert.equal((await fetch(base+'/src/app.mjs')).status,200);
 }));
+
+test('WDI guide uses dated evidence for France, abstains for absent and unrelated facts',async()=>{
+ const a=await answerGuide({code:'FR',language:'it',question:'popolazione'});
+ assert.equal(a.status,'evidence');assert.equal(a.evidence[0].id,'wdi-SP.POP.TOTL');assert.equal(a.evidence[0].period,'2024');assert.match(a.evidence[0].text,/68\.551\.653/);
+ for(const [code,question] of [['VA','popolazione'],['FR','popolazione 2030'],['FR','popolazione di Italia'],['FR','constructor']]){
+  assert.equal((await answerGuide({code,language:'it',question})).status,'insufficient');
+ }
+ const b=await answerGuide({code:'FR',language:'en',question:'forest area'});
+ assert.equal(b.evidence[0].id,'wdi-AG.LND.FRST.ZS');assert.match(b.evidence[0].text,/32\.85 %/);
+});
+test('model selections cannot retrieve unavailable WDI IDs',async()=>{
+ const a=await answerGuide({code:'VA',language:'en',question:'population'},async()=> '{"ids":["wdi-SP.POP.TOTL"]}');
+ assert.equal(a.mode,'fallback');assert.equal(a.status,'insufficient');
+});
