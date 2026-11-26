@@ -3,6 +3,9 @@ import {countries,languages,countryName} from './countries.mjs';
 import {wrapIndex,chooseDestination,cameraHeight} from './travel.mjs';
 import {createTour} from './cinematic.mjs';
 import {bathymetryProvider,ESRI_URL,sampleElevation,elevationLabel} from './geography.mjs';
+import {narrationFor} from './narration.mjs';
+import {regionName} from './regions.mjs';
+import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from './region-quiz.mjs';
 const $=id=>document.getElementById(id), key='world-explorer-visits-v1';
 let visits={},lang='it',index=0,viewer=null,terrainOn=false,terrainBusy=false,bathyLayer=null,probeEpoch=0;
 try { const data=JSON.parse(localStorage.getItem(key)||'{}'); for(const c of countries){if(Number.isSafeInteger(data?.[c.code])&&data[c.code]>=0)visits[c.code]=data[c.code];} } catch {}
@@ -14,10 +17,45 @@ function options(){
 }
 for(const l of languages)$('lang').add(new Option(new Intl.DisplayNames([l],{type:'language'}).of(l),l));
 $('lang').value=lang;options();
-function speak(){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(name(countries[index]));u.lang=lang;const v=speechSynthesis.getVoices().find(v=>v.lang.split('-')[0]===lang);if(v)u.voice=v;speechSynthesis.speak(u);}
+function speak(){
+ const n=narrationFor(countries[index].code,lang);
+ if(!n||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
+ window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(n.text);u.lang=n.language;
+ const v=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().split('-')[0]===n.language);
+ if(v)u.voice=v;window.speechSynthesis.speak(u);
+}
+const quizKey='world-explorer-region-quiz-v1';
+let quizMemory=loadMemory(null),question=null,answered=false;
+try{quizMemory=loadMemory(localStorage.getItem(quizKey));}catch{}
+function updateQuizStats(){
+ const s=quizStats(quizMemory);
+ $('quizStats').textContent='Paesi esercitati: '+s.practiced+' / '+s.total+' · Disponibili: '+s.due;
+}
+function saveQuiz(){
+ try{localStorage.setItem(quizKey,JSON.stringify(quizMemory));}
+ catch{$('quizStorage').textContent='Memoria non salvata: esporta i risultati prima di chiudere.';}
+}
+function renderQuiz(){
+ $('quizOptions').replaceChildren();updateQuizStats();
+ if(!question){$('quizQuestion').textContent='Premi Nuova domanda per esercitarti.';return;}
+ $('quizQuestion').textContent='In quale regione statistica ONU si trova '+name({code:question.code})+'?';
+ for(const option of question.options){
+  const b=document.createElement('button');b.type='button';b.textContent=regionName(option,lang);b.disabled=answered;
+  b.onclick=()=>{if(answered)return;answered=true;const ok=gradeQuestion(question,option,quizMemory);saveQuiz();
+   $('quizFeedback').textContent=(ok?'Corretto! ':'Risposta da ripassare. ')+regionName(question.answer,lang)+' · Fonte ONU M49';
+   for(const el of $('quizOptions').children)el.disabled=true;updateQuizStats();};
+  $('quizOptions').append(b);
+ }
+ if(answered)$('quizFeedback').textContent='Risposta corretta: '+regionName(question.answer,lang)+' · Fonte ONU M49';
+}
+$('quizNext').onclick=()=>{question=makeQuestion(quizMemory);answered=false;$('quizFeedback').textContent='';renderQuiz();if(!question)$('quizQuestion').textContent='Nessun ripasso disponibile ora. Riprova più tardi.';};
+$('quizReset').onclick=()=>{if(!confirm('Eliminare la memoria locale dei quiz?'))return;quizMemory=loadMemory(null);question=null;answered=false;$('quizFeedback').textContent='';saveQuiz();renderQuiz();};
+$('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+renderQuiz();
 function render(fly=true,read=false){
  probeEpoch++;$('elevation').textContent='';
  const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);
+ const n=narrationFor(c.code,lang);$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
  $('facts').textContent='Capitale (dato iniziale): '+c.capital+' · Superficie indicativa: '+new Intl.NumberFormat(lang).format(c.area)+' km²';
  $('source').href='https://'+lang+'.wikipedia.org/w/index.php?search='+encodeURIComponent(name(c));
  $('progress').textContent='Destinazioni visitate: '+Object.keys(visits).filter(k=>visits[k]>0).length+' / '+countries.length;
@@ -37,7 +75,7 @@ $('auto').onclick=()=>tour.state==='idle'?tour.start():tour.stop();
 $('pause').onclick=()=>tour.state==='paused'?tour.resume():tour.pause();
 function manual(i){tour.stop();visit(i);}
 $('place').onchange=e=>manual(Number(e.target.value));$('prev').onclick=()=>manual(index-1);$('next').onclick=()=>manual(index+1);
-$('lang').onchange=e=>{lang=e.target.value;options();render(false);};
+$('lang').onchange=e=>{lang=e.target.value;options();render(false);renderQuiz();};
 $('voice').onclick=speak;$('stopVoice').onclick=()=>window.speechSynthesis?.cancel();
 $('reset').onclick=()=>{if(confirm('Eliminare tutte le visite memorizzate su questo browser?')){visits={};save();render(false);}};
 $('ambient').onclick=()=>document.body.classList.toggle('ambient');
