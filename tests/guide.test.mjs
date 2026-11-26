@@ -7,7 +7,7 @@ import {statisticsFor} from '../src/world-statistics.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'Regione statistica'};
 test('guide validates all registry countries and supported languages',()=>{
- for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,(c.code==='IT'?14:c.code==='FR'?8:2)+statisticsFor(snapshot,c.code,language).length);}
+ for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,(['IT','FR'].includes(c.code)?14:2)+statisticsFor(snapshot,c.code,language).length);}
 });
 test('guide rejects unknown fields, codes, languages and long questions',()=>{
  for(const x of [null,[],{...input,model:'remote'},{...input,code:'XX'},{...input,language:'zz'},{...input,question:'x'.repeat(501)},{...input,question:' '}])assert.equal(validateGuideInput(x),null);
@@ -73,4 +73,14 @@ test('WDI guide uses dated evidence for France, abstains for absent and unrelate
 test('model selections cannot retrieve unavailable WDI IDs',async()=>{
  const a=await answerGuide({code:'VA',language:'en',question:'population'},async()=> '{"ids":["wdi-SP.POP.TOTL"]}');
  assert.equal(a.mode,'fallback');assert.equal(a.status,'insufficient');
+});
+
+
+test('lightweight local model is allowed without changing the fixed endpoint',async()=>{
+ const fn=ollamaSelector('qwen2.5:1.5b',async(url,options)=>{
+  assert.equal(url,'http://127.0.0.1:11434/api/chat');
+  assert.equal(JSON.parse(options.body).model,'qwen2.5:1.5b');
+  return new Response(JSON.stringify({message:{content:'{"ids":["region"]}'}}));
+ });
+ assert.equal(await fn(input,evidenceFor(input)),'{"ids":["region"]}');
 });
