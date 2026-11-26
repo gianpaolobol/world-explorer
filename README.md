@@ -29,3 +29,7 @@ Nel pannello Telecomando genera il codice temporaneo, apri sul telefono l'URL HT
 
 ### Corpus geografico pilota V0.6.2
 Per l’Italia, chiedere uno dei temi indicati nel pannello guida. Dodici brevi fatti (uno per disciplina), fonti primarie, data di controllo e periodo quando applicabile. Italiano e inglese; altre lingue ricevono eventuali estratti pilota in inglese se scelti da Ollama, non traduzioni convalidate. Le risposte senza modello riconoscono solo temi esatti e pochi sinonimi. Gli altri 194 Stati conservano esclusivamente M49. Non usare il corpus come profilo enciclopedico, serie statistica aggiornata o revisione indipendente.
+
+
+### Profili documentati e statistiche WDI (anteprima)
+Il pannello profilo mostra i fatti pilota disponibili senza Ollama. Gli indicatori WDI 2024 non sono distribuiti fino alla validazione dell'acquisizione: nessuna imputazione dei mancanti. Il comando esplicito `node scripts/fetch-world-statistics.mjs --write` interroga l'API ufficiale, con retry limitati, e scrive lo snapshot locale soltanto dopo quattro indicatori validati. Prima di redistribuire verificare copertura e licenze dei fornitori. La navigazione non interroga WDI. La vista italiano/inglese non costituisce revisione scientifica indipendente.

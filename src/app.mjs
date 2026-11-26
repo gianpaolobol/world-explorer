@@ -10,6 +10,8 @@ import {nearbyPhotos} from './photos.mjs';
 import {narrationFor} from './narration.mjs';
 import {regionName,M49_SOURCE} from './regions.mjs';
 import {pilotEvidence} from './editorial-pilot.mjs';
+import {statisticsFor,TERMS} from './world-statistics.mjs';
+import {snapshot} from './world-statistics-data.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from './region-quiz.mjs';
 const $=id=>document.getElementById(id), key='world-explorer-visits-v1';
 let visits={},lang='it',index=0,viewer=null,terrainOn=false,terrainBusy=false,bathyLayer=null,probeEpoch=0;
@@ -59,10 +61,27 @@ $('quizNext').onclick=()=>{question=makeQuestion(quizMemory);answered=false;$('q
 $('quizReset').onclick=()=>{if(!confirm('Eliminare la memoria locale dei quiz?'))return;quizMemory=loadMemory(null);question=null;answered=false;$('quizFeedback').textContent='';saveQuiz();renderQuiz();};
 $('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 renderQuiz();
+function renderProfile(code){
+ const box=$('profileFacts'),stats=$('profileStats');box.replaceChildren();stats.replaceChildren();
+ const facts=pilotEvidence(code,lang);
+ $('profileStatus').textContent=facts.length?'12 / 12 discipline con un fatto pilota ciascuna; revisione indipendente mancante.':'Profilo multidisciplinare non ancora disponibile per questa destinazione.';
+ for(const item of facts){
+  const p=document.createElement('p');p.lang=item.language;p.dir='auto';
+  p.append(document.createTextNode(item.text+' '),creditLink(item.label,item.source));
+  const meta=document.createElement('small');meta.textContent=' · '+(item.period?'Riferimento: '+item.period+' · ':'')+'Controllo fonte: '+item.checked+(item.language!==lang?' · testo in inglese':'');p.append(meta);box.append(p);
+ }
+ const observations=statisticsFor(snapshot,code,lang);
+ $('statisticsStatus').textContent=observations.length?observations.length+' / 4 indicatori disponibili (2024); non sono dati in tempo reale.':'Nessun indicatore WDI verificato/importato per questa destinazione.';
+ for(const item of observations){
+  const p=document.createElement('p');p.lang=item.language;p.dir='auto';
+  p.append(document.createTextNode(item.label+': '+item.value+' · '+item.year+' · '),creditLink(item.attribution,item.source),document.createTextNode(' · Acquisizione: '+item.retrieved+(item.language!==lang?' · testo in inglese':'')));stats.append(p);
+ }
+ if(observations.length){const p=document.createElement('p');p.append(creditLink('Condizioni dati WDI / CC BY 4.0',TERMS));stats.append(p);}
+}
 function render(fly=true,read=false){
  clearPhotos();clearGuide();
  probeEpoch++;$('elevation').textContent='';
- const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);
+ const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);renderProfile(c.code);
  const n=narrationFor(c.code,lang);$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
  $('facts').textContent='Capitale (dato iniziale): '+c.capital+' · Superficie indicativa: '+new Intl.NumberFormat(lang).format(c.area)+' km²';
  $('source').href='https://'+lang+'.wikipedia.org/w/index.php?search='+encodeURIComponent(name(c));
