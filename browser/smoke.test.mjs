@@ -132,6 +132,27 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.waitForFunction(()=>document.querySelector('#guideAnswer').textContent.includes('68.551.653'));
   assert.equal(await page.locator('#guideAnswer a').first().getAttribute('href'),'https://data.worldbank.org/indicator/SP.POP.TOTL');
   await page.locator('#place').selectOption(it);
+  // Explicit opt-in, safe credit rendering and clearing across destinations.
+  let commonsCalls=0;
+  const fakeImage='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Synthetic.jpg/640px-Synthetic.jpg';
+  await page.route('https://commons.wikimedia.org/w/api.php?*',route=>{
+   commonsCalls++;
+   const metadata={Artist:{value:'<b>Synthetic &amp; creator</b>'},LicenseShortName:{value:'CC BY 4.0'},LicenseUrl:{value:'https://creativecommons.org/licenses/by/4.0/'}};
+   return route.fulfill({json:{query:{pages:[{title:'File:Synthetic.jpg',imageinfo:[{mime:'image/jpeg',thumburl:fakeImage,descriptionurl:'https://commons.wikimedia.org/wiki/File:Synthetic.jpg',extmetadata:metadata}]}]}},headers:{'access-control-allow-origin':'*','access-control-allow-headers':'Api-User-Agent'}});
+  });
+  await page.route(fakeImage,route=>route.fulfill({body:png,contentType:'image/png'}));
+  assert.equal(commonsCalls,0);
+  await page.locator('#photos').click();
+  await page.locator('#photoResults figcaption').waitFor();
+  assert.match(await page.locator('#photoResults figcaption').textContent(),/Synthetic & creator/);
+  assert.equal(await page.locator('#photoResults figcaption b').count(),0);
+  assert.equal(await page.locator('#photoResults a[href="https://creativecommons.org/licenses/by/4.0/"]').count(),1);
+  assert.equal(await page.locator('#photoResults img').getAttribute('referrerpolicy'),'no-referrer');
+  assert.equal(commonsCalls,1);
+  await page.locator('#place').selectOption(fr);
+  assert.equal(await page.locator('#photoResults figure').count(),0);
+  assert.equal(commonsCalls,1);
+  await page.locator('#place').selectOption(it);
   await page.locator('#numericRelief summary').click();
   await page.locator('#reliefFile').setInputFiles({name:'synthetic.asc',mimeType:'text/plain',buffer:Buffer.from('ncols 2\nnrows 2\nxllcorner 10\nyllcorner 40\ncellsize 0.004166666667\n-100 20\n30 40\n')});
   await page.locator('#reliefCanvas').waitFor({state:'visible'});
