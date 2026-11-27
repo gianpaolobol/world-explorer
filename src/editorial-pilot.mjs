@@ -88,7 +88,353 @@ function euRows(code){
  ['economic','area euro','euro area',euro?'Al 27 novembre 2026 questo Stato fa parte dell’area euro.':'Al 27 novembre 2026 questo Stato è membro UE ma non dell’area euro.',euro?'On 27 November 2026 this country belongs to the euro area.':'On 27 November 2026 this country is an EU member but not part of the euro area.','https://european-union.europa.eu/institutions-law-budget/euro/countries-using-euro_en','European Union, euro area membership','2026-11-27','2026-11-27']
  ];
 }
-const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)])]);
+// Original factual summaries of local sites; no UNESCO text or media redistributed.
+const geoscienceRows=new Map([
+ [
+  "AR",
+  [
+   [
+    "orography",
+    "orografia",
+    "orography",
+    "Nelle Ande patagoniche argentine il Cerro Chaltén (Fitz Roy) raggiunge 3.375 metri.",
+    "Cerro Chaltén (Fitz Roy) rises to 3,375 metres in the Argentine Patagonian Andes.",
+    "https://whc.unesco.org/en/list/145/",
+    "UNESCO, Los Glaciares",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Il lago Argentino riceve acqua e ghiaccio da ghiacciai fra cui il Perito Moreno.",
+    "Lake Argentino receives water and ice from glaciers including Perito Moreno.",
+    "https://whc.unesco.org/en/list/145/",
+    "UNESCO, Los Glaciares",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "A Los Glaciares le morene e le conche lacustri testimoniano l'evoluzione glaciale quaternaria.",
+    "Moraines and lake basins at Los Glaciares record Quaternary glacial evolution.",
+    "https://whc.unesco.org/en/list/145/",
+    "UNESCO, Los Glaciares",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "CA",
+  [
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "Nei parchi delle Montagne Rocciose canadesi si incontrano valli glaciali, canyon e grotte carsiche.",
+    "Canada's Rocky Mountain parks contain glacial valleys, canyons and karst caves.",
+    "https://whc.unesco.org/en/list/304/",
+    "UNESCO, Canadian Rocky Mountain Parks",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Il sito del Burgess Shale conserva fossili marini del Cambriano, inclusi organismi a corpo molle.",
+    "The Burgess Shale site preserves Cambrian marine fossils, including soft-bodied organisms.",
+    "https://whc.unesco.org/en/list/304/",
+    "UNESCO, Canadian Rocky Mountain Parks",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "climatology",
+    "clima",
+    "climatology",
+    "Nei parchi delle Rocciose canadesi è documentato l'arretramento dei ghiacciai associato al cambiamento climatico.",
+    "Glacier retreat associated with climate change is documented in the Canadian Rocky Mountain parks.",
+    "https://whc.unesco.org/en/list/304/",
+    "UNESCO, Canadian Rocky Mountain Parks",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "CN",
+  [
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "Il sito carsico della Cina meridionale comprende paesaggi distribuiti fra Yunnan, Guizhou, Guangxi e Chongqing.",
+    "The South China Karst property encompasses landscapes in Yunnan, Guizhou, Guangxi and Chongqing.",
+    "https://whc.unesco.org/en/list/1248/",
+    "UNESCO, South China Karst",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Nel carsismo di Libo alcuni corsi d'acqua penetrano nel sottosuolo e percorrono sistemi di grotte.",
+    "In the Libo karst, some streams descend underground into cave systems.",
+    "https://whc.unesco.org/en/list/1248/",
+    "UNESCO, South China Karst",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "A Shilin nello Yunnan l'erosione carsica ha prodotto colonne rocciose che formano le cosiddette foreste di pietra.",
+    "Karst erosion at Shilin in Yunnan has produced rock pillars forming the so-called stone forests.",
+    "https://whc.unesco.org/en/list/1248/",
+    "UNESCO, South China Karst",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "BR",
+  [
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "L'area protetta UNESCO del Pantanal brasiliano si trova presso il confine con la Bolivia, nel settore sud-occidentale del Mato Grosso.",
+    "Brazil's UNESCO Pantanal conservation property lies near Bolivia, in southwestern Mato Grosso.",
+    "https://whc.unesco.org/en/list/999/",
+    "UNESCO, Pantanal Conservation Area",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Il Pantanal brasiliano appartiene a un vasto sistema di zone umide d'acqua dolce legato ai fiumi Paraguay e Cuiabá.",
+    "Brazil's Pantanal forms part of an extensive freshwater wetland system linked to the Paraguay and Cuiabá rivers.",
+    "https://whc.unesco.org/en/list/999/",
+    "UNESCO, Pantanal Conservation Area",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Fra gli animali del Pantanal brasiliano figurano caimani, giaguari e pappagalli, tutelati anche nelle aree protette.",
+    "Animals of the Brazilian Pantanal include caimans, jaguars and parrots, also protected within conservation areas.",
+    "https://whc.unesco.org/en/list/999/",
+    "UNESCO, Pantanal Conservation Area",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "IN",
+  [
+   [
+    "orography",
+    "orografia",
+    "orography",
+    "I Ghati occidentali si sviluppano per circa 1.600 km in parallelo alla costa occidentale indiana.",
+    "The Western Ghats extend roughly 1,600 km parallel to India's western coast.",
+    "https://whc.unesco.org/en/list/1342/",
+    "UNESCO, Western Ghats",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "climatology",
+    "clima",
+    "climatology",
+    "I Ghati occidentali intercettano le correnti umide del monsone di sud-ovest, influenzando le precipitazioni regionali.",
+    "The Western Ghats intercept moist southwesterly monsoon winds, affecting regional rainfall.",
+    "https://whc.unesco.org/en/list/1342/",
+    "UNESCO, Western Ghats",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Le foreste tropicali sempreverdi dei Ghati occidentali ospitano numerose specie endemiche.",
+    "Tropical evergreen forests of the Western Ghats support many endemic species.",
+    "https://whc.unesco.org/en/list/1342/",
+    "UNESCO, Western Ghats",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "ZA",
+  [
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "Il complesso protetto della Regione floristica del Capo comprende anche bacini idrografici montani all'estremità sud-occidentale del Sudafrica.",
+    "The protected Cape Floral Region includes mountain catchments at South Africa's southwestern tip.",
+    "https://whc.unesco.org/en/list/01007/",
+    "UNESCO, Cape Floral Region",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "climatology",
+    "clima",
+    "climatology",
+    "Nella Regione floristica del Capo il clima mediterraneo contribuisce a caratterizzare la vegetazione del fynbos.",
+    "The Mediterranean climate of the Cape Floral Region helps shape its fynbos vegetation.",
+    "https://whc.unesco.org/en/list/01007/",
+    "UNESCO, Cape Floral Region",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Il fynbos della Regione del Capo è una vegetazione arbustiva con elevato endemismo e adattamenti agli incendi periodici.",
+    "Cape fynbos is shrubland with high endemism and adaptations to recurring fires.",
+    "https://whc.unesco.org/en/list/01007/",
+    "UNESCO, Cape Floral Region",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "NZ",
+  [
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "Nell'Isola del Sud neozelandese, i fiordi di Te Wahipounamu sono il risultato dell'erosione glaciale.",
+    "Glacial erosion shaped the fjords of Te Wahipounamu on New Zealand's South Island.",
+    "https://whc.unesco.org/en/list/551/",
+    "UNESCO, Te Wahipounamu",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "La Faglia Alpina attraversa Te Wahipounamu e segna una zona di contatto fra le placche australiana e pacifica.",
+    "The Alpine Fault crosses Te Wahipounamu, marking a contact zone between the Australian and Pacific plates.",
+    "https://whc.unesco.org/en/list/551/",
+    "UNESCO, Te Wahipounamu",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "A Te Wahipounamu vivono uccelli autoctoni quali il kea e il takahē.",
+    "Native birds of Te Wahipounamu include the kea and takahē.",
+    "https://whc.unesco.org/en/list/551/",
+    "UNESCO, Te Wahipounamu",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "JP",
+  [
+   [
+    "orography",
+    "orografia",
+    "orography",
+    "Il sito montano Shirakami-Sanchi, nel nord di Honshū, si estende da circa 100 a 1.243 metri di quota.",
+    "The mountainous Shirakami-Sanchi property in northern Honshu ranges from about 100 to 1,243 metres in elevation.",
+    "https://whc.unesco.org/en/list/663/",
+    "UNESCO, Shirakami-Sanchi",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "climatology",
+    "clima",
+    "climatology",
+    "Nell'area di Shirakami-Sanchi, sul versante del Mar del Giappone, le abbondanti nevicate caratterizzano l'ambiente forestale.",
+    "Heavy snowfall characterizes the forest environment around Shirakami-Sanchi on the Sea of Japan side.",
+    "https://whc.unesco.org/en/list/663/",
+    "UNESCO, Shirakami-Sanchi",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Shirakami-Sanchi conserva foreste temperate dominate dal faggio giapponese Fagus crenata.",
+    "Shirakami-Sanchi preserves temperate forest dominated by Japanese beech, Fagus crenata.",
+    "https://whc.unesco.org/en/list/663/",
+    "UNESCO, Shirakami-Sanchi",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "AU",
+  [
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "La Grande barriera corallina si sviluppa lungo la costa nord-orientale dell'Australia.",
+    "The Great Barrier Reef extends along Australia's northeastern coast.",
+    "https://whc.unesco.org/en/list/154/",
+    "UNESCO, Great Barrier Reef",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "oceanography",
+    "oceanografia",
+    "oceanography",
+    "Il sito della Grande barriera comprende ambienti marini dalla costa fino alla piattaforma continentale esterna, in alcuni tratti a circa 250 km dalla terraferma.",
+    "The Great Barrier Reef property spans marine environments from the coast to the outer continental shelf, in some places about 250 km offshore.",
+    "https://whc.unesco.org/en/list/154/",
+    "UNESCO, Great Barrier Reef",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Le acque della Grande barriera corallina ospitano dugonghi e tartarughe verdi.",
+    "Dugongs and green turtles inhabit the waters of the Great Barrier Reef.",
+    "https://whc.unesco.org/en/list/154/",
+    "UNESCO, Great Barrier Reef",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ]
+]);
+export const geoscienceCodes=Object.freeze([...geoscienceRows.keys()].sort());
+const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
