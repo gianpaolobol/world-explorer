@@ -74,7 +74,21 @@ const sidsRows=[
  ['oceanography','oceanografia','oceanography','Per il gruppo SIDS, le risorse marine sono centrali nello sviluppo sostenibile. È un quadro collettivo, non una misura delle risorse o dei fondali di questo singolo Stato.','Marine resources are central to sustainable development for the SIDS group. This is group-level context, not a measurement of this individual country’s resources or seabed.','https://sdgs.un.org/smallislands/about-small-island-developing-states','UN DESA, SIDS context',null,'2026-11-27'],
  ['climatology','clima','climatology','L’ONU considera il gruppo SIDS particolarmente vulnerabile agli effetti del cambiamento climatico; rischi, intensità e fenomeni variano tra i membri. Non è una previsione climatica nazionale.','The UN identifies the SIDS group as particularly vulnerable to climate change impacts; hazards and their intensity vary among members. This is not a national climate projection.','https://sdgs.un.org/smallislands/about-small-island-developing-states','UN DESA, SIDS context',null,'2026-11-27']
 ];
-const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows])]);
+// EU official membership and currency lists, checked 2026-11-27.
+// Existing complete national pilots retain their own political/economic facts.
+const euGroups=[[1958,'BE LU NL'],[1973,'DK IE'],[1981,'GR'],[1986,'PT'],[1995,'AT FI SE'],[2004,'CY CZ EE HU LT LV MT PL SI SK'],[2007,'BG RO'],[2013,'HR']];
+const euYears=new Map(euGroups.flatMap(([year,codes])=>codes.split(' ').map(code=>[code,year])));
+export const euContextCodes=Object.freeze([...euYears.keys()].sort());
+const euroMembers=new Set('AT BE BG HR CY EE FI GR IE LV LT LU MT NL PT SK SI'.split(' '));
+function euRows(code){
+ const year=euYears.get(code), euro=euroMembers.has(code);
+ const joining=year===1958;
+ return [
+ ['political','unione europea','european union',joining?'Questo Stato è tra i sei fondatori delle Comunità europee, con riferimento al 1958.':`Questo Stato è membro dell’Unione europea (o delle Comunità europee che l’hanno preceduta) dal ${year}.`,joining?'This country is one of the six founding members of the European Communities, with 1958 as the reference year.':`This country has been a member of the European Union (or its predecessor European Communities) since ${year}.`,'https://european-union.europa.eu/principles-countries-history/eu-countries_en','European Union, membership chronology',String(year),'2026-11-27'],
+ ['economic','area euro','euro area',euro?'Al 27 novembre 2026 questo Stato fa parte dell’area euro.':'Al 27 novembre 2026 questo Stato è membro UE ma non dell’area euro.',euro?'On 27 November 2026 this country belongs to the euro area.':'On 27 November 2026 this country is an EU member but not part of the euro area.','https://european-union.europa.eu/institutions-law-budget/euro/countries-using-euro_en','European Union, euro area membership','2026-11-27','2026-11-27']
+ ];
+}
+const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)])]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
