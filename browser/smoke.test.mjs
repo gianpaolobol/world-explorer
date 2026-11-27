@@ -181,6 +181,11 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#globalCanvas').waitFor({state:'visible'});
   const localSample=await page.locator('#localReliefSample').textContent();
   assert.match(localSample,/GEBCO globale 2°: 0 m · centro campione/);
+  assert.match(await page.locator('#narration').textContent(),/file locale non autenticato.*0 metri/);
+  assert.equal(await page.locator('#localReliefNarrationCredit a').count(),1);
+  await page.locator('#lang').selectOption('en');
+  assert.match(await page.locator('#narration').textContent(),/unverified local file.*0 metres/);
+  await page.locator('#lang').selectOption('it');
   assert.match(await page.locator('#globalStatus').textContent(),/16199\/16200.*-5000 m, max 4000 m/);
   await page.locator('#globalScale').selectOption('50');
   assert.match(await page.locator('#globalStatus').textContent(),/50×/);
@@ -191,6 +196,8 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#globalClear').click();
   assert.equal(await page.locator('#globalCanvas').isVisible(),false);
   assert.equal(await page.locator('#localReliefSample').textContent(),'');
+  assert.doesNotMatch(await page.locator('#narration').textContent(),/file locale non autenticato/);
+  assert.equal(await page.locator('#localReliefNarrationCredit').count(),0);
   await page.locator('summary').filter({hasText:'Telecomando iPhone'}).click();
   await page.locator('#remotePair').click();
   await page.waitForFunction(()=>document.querySelector('#remoteStatus').textContent.includes('non configurato'));
