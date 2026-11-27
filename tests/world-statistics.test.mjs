@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {countryMap,parseIndicator,statisticsFor,YEAR,INDICATORS} from '../src/world-statistics.mjs';
+import {countryMap,parseIndicator,statisticsFor,YEAR,INDICATORS,indicatorYear} from '../src/world-statistics.mjs';
 const page=a=>[{page:1,pages:1,total:a.length},a];
 const country=(iso2Code,id,region={id:'ECS',value:'Europe'})=>({iso2Code,id,region});
 const map=countryMap(page([country('IT','ITA'),country('FR','FRA'),country('US','USA'),country('DE','AGG',{id:'NA',value:'Aggregates'}),country('XX','XXX')]));
@@ -9,28 +9,28 @@ test('WDI country matching excludes aggregates and nonregistry codes',()=>{asser
 test('WDI parser preserves zero, omits missing and excludes unregistered rows',()=>{assert.deepEqual(parseIndicator(page([row('IT','ITA',123),row('FR','FRA',null),row('US','USA',0),row('DE','AGG',50)]),'SP.POP.TOTL',map),{IT:123,US:0});});
 test('WDI parser rejects incomplete pages, wrong years, duplicates and country mismatches',()=>{for(const data of [[{page:1,pages:2,total:1},[row('IT','ITA',1)]],page([row('IT','ITA',1,'SP.POP.TOTL','2023')]),page([row('IT','ITA',1),row('IT','ITA',1)]),page([row('IT','FRA',1)]),page([row('IT','ITA',1,'NY.GDP.MKTP.CD')])])assert.throws(()=>parseIndicator(data,'SP.POP.TOTL',map));});
 test('WDI parser rejects invalid numeric values rather than coercing',()=>{for(const v of [-1,'23',1.5,Infinity])assert.throws(()=>parseIndicator(page([row('IT','ITA',v)]),'SP.POP.TOTL',map));assert.throws(()=>parseIndicator(page([row('IT','ITA',101,'SP.URB.TOTL.IN.ZS')]),'SP.URB.TOTL.IN.ZS',map));});
-test('offline profile uses dated and attributed observations only, explicit language fallback',()=>{const snapshot={year:YEAR,retrieved:'2026-11-26',values:{'SP.POP.TOTL':{IT:1234},'SP.URB.TOTL.IN.ZS':{IT:0}}};const a=statisticsFor(snapshot,'IT','it');assert.equal(a.length,2);assert.equal(a[0].value,'1.234');assert.equal(a[1].value,'0 %');assert.ok(a.every(x=>x.year===YEAR&&x.attribution.includes('World Bank')&&x.source.startsWith('https://data.worldbank.org/indicator/')));assert.equal(statisticsFor(snapshot,'IT','ja')[0].language,'en');assert.deepEqual(statisticsFor(snapshot,'FR'),[]);assert.deepEqual(statisticsFor(null,'IT'),[]);assert.deepEqual(statisticsFor({...snapshot,year:'2023'},'IT'),[]);assert.equal(INDICATORS.length,12);});
+test('offline profile uses dated and attributed observations only, explicit language fallback',()=>{const snapshot={year:YEAR,retrieved:'2026-11-26',values:{'SP.POP.TOTL':{IT:1234},'SP.URB.TOTL.IN.ZS':{IT:0}}};const a=statisticsFor(snapshot,'IT','it');assert.equal(a.length,2);assert.equal(a[0].value,'1.234');assert.equal(a[1].value,'0 %');assert.ok(a.every(x=>x.year===YEAR&&x.attribution.includes('World Bank')&&x.source.startsWith('https://data.worldbank.org/indicator/')));assert.equal(statisticsFor(snapshot,'IT','ja')[0].language,'en');assert.deepEqual(statisticsFor(snapshot,'FR'),[]);assert.deepEqual(statisticsFor(null,'IT'),[]);assert.deepEqual(statisticsFor({...snapshot,year:'2023'},'IT'),[]);assert.equal(INDICATORS.length,14);});
 
 import {get,retryDelay,acquire} from '../scripts/fetch-world-statistics.mjs';
 test('WDI respects Retry-After seconds and date, rejects excessive waits',()=>{
- assert.equal(retryDelay('4',0),4000);assert.equal(retryDelay('garbage',1),4000);
- assert.equal(retryDelay('Thu, 26 Nov 2026 09:00:10 GMT',0,Date.parse('2026-11-26T09:00:00Z')),10000);
+ assert.equal(retryDelay('4',0),15000);assert.equal(retryDelay('garbage',1),30000);
+ assert.equal(retryDelay('Thu, 26 Nov 2026 09:00:40 GMT',0,Date.parse('2026-11-26T09:00:00Z')),40000);
  assert.throws(()=>retryDelay('61',0),/Retry-After/);
 });
 test('WDI bounded retry recovers from 429 and never retries permanent HTTP errors',async()=>{
  let calls=0;const waits=[];
  const request=async(url,opts)=>{calls++;assert.equal(url.hostname,'api.worldbank.org');assert.equal(opts.redirect,'error');return calls===1?new Response('limited',{status:429,headers:{'Retry-After':'3'}}):new Response('[1,2]');};
- assert.deepEqual(await get('country',{}, {request,wait:async ms=>waits.push(ms),report:()=>{}}),[1,2]);assert.deepEqual(waits,[3000]);assert.equal(calls,2);
+ assert.deepEqual(await get('country',{}, {request,wait:async ms=>waits.push(ms),report:()=>{}}),[1,2]);assert.deepEqual(waits,[15000]);assert.equal(calls,2);
  calls=0;await assert.rejects(get('country',{}, {request:async()=>{calls++;return new Response('',{status:400});},wait:async()=>assert.fail('permanent error retried')}),/HTTP 400/);assert.equal(calls,1);
 });
 test('WDI stops at three rate limited attempts',async()=>{
  let calls=0;const waits=[];
  await assert.rejects(get('country',{}, {request:async()=>{calls++;return new Response('',{status:429});},wait:async ms=>waits.push(ms),report:()=>{}}),/HTTP 429/);
- assert.equal(calls,3);assert.deepEqual(waits,[2000,4000]);
+ assert.equal(calls,3);assert.deepEqual(waits,[15000,30000]);
 });
 test('WDI acquisition requests one indicator at a time and returns no partial snapshot on failure',async()=>{
  const paths=[],waits=[];let active=0;
- const getJson=async(path,query)=>{assert.equal(active++,0);paths.push(path);await Promise.resolve();active--;if(path==='country')return page([country('IT','ITA')]);const id=path.split('/').at(-1);assert.equal(query.date,YEAR);assert.equal(query.source,'2');return page([row('IT','ITA',1,id)]);};
+ const getJson=async(path,query)=>{assert.equal(active++,0);paths.push(path);await Promise.resolve();active--;if(path==='country')return page([country('IT','ITA')]);const id=path.split('/').at(-1);assert.equal(query.date,indicatorYear(id));assert.equal(query.source,'2');return page([row('IT','ITA',1,id,indicatorYear(id))]);};
  const a=await acquire({getJson,wait:async ms=>waits.push(ms),now:()=>new Date('2026-11-26T09:00:00Z')});
  assert.deepEqual(paths,['country',...INDICATORS.map(i=>'country/all/indicator/'+i.id)]);assert.deepEqual(waits,INDICATORS.map(()=>1500));assert.equal(a.retrieved,'2026-11-26');assert.equal(Object.keys(a.values).length,INDICATORS.length);
  await assert.rejects(acquire({getJson:async p=>{if(p==='country')return page([country('IT','ITA')]);throw Error('unavailable');},wait:async()=>{}}),/unavailable/);
@@ -40,22 +40,22 @@ test('WDI retries timeout but not invalid JSON, with bounded attempts',async()=>
  let calls=0;const waits=[];
  const timeout=()=>new DOMException('timed out','TimeoutError');
  assert.deepEqual(await get('country',{}, {request:async()=>{if(++calls===1)throw timeout();return new Response('[1,2]');},wait:async ms=>waits.push(ms),report:()=>{}}),[1,2]);
- assert.equal(calls,2);assert.deepEqual(waits,[2000]);
+ assert.equal(calls,2);assert.deepEqual(waits,[15000]);
  calls=0;await assert.rejects(get('country',{}, {request:async()=>{calls++;throw timeout();},wait:async()=>{},report:()=>{}}),{name:'TimeoutError'});assert.equal(calls,3);
  calls=0;await assert.rejects(get('country',{}, {request:async()=>{calls++;return new Response('not json');},wait:async()=>assert.fail('invalid data retried')}),SyntaxError);assert.equal(calls,1);
 });
 
 import {snapshot} from '../src/world-statistics-data.mjs';
 import {countries} from '../src/countries.mjs';
-test('verified CI snapshot contains 2301 dated observations from 194 registry destinations',()=>{
+test('verified CI snapshot contains 2660 dated observations from 194 registry destinations',()=>{
  assert.equal(snapshot.year,'2024');assert.equal(snapshot.retrieved,'2026-11-27');
  assert.deepEqual(Object.keys(snapshot.values),INDICATORS.map(i=>i.id));
- assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191,193,193,192,190,192,194,187,194]);
+ assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191,193,193,192,190,192,194,187,194,179,180]);
  const allowed=new Set(countries.map(c=>c.code));
  const union=new Set(Object.values(snapshot.values).flatMap(Object.keys));
  assert.equal(union.size,194);assert.ok([...union].every(c=>allowed.has(c)));
  assert.deepEqual(statisticsFor(snapshot,'VA'),[]);
- assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),2301);
+ assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),2660);
  for(const [id,values] of Object.entries(snapshot.values))for(const [code,v] of Object.entries(values)){
   assert.ok(Number.isFinite(v)&&v>=0);if(id.endsWith('.ZS'))assert.ok(v<=100);
   if(id==='SP.POP.TOTL')assert.ok(Number.isSafeInteger(v));if(id==='SP.DYN.LE00.IN')assert.ok(v>0&&v<=130);
@@ -107,7 +107,7 @@ test('real expanded snapshot supports all twelve exact queries in six locales wi
  const queries={"it":["popolazione","pil","popolazione urbana","superficie forestale","superficie delle terre emerse","densità di popolazione","superficie agricola","superficie arabile","superficie totale","popolazione rurale","pil pro capite","speranza di vita"],"en":["population","gdp","urban population","forest area","land area","population density","agricultural land","arable land","surface area","rural population","gdp per capita","life expectancy"],"fr":["population","pib","population urbaine","superficie forestière","superficie des terres émergées","densité de population","terres agricoles","terres arables","superficie totale","population rurale","pib par habitant","espérance de vie"],"es":["población","pib","población urbana","superficie forestal","superficie terrestre","densidad de población","tierras agrícolas","tierras cultivables","superficie total","población rural","pib per cápita","esperanza de vida"],"de":["bevölkerung","bip","stadtbevölkerung","waldfläche","landfläche","bevölkerungsdichte","landwirtschaftliche fläche","ackerland","gesamtfläche","landbevölkerung","bip je einwohner","lebenserwartung"],"pt":["população","pib","população urbana","área florestal","área terrestre","densidade populacional","área agrícola","terra arável","área total","população rural","pib per capita","esperança de vida"]};
  for(const {code} of countries)for(const [language,questions] of Object.entries(queries)){
   const evidence=statisticsEvidence(snapshot,code,language);
-  for(const [i,indicator] of INDICATORS.entries()){
+  for(const [i,indicator] of INDICATORS.slice(0,12).entries()){
    const id='wdi-'+indicator.id,present=Object.hasOwn(snapshot.values[indicator.id]??{},code),fact=evidence.find(x=>x.id===id);
    assert.equal(Boolean(fact),present);
    if(fact)assert.ok(fact.language===language&&fact.period===YEAR&&fact.checked===snapshot.retrievedByIndicator[indicator.id]&&fact.source==='https://data.worldbank.org/indicator/'+indicator.id);
@@ -148,7 +148,7 @@ test('demographic and surface-area expansion preserves independent indicators an
 test('incremental WDI acquisition requests only missing series and preserves old provenance and values',async()=>{
  const base={year:YEAR,retrieved:'2026-11-26',values:{'SP.POP.TOTL':{IT:1234},'NY.GDP.MKTP.CD':{IT:5678}},retrievedByIndicator:{'NY.GDP.MKTP.CD':'2026-11-25'}};
  const original=JSON.stringify(base),paths=[],waits=[];
- const getJson=async(path,query)=>{paths.push(path);if(path==='country')return page([country('IT','ITA')]);const id=path.split('/').at(-1);assert.equal(query.date,YEAR);return page([row('IT','ITA',1,id)]);};
+ const getJson=async(path,query)=>{paths.push(path);if(path==='country')return page([country('IT','ITA')]);const id=path.split('/').at(-1);assert.equal(query.date,indicatorYear(id));return page([row('IT','ITA',1,id,indicatorYear(id))]);};
  const result=await acquire({base,getJson,wait:async ms=>waits.push(ms),now:()=>new Date('2026-11-27T09:00:00Z')});
  assert.equal(JSON.stringify(base),original);
  assert.deepEqual(paths,['country',...INDICATORS.slice(2).map(i=>'country/all/indicator/'+i.id)]);
@@ -161,4 +161,35 @@ test('incremental WDI acquisition requests only missing series and preserves old
  await assert.rejects(acquire({base:{...base,values:{'SP.POP.TOTL':{XX:1}}},getJson:async()=>assert.fail('invalid base requested network')}),/Invalid base/);
  await assert.rejects(acquire({base,getJson:async p=>{if(p==='country')return page([country('IT','ITA')]);throw Error('unavailable');},wait:async()=>{}}),/unavailable/);
  assert.equal(JSON.stringify(base),original);
+});
+
+
+test('environmental series enforce individual reference years and exact localized queries',async()=>{
+ const {statisticsEvidence,statisticsSelection}=await import('../src/world-statistics.mjs');
+ const defs=[{"id":"AG.LND.PRCP.MM","year":"2022","q":{"it":"precipitazione media","en":"average precipitation","fr":"précipitations moyennes","es":"precipitación media","de":"jahresniederschlag","pt":"precipitação média"}},{"id":"ER.H2O.INTR.PC","year":"2022","q":{"it":"risorse idriche interne pro capite","en":"internal freshwater per capita","fr":"eau douce interne par habitant","es":"agua dulce interna por habitante","de":"internes süßwasser pro kopf","pt":"água doce interna per capita"}}];
+ const values=Object.fromEntries(defs.map(d=>[d.id,parseIndicator(page([row('IT','ITA',25,d.id,d.year),row('FR','FRA',null,d.id,d.year)]),d.id,map)]));
+ const yearByIndicator=Object.fromEntries(defs.map(d=>[d.id,d.year]));const candidate={year:YEAR,retrieved:'2026-11-27',yearByIndicator,values};
+ for(const d of defs){assert.throws(()=>parseIndicator(page([row('IT','ITA',25,d.id,'2024')]),d.id,map));for(const [language,question] of Object.entries(d.q)){const input={code:'IT',language,question},id='wdi-'+d.id;assert.deepEqual(statisticsSelection(candidate,input),[id]);assert.deepEqual(statisticsSelection(candidate,{...input,question:question+' '+d.year}),[id]);assert.deepEqual(statisticsSelection(candidate,{...input,question:question+' 2024'}),[]);assert.deepEqual(statisticsSelection(candidate,{...input,code:'FR'}),[]);assert.deepEqual(statisticsSelection({...candidate,yearByIndicator:{}},input),[]);assert.equal(statisticsEvidence(candidate,'IT',language).find(x=>x.id===id).period,d.year);}}
+ for(const id of ['ER.MRN.PTMR.ZS','ER.LND.PTLD.ZS']){
+  assert.ok(!INDICATORS.some(i=>i.id===id));assert.throws(()=>parseIndicator(page([row('IT','ITA',10,id,'2025')]),id,map),/Unknown indicator/);
+  assert.ok(!statisticsFor({...candidate,values:{...values,[id]:{IT:10}},yearByIndicator:{...yearByIndicator,[id]:'2025'}},'IT').some(x=>x.id===id));
+  await assert.rejects(acquire({base:{...candidate,values:{...values,[id]:{IT:10}}},getJson:async()=>assert.fail('restricted series must be rejected before network')}),/Invalid base WDI series/);
+ }
+});
+
+test('real environmental observations retain years and exact guide selection in six languages',async()=>{
+ const {statisticsEvidence,statisticsSelection}=await import('../src/world-statistics.mjs');
+ const queries={"it":["precipitazione media","risorse idriche interne pro capite"],"en":["average precipitation","internal freshwater per capita"],"fr":["précipitations moyennes","eau douce interne par habitant"],"es":["precipitación media","agua dulce interna por habitante"],"de":["jahresniederschlag","internes süßwasser pro kopf"],"pt":["precipitação média","água doce interna per capita"]};
+ for(const {code} of countries)for(const [language,questions] of Object.entries(queries)){
+  const facts=statisticsEvidence(snapshot,code,language);
+  for(const [j,indicator] of INDICATORS.slice(12).entries()){
+   const id='wdi-'+indicator.id, expected=Object.hasOwn(snapshot.values[indicator.id],code)?[id]:[];
+   const fact=facts.find(x=>x.id===id);assert.equal(Boolean(fact),expected.length===1);
+   if(fact){assert.equal(fact.period,'2022');assert.equal(fact.checked,snapshot.retrievedByIndicator[indicator.id]);assert.equal(fact.language,language);}
+   const input={code,language,question:questions[j]};
+   assert.deepEqual(statisticsSelection(snapshot,input),expected);
+   assert.deepEqual(statisticsSelection(snapshot,{...input,question:input.question+' 2022?'}),expected);
+   assert.deepEqual(statisticsSelection(snapshot,{...input,question:input.question+' 2024'}),[]);
+  }
+ }
 });

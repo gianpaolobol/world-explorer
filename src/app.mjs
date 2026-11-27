@@ -84,7 +84,7 @@ function renderProfile(code){
   const meta=document.createElement('small');meta.textContent=' · '+(item.period?'Riferimento: '+item.period+' · ':'')+'Controllo fonte: '+item.checked+(item.language!==lang?' · testo in inglese':'');p.append(meta);box.append(p);
  }
  const observations=statisticsFor(snapshot,code,lang);
- $('statisticsStatus').textContent=observations.length?observations.length+' / '+INDICATORS.length+' indicatori disponibili (2024); non sono dati in tempo reale.':'Nessun indicatore WDI verificato/importato per questa destinazione.';
+ $('statisticsStatus').textContent=observations.length?observations.length+' / '+INDICATORS.length+' indicatori disponibili (anno indicato per ogni dato); non sono dati in tempo reale.':'Nessun indicatore WDI verificato/importato per questa destinazione.';
  for(const item of observations){
   const p=document.createElement('p');p.lang=item.language;p.dir='auto';
   p.append(document.createTextNode(item.label+': '+item.value+' · '+item.year+' · '),creditLink(item.attribution,item.source),document.createTextNode(' · Acquisizione: '+item.retrieved+(item.language!==lang?' · testo in inglese':'')));stats.append(p);
