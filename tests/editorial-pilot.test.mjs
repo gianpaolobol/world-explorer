@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {countries,languages} from '../src/countries.mjs';
 import {disciplines,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
 import {answerGuide,evidenceFor} from '../src/guide.mjs';
+import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'orografia'};
 test('pilot covers the twelve disciplines once with unique IDs and explicit source-check status',()=>{
  const a=pilotEvidence('IT','it');assert.equal(a.length,12);
@@ -42,7 +43,10 @@ test('model cannot select an Italian pilot ID for a different country or inject 
  assert.equal(a.mode,'fallback');assert.equal(a.status,'insufficient');
  const b=await answerGuide(input,async()=> '{"ids":["it-orography"],"url":"https://bad.test"}');
  assert.equal(b.mode,'fallback');assert.equal(b.evidence[0].id,'it-orography');
- assert.equal(evidenceFor(input).length,18);
+ const expected=['region','method',...pilotEvidence('IT','it').map(x=>x.id),...Object.entries(snapshot.values).filter(([,values])=>Object.hasOwn(values,'IT')).map(([id])=>'wdi-'+id)];
+ const actual=evidenceFor(input).map(x=>x.id);
+ assert.deepEqual(actual,expected);
+ assert.equal(new Set(actual).size,actual.length);
 });
 
 
@@ -75,4 +79,19 @@ test('Spain: all twelve source-checked facts are scoped, bilingual and selected 
  assert.equal((await answerGuide({code:'ES',language:'it',question:'popolazione'})).evidence[0].id,'wdi-SP.POP.TOTL');
  assert.equal((await answerGuide({code:'ES',language:'it',question:'popolazione 2030'})).status,'insufficient');
  assert.deepEqual(pilotEvidence('ES','es'),en);
+});
+
+
+test('guide answers explicit WDI snapshot years without overriding scoped editorial facts',async()=>{
+ for(const [code,language,question,id] of [
+  ['FR','it','popolazione 2024','wdi-SP.POP.TOTL'],
+  ['DE','de','bevölkerung 2024','wdi-SP.POP.TOTL'],
+  ['ES','es','superficie terrestre 2024','wdi-AG.LND.TOTL.K2'],
+  ['IT','en','forest area 2024','wdi-AG.LND.FRST.ZS'],
+  ['FR','it','popolazione 2026','fr-human'],
+  ['ES','en','population 2025','es-human']
+ ]){const result=await answerGuide({code,language,question});assert.equal(result.status,'evidence');assert.equal(result.evidence[0].id,id);}
+ for(const [code,language,question] of [['VA','it','popolazione 2024'],['FR','it','popolazione 2023'],['DE','de','bevölkerung 2030'],['FR','en','population 2024 2030']]){
+  assert.equal((await answerGuide({code,language,question})).status,'insufficient');
+ }
 });
