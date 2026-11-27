@@ -14,6 +14,7 @@ import {pilotEvidence} from './editorial-pilot.mjs';
 import {statisticsFor,statisticsEvidence,TERMS,INDICATORS} from './world-statistics.mjs';
 import {snapshot} from './world-statistics-data.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from './region-quiz.mjs';
+import {createStatisticsQuiz} from './statistics-quiz.mjs';
 const $=id=>document.getElementById(id), key='world-explorer-visits-v1';
 let visits={},lang='it',index=0,viewer=null,terrainOn=false,terrainBusy=false,bathyLayer=null,probeEpoch=0;
 try { const data=JSON.parse(localStorage.getItem(key)||'{}'); for(const c of countries){if(Number.isSafeInteger(data?.[c.code])&&data[c.code]>=0)visits[c.code]=data[c.code];} } catch {}
@@ -42,20 +43,24 @@ function refreshReliefNarration(){
 observeReliefSample(refreshReliefNarration);
 function speak(done){return narrator.speak(displayedNarration(),typeof done==='function'?done:undefined);}
 const quizKey='world-explorer-region-quiz-v1';
+const statQuizKey='world-explorer-statistics-quiz-v1';
+const statQuiz=createStatisticsQuiz(snapshot);
+let statMemory=statQuiz.load(null);
+const statMode=()=>$('quizMode').value==='statistics';
 let quizMemory=loadMemory(null),question=null,answered=false,quizCorrect=null,quizStorageFailed=false,quizExhausted=false;
-try{quizMemory=loadMemory(localStorage.getItem(quizKey));}catch{quizStorageFailed=true;}
+try{quizMemory=loadMemory(localStorage.getItem(quizKey));statMemory=statQuiz.load(localStorage.getItem(statQuizKey));}catch{quizStorageFailed=true;}
 const quizLocale=()=>lang==='it'?'it':'en';
 const quizText=(it,en)=>quizLocale()==='it'?it:en;
 function updateQuizStats(){
- const s=quizStats(quizMemory);
+ const s=statMode()?statQuiz.stats(statMemory):quizStats(quizMemory);
  $('quizStats').lang=quizLocale();
- $('quizStats').textContent=quizText('Paesi esercitati: ','Countries practiced: ')+s.practiced+' / '+s.total+
+ $('quizStats').textContent=(statMode()?quizText('Domande esercitate: ','Questions practiced: '):quizText('Paesi esercitati: ','Countries practiced: '))+s.practiced+' / '+s.total+
   quizText(' · Disponibili: ',' · Due: ')+s.due+quizText(' · Consolidati (3 risposte consecutive): ',' · Mastered (3 consecutive correct): ')+s.mastered+
   quizText(' · Errori da ripassare: ',' · Mistakes due: ')+s.retryDue;
  if(!s.due&&s.nextDue!==null)$('quizStats').textContent+=quizText(' · Prossimo ripasso: ',' · Next review: ')+new Date(s.nextDue).toLocaleString(quizLocale());
 }
 function saveQuiz(){
- try{localStorage.setItem(quizKey,JSON.stringify(quizMemory));quizStorageFailed=false;}
+ try{localStorage.setItem(statMode()?statQuizKey:quizKey,JSON.stringify(statMode()?statMemory:quizMemory));quizStorageFailed=false;}
  catch{quizStorageFailed=true;}
  updateQuizStorage();
 }
@@ -66,11 +71,21 @@ function updateQuizStorage(){
 function renderQuiz(){
  $('quizOptions').replaceChildren();updateQuizStats();updateQuizStorage();
  for(const id of ['quizQuestion','quizFeedback','quizOptions','quizNext','quizReset','quizExport'])$(id).lang=quizLocale();
+ $('quizMode').options[0].textContent=quizText('Regioni ONU M49','UN M49 regions');
+ $('quizMode').options[1].textContent=quizText('Confronti statistici WDI','WDI statistical comparisons');
+ $('quizModeLabel').textContent=quizText('Argomento','Topic');
  $('quizNext').textContent=quizText('Nuova domanda','New question');
  $('quizReset').textContent=quizText('Cancella quiz','Reset quiz');
  $('quizExport').textContent=quizText('Esporta quiz','Export quiz');
  $('quizFeedback').textContent='';
  if(!question){$('quizQuestion').textContent=quizExhausted?quizText('Nessun ripasso disponibile ora. Riprova più tardi.','No reviews due now. Try again later.'):quizText('Premi Nuova domanda per esercitarti.','Select New question to practise.');return;}
+ if(statMode()){
+  const d=statQuiz.describe(question,quizLocale());if(!d){$('quizQuestion').textContent=quizText('Dati non disponibili.','Data unavailable.');return;}
+  $('quizQuestion').textContent=(question.highest?quizText('Quale paese ha il valore più alto? ','Which country has the highest value? '):quizText('Quale paese ha il valore più basso? ','Which country has the lowest value? '))+d.label+' ('+d.year+')';
+  for(const option of question.options){const b=document.createElement('button');b.type='button';b.lang=lang;b.textContent=name({code:option});b.disabled=answered;b.onclick=()=>{if(answered)return;quizCorrect=statQuiz.grade(question,option,statMemory);answered=true;saveQuiz();renderQuiz();};$('quizOptions').append(b);}
+  if(answered){$('quizFeedback').append(document.createTextNode((quizCorrect?quizText('Corretto! ','Correct! '):quizText('Risposta da ripassare. ','Review this answer. '))+name({code:question.answer})+' · '+d.entries.map(e=>name({code:e.code})+': '+e.value).join(' · ')+' · '+d.year+' · '),creditLink(d.attribution,d.source));}
+  return;
+ }
  $('quizQuestion').textContent=quizText('In quale regione statistica ONU si trova ','Which UN statistical region contains ')+name({code:question.code})+'?';
  for(const option of question.options){
   const b=document.createElement('button');b.type='button';b.lang=lang;b.textContent=regionName(option,lang);b.disabled=answered;
@@ -80,9 +95,10 @@ function renderQuiz(){
  }
  if(answered)$('quizFeedback').textContent=(quizCorrect?quizText('Corretto! ','Correct! '):quizText('Risposta da ripassare. ','Review this answer. '))+regionName(question.answer,lang)+quizText(' · Fonte ONU M49',' · UN M49 source');
 }
-$('quizNext').onclick=()=>{question=makeQuestion(quizMemory);answered=false;quizCorrect=null;quizExhausted=!question;renderQuiz();};
-$('quizReset').onclick=()=>{if(!confirm(quizText('Eliminare la memoria locale dei quiz?','Delete local quiz memory?')))return;quizMemory=loadMemory(null);question=null;answered=false;quizCorrect=null;quizExhausted=false;saveQuiz();renderQuiz();};
-$('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+$('quizNext').onclick=()=>{question=statMode()?statQuiz.make(statMemory):makeQuestion(quizMemory);answered=false;quizCorrect=null;quizExhausted=!question;renderQuiz();};
+$('quizMode').onchange=()=>{question=null;answered=false;quizCorrect=null;quizExhausted=false;renderQuiz();};
+$('quizReset').onclick=()=>{if(!confirm(quizText('Eliminare la memoria locale di questo argomento?','Delete local memory for this topic?')))return;if(statMode())statMemory=statQuiz.load(null);else quizMemory=loadMemory(null);question=null;answered=false;quizCorrect=null;quizExhausted=false;saveQuiz();renderQuiz();};
+$('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([statMode()?statQuiz.export(statMemory):quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=statMode()?'world-explorer-statistics-quiz.json':'world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 renderQuiz();
 function renderProfile(code){
  const box=$('profileFacts'),stats=$('profileStats');box.replaceChildren();stats.replaceChildren();
