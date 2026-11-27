@@ -112,7 +112,10 @@ test('real expanded snapshot supports all eight exact queries in six locales wit
    assert.equal(Boolean(fact),present);
    if(fact)assert.ok(fact.language===language&&fact.period===YEAR&&fact.checked===snapshot.retrieved&&fact.source==='https://data.worldbank.org/indicator/'+indicator.id);
    assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]}),present?[id]:[]);
+   assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]+' '+YEAR+'? '}),present?[id]:[]);
+   assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]+' 2023'}),[]);
    assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]+' 2030'}),[]);
+   assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]+' '+YEAR+' 2030'}),[]);
   }
  }
 });
