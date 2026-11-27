@@ -1,8 +1,10 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
-import {parseRegionalGrid,gridMesh,projectMesh,MAX_GRID_BYTES,GEBCO_CREDIT,GLOBAL_MAX_BYTES,parseGlobalGrid,globalMesh,projectGlobalMesh,regionalSample,globalSample} from './numeric-relief.mjs';
+import {parseRegionalGrid,gridMesh,projectMesh,MAX_GRID_BYTES,GEBCO_CREDIT,GLOBAL_MAX_BYTES,parseGlobalGrid,globalMesh,projectGlobalMesh,regionalSample,globalSample,reliefNarration} from './numeric-relief.mjs';
 const $=id=>document.getElementById(id);
 const input=$('reliefFile'),canvas=$('reliefCanvas'),scale=$('reliefScale'),status=$('reliefStatus'),clear=$('reliefClear');
-let current=null,epoch=0,destination=null;
+let current=null,epoch=0,destination=null,onSampleChange=()=>{};
+export function observeReliefSample(handler){onSampleChange=handler;}
+export function currentReliefNarration(){return destination?reliefNarration(current,globalGrid,destination.lon,destination.lat,destination.locale):null;}
 const destinationStatus=$('localReliefSample');
 export function setReliefDestination(lon,lat,locale='it'){destination={lon,lat,locale};renderDestinationSample();}
 function renderDestinationSample(){
@@ -14,6 +16,7 @@ function renderDestinationSample(){
   lines.push(s?label+': '+fmt(s.height,0)+' m · centro campione '+fmt(s.lat)+'°, '+fmt(s.lon)+'°':label+': nessun campione valido per il punto camera');
  }
  destinationStatus.textContent=lines.length?lines.join(' | ')+' · valori non esagerati, file locali non autenticati; non quota della capitale né dato per navigazione.':'';
+ onSampleChange();
 }
 const ctx=canvas.getContext('2d');
 function reset(){current=null;canvas.hidden=true;scale.disabled=true;clear.disabled=true;ctx?.clearRect(0,0,canvas.width,canvas.height);}
