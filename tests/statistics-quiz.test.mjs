@@ -11,7 +11,7 @@ test('all eligible real statistical tasks have four unique choices, strict order
   const q=quiz.make(memory,0,()=>0.5);assert.ok(q);assert.ok(!seen.has(q.key));seen.add(q.key);
   assert.equal(new Set(q.options).size,4);assert.ok(q.options.includes(q.answer));
   const values=snapshot.values[q.id],answer=values[q.answer];
-  for(const c of q.options.filter(x=>x!==q.answer))assert.ok(q.highest?answer>values[c]:answer<values[c]);
+  for(const c of q.options.filter(x=>x!==q.answer)){assert.ok(q.highest?answer>values[c]:answer<values[c]);assert.ok(Math.abs(answer-values[c])>0.05*Math.max(answer,values[c]));}
   for(const lang of ['it','en','fr','es','de','pt']){
    const d=quiz.describe(q,lang);assert.ok(d);assert.equal(d.entries.length,4);assert.match(d.source,/^https:\/\/data\.worldbank\.org\/indicator\//);assert.ok(d.entries.every(e=>e.year===d.year&&e.language===lang));
   }
