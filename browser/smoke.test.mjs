@@ -179,6 +179,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   const values=Array(16200).fill(0);values[100]=-5000;values[200]=4000;values[300]=null;
   await page.locator('#globalReliefFile').setInputFiles({name:'synthetic-global.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:90,cols:180,values}))});
   await page.locator('#globalCanvas').waitFor({state:'visible'});
+   assert.match(await page.locator('#localReliefSample').textContent(),/GEBCO globale 2°/);
   assert.match(await page.locator('#globalStatus').textContent(),/16199\/16200.*-5000 m, max 4000 m/);
   await page.locator('#globalScale').selectOption('50');
   assert.match(await page.locator('#globalStatus').textContent(),/50×/);

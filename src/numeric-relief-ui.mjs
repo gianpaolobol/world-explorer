@@ -1,8 +1,20 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
-import {parseRegionalGrid,gridMesh,projectMesh,MAX_GRID_BYTES,GEBCO_CREDIT,GLOBAL_MAX_BYTES,parseGlobalGrid,globalMesh,projectGlobalMesh} from './numeric-relief.mjs';
+import {parseRegionalGrid,gridMesh,projectMesh,MAX_GRID_BYTES,GEBCO_CREDIT,GLOBAL_MAX_BYTES,parseGlobalGrid,globalMesh,projectGlobalMesh,regionalSample,globalSample} from './numeric-relief.mjs';
 const $=id=>document.getElementById(id);
 const input=$('reliefFile'),canvas=$('reliefCanvas'),scale=$('reliefScale'),status=$('reliefStatus'),clear=$('reliefClear');
-let current=null,epoch=0;
+let current=null,epoch=0,destination=null;
+const destinationStatus=$('localReliefSample');
+export function setReliefDestination(lon,lat,locale='it'){destination={lon,lat,locale};renderDestinationSample();}
+function renderDestinationSample(){
+ if(!destination)return;
+ const {lon,lat,locale}=destination,fmt=(n,d=4)=>new Intl.NumberFormat(locale,{maximumFractionDigits:d}).format(n);
+ const lines=[];
+ for(const [grid,sample,label] of [[current,regionalSample,'GEBCO regionale 15″'],[globalGrid,globalSample,'GEBCO globale 2°']]){
+  if(!grid)continue;const s=sample(grid,lon,lat);
+  lines.push(s?label+': '+fmt(s.height,0)+' m · centro campione '+fmt(s.lat)+'°, '+fmt(s.lon)+'°':label+': nessun campione valido per il punto camera');
+ }
+ destinationStatus.textContent=lines.length?lines.join(' | ')+' · valori non esagerati, file locali non autenticati; non quota della capitale né dato per navigazione.':'';
+}
 const ctx=canvas.getContext('2d');
 function reset(){current=null;canvas.hidden=true;scale.disabled=true;clear.disabled=true;ctx?.clearRect(0,0,canvas.width,canvas.height);}
 function paint(){
@@ -24,14 +36,14 @@ function paint(){
  status.textContent='Area '+fmt(g.west)+'° / '+fmt(g.south)+'° – '+fmt(g.east)+'° / '+fmt(g.north)+'°; '+g.count+'/'+g.values.length+' campioni validi; quota min '+fmt(g.min)+' m, max '+fmt(g.max)+' m (dati non esagerati). Esagerazione verticale '+ex+'×. File dichiarato GEBCO 2025 dall’utente, provenienza non autenticata. '+GEBCO_CREDIT+'.';
 }
 input.onchange=async()=>{
- const id=++epoch,file=input.files?.[0];reset();status.textContent='';if(!file)return;
+ const id=++epoch,file=input.files?.[0];reset();renderDestinationSample();status.textContent='';if(!file)return;
  if(file.size>MAX_GRID_BYTES){status.textContent='File troppo grande (limite 1 MiB).';input.value='';return;}
  if(!ctx){status.textContent='Canvas 2D non disponibile.';return;}
- try{const g=parseRegionalGrid(await file.text());if(id!==epoch)return;current=g;scale.disabled=false;clear.disabled=false;paint();}
+ try{const g=parseRegionalGrid(await file.text());if(id!==epoch)return;current=g;scale.disabled=false;clear.disabled=false;paint();renderDestinationSample();}
  catch(e){if(id===epoch){status.textContent='Griglia non valida: '+e.message;input.value='';}}
 };
 scale.onchange=paint;
-clear.onclick=()=>{epoch++;reset();input.value='';status.textContent='Griglia rimossa dalla memoria.';};
+clear.onclick=()=>{epoch++;reset();renderDestinationSample();input.value='';status.textContent='Griglia rimossa dalla memoria.';};
 reset();
 
  // Independent coarse global relief preview, local file only.
@@ -62,7 +74,7 @@ $('numericRelief').after(globalPanel);
 const gc=globalCanvas.getContext('2d');
 let globalGrid=null,globalEpoch=0,mesh=null;
 function clearGlobal(){
- stopMainRelief();mainToggle.disabled=true;globalGrid=null;mesh=null;globalCanvas.hidden=true;for(const c of [lon,lat,ex,globalClear])c.disabled=true;
+ stopMainRelief();mainToggle.disabled=true;globalGrid=null;mesh=null;renderDestinationSample();globalCanvas.hidden=true;for(const c of [lon,lat,ex,globalClear])c.disabled=true;
  gc?.clearRect(0,0,globalCanvas.width,globalCanvas.height);
 }
 function drawGlobal(rebuild=false){
@@ -85,7 +97,7 @@ globalInput.onchange=async()=>{
   if(!gc)throw new Error('Canvas 2D non disponibile');
   if(file.size>GLOBAL_MAX_BYTES)throw new Error('File troppo grande');
   const grid=parseGlobalGrid(await file.text());if(epoch!==globalEpoch)return;
-  globalGrid=grid;mainToggle.disabled=!mainHandler;for(const c of [lon,lat,ex,globalClear])c.disabled=false;drawGlobal(true);
+  globalGrid=grid;mainToggle.disabled=!mainHandler;for(const c of [lon,lat,ex,globalClear])c.disabled=false;drawGlobal(true);renderDestinationSample();
  }catch(e){if(epoch===globalEpoch){clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale non valida: '+e.message;}}
 };
 lon.onchange=lat.onchange=()=>drawGlobal();ex.onchange=()=>{stopMainRelief();drawGlobal(true);};

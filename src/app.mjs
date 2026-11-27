@@ -1,6 +1,6 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
 import {createReliefPrimitive,safeReliefHeight} from './global-relief-cesium.mjs';
-import {configureMainRelief,stopMainRelief,reportMainRelief} from './numeric-relief-ui.mjs';
+import {configureMainRelief,stopMainRelief,reportMainRelief,setReliefDestination} from './numeric-relief-ui.mjs';
 import {countries,languages,countryName} from './countries.mjs';
 import {wrapIndex,chooseDestination,cameraHeight} from './travel.mjs';
 import {createTour} from './cinematic.mjs';
@@ -94,7 +94,7 @@ function renderProfile(code){
 function render(fly=true,read=false){
  clearPhotos();clearGuide();
  probeEpoch++;$('elevation').textContent='';
- const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);renderProfile(c.code);
+ const c=countries[index];$('place').value=String(index);$('name').textContent=name(c);renderProfile(c.code);setReliefDestination(c.lon,c.lat,lang);
  const n=cinematicNarrationFor(c.code,lang);$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
  const credits=$('narrationCredits');credits.replaceChildren();
  for(const fact of n?.facts||[]){

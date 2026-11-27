@@ -118,3 +118,30 @@ export function projectGlobalMesh(mesh,longitude=0,latitude=0){
  }
  return triangles.sort((a,b)=>a.depth-b.depth);
 }
+
+ // Report actual cell values, never interpolated or vertically exaggerated.
+function coordinateCheck(lon,lat){
+ if(!Number.isFinite(lon)||!Number.isFinite(lat)||Math.abs(lon)>180||Math.abs(lat)>90)throw new RangeError('Invalid coordinates');
+}
+export function regionalSample(g,lon,lat){
+ coordinateCheck(lon,lat);
+ if(!g||lon<g.west||lon>=g.east||lat<g.south||lat>=g.north)return null;
+ const col=Math.min(g.cols-1,Math.floor((lon-g.west)/g.step));
+ const row=g.rows-1-Math.min(g.rows-1,Math.floor((lat-g.south)/g.step));
+ const height=g.values[row*g.cols+col];
+ if(!Number.isFinite(height))return null;
+ return {height,lon:g.west+(col+.5)*g.step,lat:g.south+(g.rows-row-.5)*g.step,resolution:g.step};
+}
+export function globalSample(g,lon,lat){
+ coordinateCheck(lon,lat);
+ const step=GLOBAL_STRIDE/240,first=(GLOBAL_FIRST+.5)/240;
+ const south=-90+first,north=south+(GLOBAL_ROWS-1)*step;
+ // No extrapolation into the unrepresented polar caps.
+ if(!g||lat<south||lat>north)return null;
+ const row=Math.max(0,Math.min(GLOBAL_ROWS-1,Math.round((lat-south)/step)));
+ const west=-180+first;
+ const col=((Math.round((lon-west)/step)%GLOBAL_COLS)+GLOBAL_COLS)%GLOBAL_COLS;
+ const height=g.values[row*GLOBAL_COLS+col];
+ if(!Number.isFinite(height))return null;
+ return {height,lon:west+col*step,lat:south+row*step,resolution:step};
+}
