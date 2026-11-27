@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseGlobalGrid,globalMesh,projectGlobalMesh,GLOBAL_MAX_BYTES,GLOBAL_ROWS,GLOBAL_COLS} from '../src/numeric-relief.mjs';
+import {parseGlobalGrid,globalMesh,projectGlobalMesh,GLOBAL_MAX_BYTES,GLOBAL_ROWS,GLOBAL_COLS,globalSample,regionalSample,parseRegionalGrid} from '../src/numeric-relief.mjs';
 const payload=(values=Array(GLOBAL_ROWS*GLOBAL_COLS).fill(0))=>JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:GLOBAL_ROWS,cols:GLOBAL_COLS,values});
 test('global grid has fixed shape and preserves deep negative values and gaps',()=>{
  const v=Array(16200).fill(0);v[0]=-9999;v[1]=null;v[2]=8848;
@@ -34,4 +34,32 @@ test('global orthographic rotation produces finite front-facing triangles',()=>{
   assert.ok(tris.every((t,i)=>Number.isFinite(t.depth)&&(!i||tris[i-1].depth<=t.depth)));
  }
  assert.throws(()=>projectGlobalMesh(m,181,0));
+});
+
+test('local relief reports native signed sample values and never interpolates gaps',()=>{
+ const g=parseRegionalGrid('ncols 2\nnrows 2\nxllcorner 10\nyllcorner 40\ncellsize 0.004166666667\n-100 -9999\n30 40');
+ assert.equal(regionalSample(g,10.001,40.006).height,-100);
+ assert.equal(regionalSample(g,10.006,40.006),null);
+ assert.equal(regionalSample(g,10.001,40.001).height,30);
+ assert.equal(regionalSample(g,10.006,40.001).height,40);
+ assert.equal(regionalSample(g,g.east,40.001),null);
+ assert.equal(regionalSample(g,10.001,g.north),null);
+ assert.equal(regionalSample(g,9,40),null);
+ assert.throws(()=>regionalSample(g,NaN,40));
+});
+test('coarse samples close longitude seam, preserve zero and exclude polar caps',()=>{
+ const v=Array(16200).fill(0);v[45*180]=-5000;v[45*180+1]=null;
+ const g=parseGlobalGrid(payload(v));
+ for(const lon of [-180,180,-179])assert.equal(globalSample(g,lon,1).height,-5000);
+ assert.equal(globalSample(g,-177,1),null);
+ assert.equal(globalSample(g,0,0).height,0);
+ assert.equal(globalSample(g,0,90),null);
+ assert.equal(globalSample(g,0,-90),null);
+ assert.throws(()=>globalSample(g,0,91));
+ for(let row=0;row<90;row++)for(let col=0;col<180;col++){
+  const lat=-90+(239+row*480+.5)/240,lon=-180+(239+col*480+.5)/240;
+  const s=globalSample(g,lon,lat);
+  if(v[row*180+col]===null){assert.equal(s,null);continue;}
+  assert.equal(s.height,v[row*180+col]);assert.ok(Math.abs(s.lon-lon)<1e-9);assert.ok(Math.abs(s.lat-lat)<1e-9);
+ }
 });

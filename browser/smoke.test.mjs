@@ -179,14 +179,18 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   const values=Array(16200).fill(0);values[100]=-5000;values[200]=4000;values[300]=null;
   await page.locator('#globalReliefFile').setInputFiles({name:'synthetic-global.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:90,cols:180,values}))});
   await page.locator('#globalCanvas').waitFor({state:'visible'});
+  const localSample=await page.locator('#localReliefSample').textContent();
+  assert.match(localSample,/GEBCO globale 2°: 0 m · centro campione/);
   assert.match(await page.locator('#globalStatus').textContent(),/16199\/16200.*-5000 m, max 4000 m/);
   await page.locator('#globalScale').selectOption('50');
   assert.match(await page.locator('#globalStatus').textContent(),/50×/);
+  assert.equal(await page.locator('#localReliefSample').textContent(),localSample);
   await page.locator('#globalLon').fill('180');
   await page.locator('#globalLon').dispatchEvent('change');
   assert.match(await page.locator('#globalStatus').textContent(),/vista 180°/);
   await page.locator('#globalClear').click();
   assert.equal(await page.locator('#globalCanvas').isVisible(),false);
+  assert.equal(await page.locator('#localReliefSample').textContent(),'');
   await page.locator('summary').filter({hasText:'Telecomando iPhone'}).click();
   await page.locator('#remotePair').click();
   await page.waitForFunction(()=>document.querySelector('#remoteStatus').textContent.includes('non configurato'));
@@ -248,6 +252,7 @@ if(process.env.WORLD_EXPLORER_REAL_RELIEF==='1'){
    await page.locator('#globalReliefFile').setInputFiles({name:'global-relief.json',mimeType:'application/json',buffer:global});
    await page.locator('#globalCanvas').waitFor({state:'visible'});
    assert.ok((await page.locator('#globalStatus').textContent()).includes('16200/16200'));
+   assert.match(await page.locator('#localReliefSample').textContent(),/GEBCO globale 2°:.* m · centro campione/);
    await page.locator('#globalScale').selectOption('20');
    await page.locator('#globalMainToggle').click();
    await page.waitForFunction(()=>document.querySelector('#globalMainStatus').textContent.includes('Cesium pronta'),{},{timeout:30000});
