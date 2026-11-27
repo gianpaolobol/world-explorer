@@ -125,6 +125,14 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#quizOptions button').first().click();
   assert.match(await page.locator('#quizFeedback a').getAttribute('href'),/^https:\/\/data\.worldbank\.org\/indicator\//);
   assert.equal(await page.locator('#quizOptions button:disabled').count(),4);
+  for(const [locale,label] of [['fr','Nouvelle question'],['de','Neue Frage'],['es','Nueva pregunta'],['pt','Nova pergunta'],['ja','New question']]){
+   await page.locator('#lang').selectOption(locale);
+   assert.equal(await page.locator('#quizNext').textContent(),label);
+   assert.equal(await page.locator('#quizQuestion').getAttribute('lang'),locale==='ja'?'en':locale);
+   assert.equal(await page.locator('#quizOptions button:disabled').count(),4);
+   assert.match(await page.locator('#quizFeedback a').getAttribute('href'),/^https:\/\/data\.worldbank\.org\/indicator\//);
+  }
+  await page.locator('#lang').selectOption('it');
   await page.locator('#quizMode').selectOption('region');
   assert.match(await page.locator('#quizStats').textContent(),/1 \/ 195/);
   await page.locator('#quizMode').selectOption('statistics');

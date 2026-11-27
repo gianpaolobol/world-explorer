@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {countries,languages} from '../src/countries.mjs';
 import {classifiedCountries,regionOf,regionCodes,regionName,M49_SOURCE} from '../src/regions.mjs';
 import {narrationFor} from '../src/narration.mjs';
-import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from '../src/region-quiz.mjs';
+import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport,quizLanguage,quizMessage} from '../src/region-quiz.mjs';
 test('M49 covers exactly the atlas registry',()=>{assert.equal(classifiedCountries.length,195);assert.deepEqual([...classifiedCountries].sort(),countries.map(c=>c.code).sort());assert.equal(regionCodes.length,22)});
 test('classification edge cases follow statistical convention',()=>{for(const [code,region] of Object.entries({MX:'013',IR:'034',RU:'151',CY:'145',TR:'145',VA:'039',PS:'145',SS:'014',TV:'061',NR:'057',SD:'015',TZ:'014'}))assert.equal(regionOf(code),region);assert.equal(regionOf('ZZ'),null)});
 test('all countries in all 20 languages have a sourced narration',()=>{for(const c of countries)for(const l of languages){const n=narrationFor(c.code,l);assert.equal(n.language,l);assert.equal(n.source,M49_SOURCE);assert.ok(n.text.includes(regionName(regionOf(c.code),l)));assert.ok(n.text.length>15);assert.notEqual(regionName(regionOf(c.code),l),regionOf(c.code))}});
@@ -35,4 +35,11 @@ test('empty quiz exposes next review without presenting future questions',()=>{
  assert.equal(quizStats(m,99).nextDue,100);
  assert.equal(quizStats(m,99).due,0);
  assert.equal(quizStats(m,100).due,195);
+});
+
+test('quiz interface has six complete locales and explicit English fallback',()=>{
+ const keys=["questions","countries","due","mastered","mistakes","nextDue","storage","region","statistics","topic","next","reset","export","exhausted","start","unavailable","highest","lowest","correct","wrong","regionQuestion","regionSource","confirm","heading","notice"];
+ for(const locale of languages){const resolved=quizLanguage(locale);assert.equal(resolved,['it','en','fr','de','es','pt'].includes(locale)?locale:'en');for(const k of keys){assert.ok(quizMessage(k,locale).trim());assert.equal(quizMessage(k,locale),quizMessage(k,resolved));}}
+ for(const l of ['fr','de','es','pt'])assert.notEqual(quizMessage('next',l),quizMessage('next','en'));
+ assert.equal(quizLanguage('__proto__'),'en');assert.throws(()=>quizMessage('__proto__','it'));
 });
