@@ -47,18 +47,18 @@ test('WDI retries timeout but not invalid JSON, with bounded attempts',async()=>
 
 import {snapshot} from '../src/world-statistics-data.mjs';
 import {countries} from '../src/countries.mjs';
-test('verified CI snapshot contains 1534 dated observations from 194 registry destinations',()=>{
+test('verified CI snapshot contains 2301 dated observations from 194 registry destinations',()=>{
  assert.equal(snapshot.year,'2024');assert.equal(snapshot.retrieved,'2026-11-27');
- assert.deepEqual(Object.keys(snapshot.values),INDICATORS.slice(0,8).map(i=>i.id)); // candidate retains the verified eight-indicator snapshot until live acquisition is reconciled
- assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191,193,193,192,190]);
+ assert.deepEqual(Object.keys(snapshot.values),INDICATORS.map(i=>i.id));
+ assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191,193,193,192,190,192,194,187,194]);
  const allowed=new Set(countries.map(c=>c.code));
  const union=new Set(Object.values(snapshot.values).flatMap(Object.keys));
  assert.equal(union.size,194);assert.ok([...union].every(c=>allowed.has(c)));
  assert.deepEqual(statisticsFor(snapshot,'VA'),[]);
- assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),1534);
+ assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),2301);
  for(const [id,values] of Object.entries(snapshot.values))for(const [code,v] of Object.entries(values)){
   assert.ok(Number.isFinite(v)&&v>=0);if(id.endsWith('.ZS'))assert.ok(v<=100);
-  if(id==='SP.POP.TOTL')assert.ok(Number.isSafeInteger(v));
+  if(id==='SP.POP.TOTL')assert.ok(Number.isSafeInteger(v));if(id==='SP.DYN.LE00.IN')assert.ok(v>0&&v<=130);
  }
 });
 
@@ -102,15 +102,15 @@ test('expanded WDI indicators validate units, retain fractions and select exact 
  for(const id of ids.slice(2)){assert.throws(()=>parseIndicator(page([row('IT','ITA',101,id)]),id,map));}
 });
 
-test('real expanded snapshot supports all eight exact queries in six locales without filling gaps',async()=>{
+test('real expanded snapshot supports all twelve exact queries in six locales without filling gaps',async()=>{
  const {statisticsEvidence,statisticsSelection}=await import('../src/world-statistics.mjs');
- const queries={it:['popolazione','pil','popolazione urbana','superficie forestale','superficie delle terre emerse','densità di popolazione','superficie agricola','superficie arabile'],en:['population','gdp','urban population','forest area','land area','population density','agricultural land','arable land'],fr:['population','pib','population urbaine','superficie forestière','superficie des terres émergées','densité de population','terres agricoles','terres arables'],es:['población','pib','población urbana','superficie forestal','superficie terrestre','densidad de población','tierras agrícolas','tierras cultivables'],de:['bevölkerung','bip','stadtbevölkerung','waldfläche','landfläche','bevölkerungsdichte','landwirtschaftliche fläche','ackerland'],pt:['população','pib','população urbana','área florestal','área terrestre','densidade populacional','área agrícola','terra arável']};
+ const queries={"it":["popolazione","pil","popolazione urbana","superficie forestale","superficie delle terre emerse","densità di popolazione","superficie agricola","superficie arabile","superficie totale","popolazione rurale","pil pro capite","speranza di vita"],"en":["population","gdp","urban population","forest area","land area","population density","agricultural land","arable land","surface area","rural population","gdp per capita","life expectancy"],"fr":["population","pib","population urbaine","superficie forestière","superficie des terres émergées","densité de population","terres agricoles","terres arables","superficie totale","population rurale","pib par habitant","espérance de vie"],"es":["población","pib","población urbana","superficie forestal","superficie terrestre","densidad de población","tierras agrícolas","tierras cultivables","superficie total","población rural","pib per cápita","esperanza de vida"],"de":["bevölkerung","bip","stadtbevölkerung","waldfläche","landfläche","bevölkerungsdichte","landwirtschaftliche fläche","ackerland","gesamtfläche","landbevölkerung","bip je einwohner","lebenserwartung"],"pt":["população","pib","população urbana","área florestal","área terrestre","densidade populacional","área agrícola","terra arável","área total","população rural","pib per capita","esperança de vida"]};
  for(const {code} of countries)for(const [language,questions] of Object.entries(queries)){
   const evidence=statisticsEvidence(snapshot,code,language);
-  for(const [i,indicator] of INDICATORS.slice(0,8).entries()){
+  for(const [i,indicator] of INDICATORS.entries()){
    const id='wdi-'+indicator.id,present=Object.hasOwn(snapshot.values[indicator.id]??{},code),fact=evidence.find(x=>x.id===id);
    assert.equal(Boolean(fact),present);
-   if(fact)assert.ok(fact.language===language&&fact.period===YEAR&&fact.checked===snapshot.retrieved&&fact.source==='https://data.worldbank.org/indicator/'+indicator.id);
+   if(fact)assert.ok(fact.language===language&&fact.period===YEAR&&fact.checked===snapshot.retrievedByIndicator[indicator.id]&&fact.source==='https://data.worldbank.org/indicator/'+indicator.id);
    assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]}),present?[id]:[]);
    assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]+' '+YEAR+'? '}),present?[id]:[]);
    assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]+' 2023'}),[]);
