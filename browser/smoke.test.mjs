@@ -115,6 +115,22 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(Object.keys(saved).length,1);
   await page.reload();
   await page.waitForFunction(()=>document.querySelector('#quizStats').textContent.includes('1 / 195'));
+  await page.locator('#quiz summary').click();
+  await page.locator('#quizMode').selectOption('statistics');
+  await page.locator('#quizNext').click();
+  assert.equal(await page.locator('#quizOptions button').count(),4);
+  assert.match(await page.locator('#quizQuestion').textContent(),/202[24]/);
+  await page.locator('#quizOptions button').first().click();
+  assert.match(await page.locator('#quizFeedback a').getAttribute('href'),/^https:\/\/data\.worldbank\.org\/indicator\//);
+  assert.equal(await page.locator('#quizOptions button:disabled').count(),4);
+  await page.locator('#quizMode').selectOption('region');
+  assert.match(await page.locator('#quizStats').textContent(),/1 \/ 195/);
+  await page.locator('#quizMode').selectOption('statistics');
+  assert.match(await page.locator('#quizStats').textContent(),/1 \/ 2\d{3}/);
+  await page.reload();
+  await page.locator('#quiz summary').click();
+  await page.locator('#quizMode').selectOption('statistics');
+  assert.match(await page.locator('#quizStats').textContent(),/1 \/ 2\d{3}/);
   // Reload intentionally resets the selected country; select Italy for the scoped corpus.
   await page.locator('#place').selectOption(it);
   await page.locator('#guide summary').click();
