@@ -2,7 +2,8 @@
 import {writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
-import {countryMap,parseIndicator,INDICATORS,YEAR} from '../src/world-statistics.mjs';
+import {countryMap,parseIndicator,INDICATORS,YEAR,statisticsFor} from '../src/world-statistics.mjs';
+import {snapshot as committedSnapshot} from '../src/world-statistics-data.mjs';
 
 export function retryDelay(header,attempt,now=Date.now()){
  const fallback=2000*2**attempt;
@@ -38,17 +39,34 @@ export async function get(path,query,{request=fetch,wait=delay,report=console.wa
  }
  throw new Error('WDI retry limit');
 }
-export async function acquire({getJson=get,wait=delay,now=()=>new Date()}={}){
- const map=countryMap(await getJson('country',{}));
- const entries=[];
- for(const {id} of INDICATORS){
-  await wait(1500);
-  entries.push([id,parseIndicator(await getJson('country/all/indicator/'+id,{source:'2',date:YEAR}),id,map)]);
+export async function acquire({getJson=get,wait=delay,now=()=>new Date(),base=null}={}){
+ const entries=[], dates={};
+ const datePattern=/^\d{4}-\d{2}-\d{2}$/;
+ if(base!==null){
+  if(base.year!==YEAR||!datePattern.test(base.retrieved??'')||!base.values||typeof base.values!=='object'||Array.isArray(base.values))throw new Error('Invalid base WDI snapshot');
+  for(const [id,values] of Object.entries(base.values)){
+   if(!INDICATORS.some(i=>i.id===id)||!values||typeof values!=='object'||Array.isArray(values)||!Object.keys(values).length)throw new Error('Invalid base WDI series');
+   const checked=base.retrievedByIndicator?.[id]??base.retrieved;
+   if(!datePattern.test(checked))throw new Error('Invalid base WDI acquisition date');
+   for(const code of Object.keys(values))if(!statisticsFor(base,code,'en').some(i=>i.id===id))throw new Error('Invalid base WDI observation');
+   entries.push([id,{...values}]);dates[id]=checked;
+  }
  }
- return {year:YEAR,retrieved:now().toISOString().slice(0,10),values:Object.fromEntries(entries)};
+ const present=new Set(entries.map(([id])=>id));
+ const missing=INDICATORS.filter(({id})=>!present.has(id));
+ if(!missing.length)return base; // no external request when all series are already verified
+ const map=countryMap(await getJson('country',{}));
+ for(const {id} of missing){
+  await wait(base===null?1500:5000);
+  entries.push([id,parseIndicator(await getJson('country/all/indicator/'+id,{source:'2',date:YEAR}),id,map)]);
+  dates[id]=now().toISOString().slice(0,10);
+ }
+ const values=Object.fromEntries(INDICATORS.map(({id})=>[id,entries.find(([key])=>key===id)[1]]));
+ const retrieved=now().toISOString().slice(0,10);
+ return {year:YEAR,retrieved,values,...(base!==null||Object.values(dates).some(d=>d!==retrieved)?{retrievedByIndicator:dates}:{})};
 }
 async function main(){
- const snapshot=await acquire();
+ const snapshot=await acquire({base:process.argv.includes('--extend')?committedSnapshot:null});
  for(const [id,values] of Object.entries(snapshot.values))console.log(id+': '+Object.keys(values).length+' countries with observations');
  if(process.argv.includes('--write'))await writeFile(new URL('../src/world-statistics-data.mjs',import.meta.url),'// Data: World Bank WDI and named providers, CC BY 4.0 and additional terms: https://data.worldbank.org/summary-terms-of-use\nexport const snapshot='+JSON.stringify(snapshot)+';\n');
  console.log('WDI_SNAPSHOT '+JSON.stringify(snapshot));

@@ -10,14 +10,18 @@ export const INDICATORS=Object.freeze([
  Object.freeze({id:'AG.LND.TOTL.K2',it:'Superficie delle terre emerse',en:'Land area',unit:'km²',digits:2,provider:'FAO, FAOSTAT'}),
  Object.freeze({id:'EN.POP.DNST',it:'Densità di popolazione',en:'Population density',unit:'/km²',digits:2,provider:'FAO and World Bank population estimates'}),
  Object.freeze({id:'AG.LND.AGRI.ZS',it:'Superficie agricola (quota delle terre emerse)',en:'Agricultural land (% of land area)',unit:'%',provider:'FAO, FAOSTAT'}),
- Object.freeze({id:'AG.LND.ARBL.ZS',it:'Superficie arabile (quota delle terre emerse)',en:'Arable land (% of land area)',unit:'%',provider:'FAO, FAOSTAT'})
+ Object.freeze({id:'AG.LND.ARBL.ZS',it:'Superficie arabile (quota delle terre emerse)',en:'Arable land (% of land area)',unit:'%',provider:'FAO, FAOSTAT'}),
+ Object.freeze({"id":"AG.SRF.TOTL.K2","it":"Superficie totale (terre e acque interne)","en":"Surface area (land and inland water)","unit":"km²","digits":2,"provider":"FAO, FAOSTAT"}),
+ Object.freeze({"id":"SP.RUR.TOTL.ZS","it":"Popolazione rurale (% del totale)","en":"Rural population (% of total)","unit":"%","provider":"UN Population Division, World Urbanization Prospects; World Bank estimates"}),
+ Object.freeze({"id":"NY.GDP.PCAP.CD","it":"PIL pro capite a prezzi correnti","en":"GDP per capita, current prices","unit":"USD","digits":2,"provider":"National statistical organizations / central banks; OECD; World Bank"}),
+ Object.freeze({"id":"SP.DYN.LE00.IN","it":"Speranza di vita alla nascita (anni)","en":"Life expectancy at birth (years)","unit":"","digits":2,"provider":"UN Population Division, World Population Prospects; national statistical offices; Eurostat"})
 ]);
 // Original translations of indicator names, not additional data observations.
 const localizedLabels=Object.freeze({
- fr:['Population totale','PIB à prix courants','Population urbaine','Superficie forestière (% des terres émergées)',"Superficie des terres émergées","Densité de population","Terres agricoles (% des terres émergées)","Terres arables (% des terres émergées)"],
- es:['Población total','PIB a precios corrientes','Población urbana','Superficie forestal (% de la superficie terrestre)',"Superficie terrestre","Densidad de población","Tierras agrícolas (% de la superficie terrestre)","Tierras cultivables (% de la superficie terrestre)"],
- de:['Gesamtbevölkerung','BIP zu jeweiligen Preisen','Stadtbevölkerung','Waldfläche (% der Landfläche)',"Landfläche","Bevölkerungsdichte","Landwirtschaftliche Fläche (% der Landfläche)","Ackerland (% der Landfläche)"],
- pt:['População total','PIB a preços correntes','População urbana','Área florestal (% da área terrestre)',"Área terrestre","Densidade populacional","Área agrícola (% da área terrestre)","Terra arável (% da área terrestre)"]
+ fr:['Population totale','PIB à prix courants','Population urbaine','Superficie forestière (% des terres émergées)',"Superficie des terres émergées","Densité de population","Terres agricoles (% des terres émergées)","Terres arables (% des terres émergées)","Superficie totale (terres et eaux intérieures)","Population rurale (% du total)","PIB par habitant à prix courants","Espérance de vie à la naissance (ans)"],
+ es:['Población total','PIB a precios corrientes','Población urbana','Superficie forestal (% de la superficie terrestre)',"Superficie terrestre","Densidad de población","Tierras agrícolas (% de la superficie terrestre)","Tierras cultivables (% de la superficie terrestre)","Superficie total (tierra y aguas interiores)","Población rural (% del total)","PIB per cápita a precios corrientes","Esperanza de vida al nacer (años)"],
+ de:['Gesamtbevölkerung','BIP zu jeweiligen Preisen','Stadtbevölkerung','Waldfläche (% der Landfläche)',"Landfläche","Bevölkerungsdichte","Landwirtschaftliche Fläche (% der Landfläche)","Ackerland (% der Landfläche)","Gesamtfläche (Land und Binnengewässer)","Landbevölkerung (% der Gesamtbevölkerung)","BIP je Einwohner zu jeweiligen Preisen","Lebenserwartung bei Geburt (Jahre)"],
+ pt:['População total','PIB a preços correntes','População urbana','Área florestal (% da área terrestre)',"Área terrestre","Densidade populacional","Área agrícola (% da área terrestre)","Terra arável (% da área terrestre)","Área total (terra e águas interiores)","População rural (% do total)","PIB per capita a preços correntes","Esperança de vida ao nascer (anos)"]
 });
 export const statisticsLanguages=Object.freeze(['it','en',...Object.keys(localizedLabels)]);
 const codes=new Set(countries.map(x=>x.code));
@@ -39,6 +43,7 @@ function validValue(id,v){
  if(typeof v!=='number'||!Number.isFinite(v)||v<0)return false;
  if(id==='SP.POP.TOTL')return Number.isSafeInteger(v);
  if(id.endsWith('.ZS'))return v<=100;
+ if(id==='SP.DYN.LE00.IN')return v>0&&v<=130;
  return true;
 }
 export function parseIndicator(payload,id,map){
@@ -63,8 +68,10 @@ export function statisticsFor(snapshot,code,locale='it'){
  const language=statisticsLanguages.includes(locale)?locale:'en';
  return INDICATORS.flatMap((i,index)=>{
   const v=snapshot.values?.[i.id]?.[code];if(!validValue(i.id,v))return [];
+  const retrieved=snapshot.retrievedByIndicator?.[i.id]??snapshot.retrieved;
+  if(typeof retrieved!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(retrieved))return [];
   const nf=new Intl.NumberFormat(language,{useGrouping:'always',maximumFractionDigits:i.digits??(i.unit==='%'?2:0)});
-  return [{id:i.id,language,label:localizedLabels[language]?.[index]??i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved:snapshot.retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
+  return [{id:i.id,language,label:localizedLabels[language]?.[index]??i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
  });
 }
 
@@ -83,6 +90,13 @@ const queries={
  de:{'bevölkerung':'SP.POP.TOTL','gesamtbevölkerung':'SP.POP.TOTL','bip':'NY.GDP.MKTP.CD','stadtbevölkerung':'SP.URB.TOTL.IN.ZS','waldfläche':'AG.LND.FRST.ZS',"landfläche":"AG.LND.TOTL.K2","bevölkerungsdichte":"EN.POP.DNST","landwirtschaftliche fläche":"AG.LND.AGRI.ZS","ackerland":"AG.LND.ARBL.ZS"},
  pt:{'população':'SP.POP.TOTL','população total':'SP.POP.TOTL','pib':'NY.GDP.MKTP.CD','população urbana':'SP.URB.TOTL.IN.ZS','área florestal':'AG.LND.FRST.ZS',"área terrestre":"AG.LND.TOTL.K2","densidade populacional":"EN.POP.DNST","área agrícola":"AG.LND.AGRI.ZS","terra arável":"AG.LND.ARBL.ZS"}
 };
+// Local aliases retain exact matching and explicit year semantics.
+Object.assign(queries.it,{"superficie totale":"AG.SRF.TOTL.K2","popolazione rurale":"SP.RUR.TOTL.ZS","pil pro capite":"NY.GDP.PCAP.CD","speranza di vita":"SP.DYN.LE00.IN"});
+Object.assign(queries.en,{"surface area":"AG.SRF.TOTL.K2","rural population":"SP.RUR.TOTL.ZS","gdp per capita":"NY.GDP.PCAP.CD","life expectancy":"SP.DYN.LE00.IN"});
+Object.assign(queries.fr,{"superficie totale":"AG.SRF.TOTL.K2","population rurale":"SP.RUR.TOTL.ZS","pib par habitant":"NY.GDP.PCAP.CD","espérance de vie":"SP.DYN.LE00.IN"});
+Object.assign(queries.es,{"superficie total":"AG.SRF.TOTL.K2","población rural":"SP.RUR.TOTL.ZS","pib per cápita":"NY.GDP.PCAP.CD","esperanza de vida":"SP.DYN.LE00.IN"});
+Object.assign(queries.de,{"gesamtfläche":"AG.SRF.TOTL.K2","landbevölkerung":"SP.RUR.TOTL.ZS","bip je einwohner":"NY.GDP.PCAP.CD","lebenserwartung":"SP.DYN.LE00.IN"});
+Object.assign(queries.pt,{"área total":"AG.SRF.TOTL.K2","população rural":"SP.RUR.TOTL.ZS","pib per capita":"NY.GDP.PCAP.CD","esperança de vida":"SP.DYN.LE00.IN"});
 export function statisticsSelection(snapshot,input){
  if(!Object.hasOwn(queries,input.language))return [];
  let q=input.question.normalize('NFC').toLowerCase().trim().replace(/[?!.]+$/u,'').trim();
