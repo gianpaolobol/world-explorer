@@ -13,7 +13,7 @@ test('pilot covers the twelve disciplines once with unique IDs and explicit sour
  for(const x of a){assert.match(x.source,/^https:\/\//);assert.ok(x.label&&x.text);assert.equal(x.checked,'2026-11-26');assert.equal(x.review,'source-checked-not-independent');}
 });
 test('pilot never transfers Italian evidence to any other country',()=>{
- for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES'].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
+ for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE'].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
 });
 test('both supported pilot languages have complete distinct texts, others disclose English fallback',()=>{
  const it=pilotEvidence('IT','it'),en=pilotEvidence('IT','en');
@@ -58,7 +58,7 @@ test('France corpus has twelve disciplines, scoped bilingual facts and explicit 
  for(const [language,questions] of [['it',['orografia','idrografia','geologia','biogeografia','popolazione 2026','storia','territorio','oceanografia','clima','capitale','economia 2024','città']],['en',['orography','hydrology','geology','biogeography','population 2026','historical geography','physical geography','oceanography','climatology','capital','economy 2024','urban geography']]])for(let i=0;i<questions.length;i++){const a=await answerGuide({code:'FR',language,question:questions[i]});assert.equal(a.evidence.length,1);assert.equal(a.evidence[0].id,it[i].id);}
  assert.equal((await answerGuide({code:'FR',language:'it',question:'popolazione 2026'})).evidence[0].period,'2026-01-01');
  assert.equal((await answerGuide({code:'FR',language:'it',question:'popolazione'})).evidence[0].id,'wdi-SP.POP.TOTL');
- assert.equal((await answerGuide({code:'DE',language:'it',question:'geologia'})).status,'insufficient');
+ assert.equal((await answerGuide({code:'AT',language:'it',question:'geologia'})).status,'insufficient');
  assert.deepEqual(pilotEvidence('FR','fr'),en);
 });
 
@@ -94,4 +94,19 @@ test('guide answers explicit WDI snapshot years without overriding scoped editor
  for(const [code,language,question] of [['VA','it','popolazione 2024'],['FR','it','popolazione 2023'],['DE','de','bevölkerung 2030'],['FR','en','population 2024 2030']]){
   assert.equal((await answerGuide({code,language,question})).status,'insufficient');
  }
+});
+
+
+test('Germany twelve disciplines: bilingual, scoped, dated and source-checked',async()=>{
+ const it=pilotEvidence('DE','it'),en=pilotEvidence('DE','en');
+ assert.deepEqual(it.map(f=>f.discipline),disciplines);
+ assert.deepEqual(it.map(f=>f.id),en.map(f=>f.id));
+ const queries={it:["territorio","orografia","idrografia","oceanografia","geologia","clima","biogeografia","capitale","popolazione 2025","economia 2025","città","storia"],en:["physical geography","orography","hydrology","oceanography","geology","climatology","biogeography","capital","population 2025","economy 2025","urban geography","historical geography"]};
+ for(let i=0;i<12;i++){
+  assert.match(it[i].id,/^de-/);assert.notEqual(it[i].text,en[i].text);assert.equal(it[i].source,en[i].source);assert.equal(it[i].period,en[i].period);assert.equal(it[i].checked,'2026-11-27');assert.equal(it[i].review,'source-checked-not-independent');
+  for(const language of ['it','en']){const a=await answerGuide({code:'DE',language,question:queries[language][i]});assert.equal(a.status,'evidence');assert.equal(a.evidence.length,1);assert.equal(a.evidence[0].id,it[i].id);}
+ }
+ assert.deepEqual(pilotEvidence('DE','de'),en);
+ assert.equal((await answerGuide({code:'DE',language:'it',question:'popolazione 2024'})).evidence[0].id,'wdi-SP.POP.TOTL');
+ assert.equal((await answerGuide({code:'DE',language:'it',question:'popolazione 2030'})).status,'insufficient');
 });
