@@ -115,7 +115,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(Object.keys(saved).length,1);
   await page.reload();
   await page.waitForFunction(()=>document.querySelector('#quizStats').textContent.includes('1 / 195'));
-  await page.locator('#quiz summary').click();
+  await page.locator('#quiz').evaluate(el=>el.open=true);
   await page.locator('#quizMode').selectOption('statistics');
   await page.locator('#quizNext').click();
   assert.equal(await page.locator('#quizOptions button').count(),4);
@@ -128,7 +128,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#quizMode').selectOption('statistics');
   assert.match(await page.locator('#quizStats').textContent(),/1 \/ 2\d{3}/);
   await page.reload();
-  await page.locator('#quiz summary').click();
+  await page.locator('#quiz').evaluate(el=>el.open=true);
   await page.locator('#quizMode').selectOption('statistics');
   assert.match(await page.locator('#quizStats').textContent(),/1 \/ 2\d{3}/);
   // Reload intentionally resets the selected country; select Italy for the scoped corpus.
