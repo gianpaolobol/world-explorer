@@ -4,8 +4,10 @@ import {INDICATORS,statisticsFor} from './world-statistics.mjs';
 import {review,exportMemory} from './learning.mjs';
 function shuffle(items,random){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.min(i,Math.max(0,Math.floor(random()*(i+1))));[a[i],a[j]]=[a[j],a[i]];}return a;}
 export function createStatisticsQuiz(snapshot){
+ const localized=new Map();
+ function observations(code,locale){const key=locale+':'+code;if(!localized.has(key))localized.set(key,statisticsFor(snapshot,code,locale));return localized.get(key);}
  const groups=new Map(INDICATORS.map(i=>[i.id,[]]));
- for(const {code} of countries)for(const item of statisticsFor(snapshot,code,'en')){
+ for(const {code} of countries)for(const item of observations(code,'en')){
   groups.get(item.id).push({code,value:snapshot.values[item.id][code],display:item.value});
  }
  const tasks=new Map();
@@ -34,7 +36,7 @@ export function createStatisticsQuiz(snapshot){
   if(!q)return null;const t=tasks.get(q.key);if(!t||q.id!==t.id||q.answer!==t.code||typeof q.highest!=='boolean'||!Array.isArray(q.options)||q.options.length!==4||new Set(q.options).size!==4||!q.options.includes(q.answer))return null;
   const allowed=new Set((q.highest?t.lower:t.higher).map(x=>x.code));
   if(q.options.some(x=>x!==q.answer&&!allowed.has(x)))return null;
-  const entries=q.options.map(code=>({code,...statisticsFor(snapshot,code,locale).find(x=>x.id===t.id)}));
+  const entries=q.options.map(code=>({code,...observations(code,locale).find(x=>x.id===t.id)}));
   const answer=entries.find(x=>x.code===q.answer);
   if(!answer?.source||entries.some(x=>!x.source||x.year!==answer.year))return null;
   return {label:answer.label,year:answer.year,source:answer.source,attribution:answer.attribution,entries};
