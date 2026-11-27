@@ -101,3 +101,18 @@ test('expanded WDI indicators validate units, retain fractions and select exact 
  for(const id of ids){assert.throws(()=>parseIndicator(page([row('IT','ITA',-1,id)]),id,map));}
  for(const id of ids.slice(2)){assert.throws(()=>parseIndicator(page([row('IT','ITA',101,id)]),id,map));}
 });
+
+test('real expanded snapshot supports all eight exact queries in six locales without filling gaps',async()=>{
+ const {statisticsEvidence,statisticsSelection}=await import('../src/world-statistics.mjs');
+ const queries={it:['popolazione','pil','popolazione urbana','superficie forestale','superficie delle terre emerse','densità di popolazione','superficie agricola','superficie arabile'],en:['population','gdp','urban population','forest area','land area','population density','agricultural land','arable land'],fr:['population','pib','population urbaine','superficie forestière','superficie des terres émergées','densité de population','terres agricoles','terres arables'],es:['población','pib','población urbana','superficie forestal','superficie terrestre','densidad de población','tierras agrícolas','tierras cultivables'],de:['bevölkerung','bip','stadtbevölkerung','waldfläche','landfläche','bevölkerungsdichte','landwirtschaftliche fläche','ackerland'],pt:['população','pib','população urbana','área florestal','área terrestre','densidade populacional','área agrícola','terra arável']};
+ for(const {code} of countries)for(const [language,questions] of Object.entries(queries)){
+  const evidence=statisticsEvidence(snapshot,code,language);
+  for(const [i,indicator] of INDICATORS.entries()){
+   const id='wdi-'+indicator.id,present=Object.hasOwn(snapshot.values[indicator.id],code),fact=evidence.find(x=>x.id===id);
+   assert.equal(Boolean(fact),present);
+   if(fact)assert.ok(fact.language===language&&fact.period===YEAR&&fact.checked===snapshot.retrieved&&fact.source==='https://data.worldbank.org/indicator/'+indicator.id);
+   assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]}),present?[id]:[]);
+   assert.deepEqual(statisticsSelection(snapshot,{code,language,question:questions[i]+' 2030'}),[]);
+  }
+ }
+});
