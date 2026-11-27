@@ -59,7 +59,14 @@ const germanyRows=[
  ["urban","città","urban geography","Al 31 dicembre 2025 il Land di Berlino contava 3.700.577 residenti; il dato non descrive l’intera area metropolitana.","On 31 December 2025 the federal state of Berlin had 3,700,577 residents; this does not measure its entire metropolitan area.","https://www.destatis.de/EN/Themes/Society-Environment/Population/Current-Population/Tables/population-by-laender-basis-2022.html","Destatis, popolazione per Land","2025-12-31","2026-11-27"],
  ["historical","storia","historical geography","Nella valle del Medio Reno, i terrazzamenti viticoli testimoniano oltre un millennio di trasformazioni del paesaggio fluviale.","Vineyard terraces in the Middle Rhine Valley reflect over a millennium of human reshaping of the river landscape.","https://whc.unesco.org/en/list/1066/","UNESCO, Upper Middle Rhine Valley",null,"2026-11-27"]
 ];
-const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows]]);
+// UNCTAD's 32-country LLDC list and the UN explanatory page, checked 2026-11-27.
+ // This is a partial geographic context, not an oceanographic survey or national economic profile.
+export const lldcCodes=Object.freeze('AF AM AZ BT BO BW BF BI CF TD SZ ET KZ KG LA LS MK MW ML MN NP NE PY MD RW SS TJ TM UG UZ ZM ZW'.split(' '));
+const lldcRows=[
+ ['oceanography','oceanografia','oceanography','Questo Stato non dispone di accesso territoriale diretto all’oceano; ciò non esclude laghi, mari interni o altri ambienti acquatici.','This country has no direct territorial access to the ocean; it may still have lakes, inland seas or other aquatic environments.','https://unctad.org/topic/landlocked-developing-countries/list-of-LLDCs','UNCTAD, LLDC list',null,'2026-11-27'],
+ ['economic','accesso ai porti','access to seaports','Per raggiungere via terra porti oceanici, questo Stato dipende dal transito attraverso altri Paesi; non è una stima dei costi di trasporto nazionali.','Land routes from this country to ocean seaports depend on transit through other countries; this is not an estimate of national transport costs.','https://www.un.org/en/landlocked/about-landlocked-developing-countries','UN, LLDC geographical context',null,'2026-11-27']
+];
+const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows])]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];

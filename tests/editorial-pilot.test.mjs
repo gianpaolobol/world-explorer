@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {countries,languages} from '../src/countries.mjs';
-import {disciplines,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
+import {disciplines,lldcCodes,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
 import {answerGuide,evidenceFor} from '../src/guide.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'orografia'};
@@ -13,7 +13,7 @@ test('pilot covers the twelve disciplines once with unique IDs and explicit sour
  for(const x of a){assert.match(x.source,/^https:\/\//);assert.ok(x.label&&x.text);assert.equal(x.checked,'2026-11-26');assert.equal(x.review,'source-checked-not-independent');}
 });
 test('pilot never transfers Italian evidence to any other country',()=>{
- for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE'].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
+ for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE',...lldcCodes].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
 });
 test('both supported pilot languages have complete distinct texts, others disclose English fallback',()=>{
  const it=pilotEvidence('IT','it'),en=pilotEvidence('IT','en');
@@ -109,4 +109,36 @@ test('Germany twelve disciplines: bilingual, scoped, dated and source-checked',a
  assert.deepEqual(pilotEvidence('DE','de'),en);
  assert.equal((await answerGuide({code:'DE',language:'it',question:'popolazione 2024'})).evidence[0].id,'wdi-SP.POP.TOTL');
  assert.equal((await answerGuide({code:'DE',language:'it',question:'popolazione 2030'})).status,'insufficient');
+});
+
+test('UN LLDC batch: explicit partial coverage, country scope, exact guide selection and abstention',async()=>{
+ const expected='AF AM AZ BT BO BW BF BI CF TD SZ ET KZ KG LA LS MK MW ML MN NP NE PY MD RW SS TJ TM UG UZ ZM ZW'.split(' ');
+ assert.deepEqual(lldcCodes,expected);assert.equal(new Set(lldcCodes).size,32);
+ for(const c of countries){
+  const n=['IT','FR','ES','DE'].includes(c.code)?12:expected.includes(c.code)?2:0;
+  for(const l of languages){
+   const a=pilotEvidence(c.code,l);
+   assert.equal(a.length,n);
+   assert.equal(new Set(a.map(x=>x.id)).size,n);
+   assert.ok(a.every(x=>x.id.startsWith(c.code.toLowerCase()+'-')));
+  }
+  if(!expected.includes(c.code))continue;
+  const it=pilotEvidence(c.code,'it'),en=pilotEvidence(c.code,'en');
+  assert.deepEqual(it.map(f=>f.discipline),['oceanography','economic']);
+  assert.deepEqual(it.map(f=>f.id),en.map(f=>f.id));
+  for(const [i,qit,qen] of [[0,'oceanografia','oceanography'],[1,'accesso ai porti','access to seaports']]){
+   assert.equal(it[i].checked,'2026-11-27');assert.equal(it[i].review,'source-checked-not-independent');
+   assert.equal(it[i].source,en[i].source);assert.equal(it[i].period,null);
+   assert.notEqual(it[i].text,en[i].text);
+   for(const [language,question] of [['it',qit],['en',qen]]){
+    const a=await answerGuide({code:c.code,language,question});
+    assert.equal(a.status,'evidence');assert.equal(a.evidence.length,1);assert.equal(a.evidence[0].id,it[i].id);
+   }
+  }
+  assert.deepEqual(pilotEvidence(c.code,'fr'),en);
+  assert.equal((await answerGuide({code:c.code,language:'it',question:'oceanografia 2030'})).status,'insufficient');
+ }
+ assert.equal((await answerGuide({code:'AT',language:'en',question:'access to seaports'})).status,'insufficient');
+ assert.equal((await answerGuide({code:'NE',language:'en',question:'access to seaports'},async()=> '{"ids":["af-economic"]}')).mode,'fallback');
+ assert.equal(countries.reduce((n,c)=>n+pilotEvidence(c.code,'it').length,0),112);
 });
