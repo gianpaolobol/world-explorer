@@ -20,7 +20,8 @@ async function runBrowser(t,withGlobe,fn){
  const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  t.after(()=>browser.close());
  const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
- const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await context.newPage();const errors=[],failedAssets=[];page.on('pageerror',e=>errors.push(e.message));
+ page.on('response',res=>{if(res.url().startsWith(origin+'/src/')&&res.status()>=400)failedAssets.push(res.status()+' '+res.url());});
  // Never load live tiles or send test data to third-party services.
  await context.route('**/*',async route=>{
   const url=route.request().url();
@@ -36,7 +37,8 @@ async function runBrowser(t,withGlobe,fn){
   return route.abort();
  });
  await page.goto(origin+'/',{waitUntil:'load'});
- await page.waitForFunction(()=>document.querySelector('#place').options.length===195);
+ try{await page.waitForFunction(()=>document.querySelector('#place').options.length===195);}
+ catch(error){throw new Error('Atlas startup failed; browser exceptions: '+JSON.stringify(errors)+'; failed local assets: '+JSON.stringify(failedAssets),{cause:error});}
  await fn(page);
  assert.deepEqual(errors,[],'Uncaught browser exceptions');
 }
@@ -115,6 +117,22 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(Object.keys(saved).length,1);
   await page.reload();
   await page.waitForFunction(()=>document.querySelector('#quizStats').textContent.includes('1 / 195'));
+  await page.locator('#quiz').evaluate(el=>el.open=true);
+  await page.locator('#quizMode').selectOption('statistics');
+  await page.locator('#quizNext').click();
+  assert.equal(await page.locator('#quizOptions button').count(),4);
+  assert.match(await page.locator('#quizQuestion').textContent(),/202[24]/);
+  await page.locator('#quizOptions button').first().click();
+  assert.match(await page.locator('#quizFeedback a').getAttribute('href'),/^https:\/\/data\.worldbank\.org\/indicator\//);
+  assert.equal(await page.locator('#quizOptions button:disabled').count(),4);
+  await page.locator('#quizMode').selectOption('region');
+  assert.match(await page.locator('#quizStats').textContent(),/1 \/ 195/);
+  await page.locator('#quizMode').selectOption('statistics');
+  assert.match(await page.locator('#quizStats').textContent(),/1 \/ 2\d{3}/);
+  await page.reload();
+  await page.locator('#quiz').evaluate(el=>el.open=true);
+  await page.locator('#quizMode').selectOption('statistics');
+  assert.match(await page.locator('#quizStats').textContent(),/1 \/ 2\d{3}/);
   // Reload intentionally resets the selected country; select Italy for the scoped corpus.
   await page.locator('#place').selectOption(it);
   await page.locator('#guide summary').click();
