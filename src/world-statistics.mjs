@@ -68,8 +68,10 @@ export function statisticsFor(snapshot,code,locale='it'){
  const language=statisticsLanguages.includes(locale)?locale:'en';
  return INDICATORS.flatMap((i,index)=>{
   const v=snapshot.values?.[i.id]?.[code];if(!validValue(i.id,v))return [];
+  const retrieved=snapshot.retrievedByIndicator?.[i.id]??snapshot.retrieved;
+  if(typeof retrieved!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(retrieved))return [];
   const nf=new Intl.NumberFormat(language,{useGrouping:'always',maximumFractionDigits:i.digits??(i.unit==='%'?2:0)});
-  return [{id:i.id,language,label:localizedLabels[language]?.[index]??i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved:snapshot.retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
+  return [{id:i.id,language,label:localizedLabels[language]?.[index]??i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
  });
 }
 
