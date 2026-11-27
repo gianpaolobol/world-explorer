@@ -31,3 +31,5 @@ SOFTWARE.
 - Optional local model Qwen2.5 1.5B: Apache-2.0, https://ollama.com/library/qwen2.5:1.5b . Qwen2.5 3B is governed by a separate Qwen Research License permitting noncommercial use only, https://ollama.com/library/qwen2.5:3b ; not approved for commercial use here. Model weights and Ollama binaries are not distributed in this repository. CI uses a temporary verified upstream Ollama v0.40.18 archive; https://github.com/ollama/ollama/releases/tag/v0.40.18 .
 
 - WDI expansion (2024 observations acquired 2026-11-27): land area, agricultural land and arable land: FAO FAOSTAT; population density: FAO and World Bank population estimates; indicator pages and CC BY 4.0 / additional terms in docs/SOURCES.md. Snapshot includes 1,534 observations; no imputation.
+
+- Candidate WDI additions: FAO surface area, UN/World Bank rural population, national offices/OECD/World Bank GDP per capita, UN/national offices/Eurostat life expectancy. Individual CC BY 4.0 pages and additional terms in docs/SOURCES.md; no additional values committed yet.
