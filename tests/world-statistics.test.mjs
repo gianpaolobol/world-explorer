@@ -47,15 +47,15 @@ test('WDI retries timeout but not invalid JSON, with bounded attempts',async()=>
 
 import {snapshot} from '../src/world-statistics-data.mjs';
 import {countries} from '../src/countries.mjs';
-test('verified CI snapshot contains 766 dated observations from 194 registry destinations',()=>{
- assert.equal(snapshot.year,'2024');assert.equal(snapshot.retrieved,'2026-11-26');
- assert.deepEqual(Object.keys(snapshot.values),INDICATORS.slice(0,4).map(i=>i.id));
- assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191]);
+test('verified CI snapshot contains 1534 dated observations from 194 registry destinations',()=>{
+ assert.equal(snapshot.year,'2024');assert.equal(snapshot.retrieved,'2026-11-27');
+ assert.deepEqual(Object.keys(snapshot.values),INDICATORS.map(i=>i.id));
+ assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191,193,193,192,190]);
  const allowed=new Set(countries.map(c=>c.code));
  const union=new Set(Object.values(snapshot.values).flatMap(Object.keys));
  assert.equal(union.size,194);assert.ok([...union].every(c=>allowed.has(c)));
  assert.deepEqual(statisticsFor(snapshot,'VA'),[]);
- assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),766);
+ assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),1534);
  for(const [id,values] of Object.entries(snapshot.values))for(const [code,v] of Object.entries(values)){
   assert.ok(Number.isFinite(v)&&v>=0);if(id.endsWith('.ZS'))assert.ok(v<=100);
   if(id==='SP.POP.TOTL')assert.ok(Number.isSafeInteger(v));
@@ -80,7 +80,7 @@ test('four new statistic locales retain exact observation coverage, provenance a
  }
 });
 
-// New indicators use synthetic fixtures until the separately acquired snapshot is reviewed.
+// Synthetic edge cases complement the separately acquired snapshot.
 test('expanded WDI indicators validate units, retain fractions and select exact localized evidence',async()=>{
  const {statisticsEvidence,statisticsSelection}=await import('../src/world-statistics.mjs');
  const ids=["AG.LND.TOTL.K2","EN.POP.DNST","AG.LND.AGRI.ZS","AG.LND.ARBL.ZS"];
