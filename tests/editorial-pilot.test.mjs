@@ -12,7 +12,7 @@ test('pilot covers the twelve disciplines once with unique IDs and explicit sour
  for(const x of a){assert.match(x.source,/^https:\/\//);assert.ok(x.label&&x.text);assert.equal(x.checked,'2026-11-26');assert.equal(x.review,'source-checked-not-independent');}
 });
 test('pilot never transfers Italian evidence to any other country',()=>{
- for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(c.code!=='FR')assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
+ for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES'].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
 });
 test('both supported pilot languages have complete distinct texts, others disclose English fallback',()=>{
  const it=pilotEvidence('IT','it'),en=pilotEvidence('IT','en');
@@ -62,4 +62,17 @@ test('France dated economic and urban evidence retain explicit geographical and 
  const g=await answerGuide({code:'FR',language:'it',question:'economia 2024'});assert.equal(g.evidence[0].period,'2024');assert.equal(g.evidence[0].checked,'2026-11-27');assert.match(g.evidence[0].text,/2\.919,9/);
  const u=await answerGuide({code:'FR',language:'en',question:'urban geography'});assert.equal(u.evidence[0].period,'2023');assert.match(u.evidence[0].text,/2,103,778.*11,013,774/);
  assert.equal((await answerGuide({code:'FR',language:'en',question:'economy 2030'})).status,'insufficient');
+});
+
+
+test('Spain: all twelve source-checked facts are scoped, bilingual and selected by the guide',async()=>{
+ const it=pilotEvidence('ES','it'),en=pilotEvidence('ES','en');
+ assert.deepEqual(it.map(f=>f.discipline),disciplines);
+ assert.deepEqual(it.map(f=>f.id),en.map(f=>f.id));
+ for(let i=0;i<12;i++){assert.match(it[i].id,/^es-/);assert.equal(it[i].source,en[i].source);assert.equal(it[i].period,en[i].period);assert.notEqual(it[i].text,en[i].text);assert.equal(it[i].checked,'2026-11-27');assert.equal(it[i].review,'source-checked-not-independent');}
+ const queries={it:['territorio','orografia','idrografia','oceanografia','geologia','clima','biogeografia','capitale','popolazione 2025','economia 2024','città','storia'],en:['physical geography','orography','hydrology','oceanography','geology','climatology','biogeography','capital','population 2025','economy 2024','urban geography','historical geography']};
+ for(const language of ['it','en'])for(let i=0;i<12;i++){const a=await answerGuide({code:'ES',language,question:queries[language][i]});assert.equal(a.status,'evidence');assert.equal(a.evidence.length,1);assert.equal(a.evidence[0].id,it[i].id);}
+ assert.equal((await answerGuide({code:'ES',language:'it',question:'popolazione'})).evidence[0].id,'wdi-SP.POP.TOTL');
+ assert.equal((await answerGuide({code:'ES',language:'it',question:'popolazione 2030'})).status,'insufficient');
+ assert.deepEqual(pilotEvidence('ES','es'),en);
 });
