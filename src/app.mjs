@@ -11,7 +11,7 @@ import {nearbyPhotos} from './photos.mjs';
 import {cinematicNarrationFor} from './narration.mjs';
 import {regionName,M49_SOURCE} from './regions.mjs';
 import {pilotEvidence} from './editorial-pilot.mjs';
-import {statisticsFor,statisticsEvidence,TERMS} from './world-statistics.mjs';
+import {statisticsFor,statisticsEvidence,TERMS,INDICATORS} from './world-statistics.mjs';
 import {snapshot} from './world-statistics-data.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport} from './region-quiz.mjs';
 const $=id=>document.getElementById(id), key='world-explorer-visits-v1';
@@ -84,7 +84,7 @@ function renderProfile(code){
   const meta=document.createElement('small');meta.textContent=' · '+(item.period?'Riferimento: '+item.period+' · ':'')+'Controllo fonte: '+item.checked+(item.language!==lang?' · testo in inglese':'');p.append(meta);box.append(p);
  }
  const observations=statisticsFor(snapshot,code,lang);
- $('statisticsStatus').textContent=observations.length?observations.length+' / 4 indicatori disponibili (2024); non sono dati in tempo reale.':'Nessun indicatore WDI verificato/importato per questa destinazione.';
+ $('statisticsStatus').textContent=observations.length?observations.length+' / '+INDICATORS.length+' indicatori disponibili (2024); non sono dati in tempo reale.':'Nessun indicatore WDI verificato/importato per questa destinazione.';
  for(const item of observations){
   const p=document.createElement('p');p.lang=item.language;p.dir='auto';
   p.append(document.createTextNode(item.label+': '+item.value+' · '+item.year+' · '),creditLink(item.attribution,item.source),document.createTextNode(' · Acquisizione: '+item.retrieved+(item.language!==lang?' · testo in inglese':'')));stats.append(p);
