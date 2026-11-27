@@ -136,12 +136,14 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   let commonsCalls=0;
   const fakeImage='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Synthetic.jpg/640px-Synthetic.jpg';
   await page.route('https://commons.wikimedia.org/w/api.php?*',route=>{
+   if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-methods':'GET, OPTIONS','access-control-allow-headers':'Api-User-Agent'}});
    commonsCalls++;
    const metadata={Artist:{value:'<b>Synthetic &amp; creator</b>'},LicenseShortName:{value:'CC BY 4.0'},LicenseUrl:{value:'https://creativecommons.org/licenses/by/4.0/'}};
    return route.fulfill({json:{query:{pages:[{title:'File:Synthetic.jpg',imageinfo:[{mime:'image/jpeg',thumburl:fakeImage,descriptionurl:'https://commons.wikimedia.org/wiki/File:Synthetic.jpg',extmetadata:metadata}]}]}},headers:{'access-control-allow-origin':'*','access-control-allow-headers':'Api-User-Agent'}});
   });
   await page.route(fakeImage,route=>route.fulfill({body:png,contentType:'image/png'}));
   assert.equal(commonsCalls,0);
+  await page.locator('#photos').evaluate(el=>{el.closest('details').open=true;});
   await page.locator('#photos').click();
   await page.locator('#photoResults figcaption').waitFor();
   assert.match(await page.locator('#photoResults figcaption').textContent(),/Synthetic & creator/);
