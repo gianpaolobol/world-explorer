@@ -54,7 +54,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
   assert.match(await page.locator('#statisticsStatus').textContent(),/8 \/ 8 indicatori/);
-  assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),4);
+  assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),8);
   const fr=String(countries.findIndex(c=>c.code==='FR'));
   await page.locator('#place').selectOption(fr);
   assert.equal(await page.locator('#profileFacts a').count(),12);
