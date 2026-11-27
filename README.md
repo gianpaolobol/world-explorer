@@ -32,7 +32,7 @@ Per l’Italia, chiedere uno dei temi indicati nel pannello guida. Dodici brevi 
 
 
 ### Profili documentati e statistiche WDI (anteprima)
-Il pannello profilo mostra i fatti pilota disponibili senza Ollama. Lo snapshot WDI 2024 verificato contiene 1.534 osservazioni su 2.340 indicatori configurati (otto serie già importate; quattro in attesa di acquisizione); nessuna imputazione dei mancanti. Il comando esplicito `node scripts/fetch-world-statistics.mjs --write` interroga l'API ufficiale, con retry limitati, e scrive lo snapshot locale soltanto dopo dodici indicatori validati. Prima di redistribuire verificare copertura e licenze dei fornitori. La navigazione non interroga WDI. La vista italiano/inglese non costituisce revisione scientifica indipendente.
+Il pannello profilo mostra i fatti pilota disponibili senza Ollama. Lo snapshot WDI 2024 verificato contiene 1.534 osservazioni su 2.340 indicatori configurati (otto serie già importate; quattro in attesa di acquisizione); nessuna imputazione dei mancanti. Il comando esplicito `node scripts/fetch-world-statistics.mjs --write` interroga l'API ufficiale, con retry limitati, e scrive lo snapshot locale soltanto dopo dodici indicatori validati. Con `--extend` (usato nella CI delle PR) acquisisce solo le serie mancanti, preserva i valori già verificati e la data di acquisizione per ciascuna serie; senza `--extend` esegue un aggiornamento completo. Prima di redistribuire verificare copertura e licenze dei fornitori. La navigazione non interroga WDI. La vista italiano/inglese non costituisce revisione scientifica indipendente.
 
 
 ### Collaudo guida locale
