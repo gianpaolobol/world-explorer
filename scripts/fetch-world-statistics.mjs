@@ -6,7 +6,7 @@ import {countryMap,parseIndicator,INDICATORS,YEAR,indicatorYear,statisticsFor} f
 import {snapshot as committedSnapshot} from '../src/world-statistics-data.mjs';
 
 export function retryDelay(header,attempt,now=Date.now()){
- const fallback=2000*2**attempt;
+ const fallback=15000*2**attempt;
  if(!header)return fallback;
  const ms=/^\d+$/.test(header)?Number(header)*1000:Date.parse(header)-now;
  if(!Number.isFinite(ms))return fallback;
