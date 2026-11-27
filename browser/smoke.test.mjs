@@ -132,6 +132,13 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.waitForFunction(()=>document.querySelector('#guideAnswer').textContent.includes('68.551.653'));
   assert.equal(await page.locator('#guideAnswer a').first().getAttribute('href'),'https://data.worldbank.org/indicator/SP.POP.TOTL');
   await page.locator('#place').selectOption(it);
+  const es=String(countries.findIndex(c=>c.code==='ES'));
+  await page.locator('#place').selectOption(es);
+  assert.equal(await page.locator('#profileFacts a').count(),12);
+  assert.match(await page.locator('#narration').textContent(),/Teide/);
+  assert.match(await page.locator('#narration').textContent(),/Guadalquivir/);
+  assert.equal(await page.locator('#narrationCredits a[href^="https://whc.unesco.org/"]').count(),2);
+  await page.locator('#place').selectOption(it);
   // Explicit opt-in, safe credit rendering and clearing across destinations.
   let commonsCalls=0;
   const fakeImage='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Synthetic.jpg/640px-Synthetic.jpg';
