@@ -85,7 +85,10 @@ const queries={
 };
 export function statisticsSelection(snapshot,input){
  if(!Object.hasOwn(queries,input.language))return [];
- const q=input.question.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
+ let q=input.question.normalize('NFC').toLowerCase().trim().replace(/[?!.]+$/u,'').trim();
+ // Explicit year queries are supported only for the exact snapshot year.
+ const dated=q.match(/^(.*?)\s+(\d{4})$/u);
+ if(dated){if(dated[2]!==YEAR)return [];q=dated[1].trim();}
  const aliases=queries[input.language];
  if(!Object.hasOwn(aliases,q))return [];
  const id='wdi-'+aliases[q];
