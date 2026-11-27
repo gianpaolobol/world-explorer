@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {countries,languages} from '../src/countries.mjs';
-import {disciplines,lldcCodes,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
+import {disciplines,lldcCodes,sidsCodes,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
 import {answerGuide,evidenceFor} from '../src/guide.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'orografia'};
@@ -13,7 +13,7 @@ test('pilot covers the twelve disciplines once with unique IDs and explicit sour
  for(const x of a){assert.match(x.source,/^https:\/\//);assert.ok(x.label&&x.text);assert.equal(x.checked,'2026-11-26');assert.equal(x.review,'source-checked-not-independent');}
 });
 test('pilot never transfers Italian evidence to any other country',()=>{
- for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE',...lldcCodes].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
+ for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE',...lldcCodes,...sidsCodes].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
 });
 test('both supported pilot languages have complete distinct texts, others disclose English fallback',()=>{
  const it=pilotEvidence('IT','it'),en=pilotEvidence('IT','en');
@@ -115,7 +115,7 @@ test('UN LLDC batch: explicit partial coverage, country scope, exact guide selec
  const expected='AF AM AZ BT BO BW BF BI CF TD SZ ET KZ KG LA LS MK MW ML MN NP NE PY MD RW SS TJ TM UG UZ ZM ZW'.split(' ');
  assert.deepEqual(lldcCodes,expected);assert.equal(new Set(lldcCodes).size,32);
  for(const c of countries){
-  const n=['IT','FR','ES','DE'].includes(c.code)?12:expected.includes(c.code)?2:0;
+  const n=['IT','FR','ES','DE'].includes(c.code)?12:expected.includes(c.code)?2:sidsCodes.includes(c.code)?3:0;
   for(const l of languages){
    const a=pilotEvidence(c.code,l);
    assert.equal(a.length,n);
@@ -140,5 +140,32 @@ test('UN LLDC batch: explicit partial coverage, country scope, exact guide selec
  }
  assert.equal((await answerGuide({code:'AT',language:'en',question:'access to seaports'})).status,'insufficient');
  assert.equal((await answerGuide({code:'NE',language:'en',question:'access to seaports'},async()=> '{"ids":["af-economic"]}')).mode,'fallback');
- assert.equal(countries.reduce((n,c)=>n+pilotEvidence(c.code,'it').length,0),112);
+ assert.equal(countries.reduce((n,c)=>n+pilotEvidence(c.code,'it').length,0),223);
+});
+
+test('UN OHRLLS SIDS group: registry membership, scoped facts and exact guide selection',async()=>{
+ const expected='AG BS BB BZ CV KM CU DM DO FJ GD GW GY HT JM KI MV MH FM MU NR PW PG WS ST SG KN LC VC SC SB SR TL TO TT TV VU'.split(' ');
+ assert.deepEqual(sidsCodes,expected);
+ assert.equal(new Set(expected).size,37);
+ assert.ok(expected.every(code=>countries.some(c=>c.code===code)));
+ assert.ok(expected.every(code=>!lldcCodes.includes(code)));
+ for(const code of expected){
+  const it=pilotEvidence(code,'it'),en=pilotEvidence(code,'en');
+  assert.deepEqual(it.map(f=>f.discipline),['political','oceanography','climatology']);
+  assert.deepEqual(it.map(f=>f.id),en.map(f=>f.id));
+  for(const [i,qit,qen] of [[0,'sids','sids'],[1,'oceanografia','oceanography'],[2,'clima','climatology']]){
+   assert.notEqual(it[i].text,en[i].text);
+   assert.equal(it[i].source,en[i].source);
+   assert.equal(it[i].review,'source-checked-not-independent');
+   assert.equal(it[i].period,null);
+   for(const [language,question] of [['it',qit],['en',qen]]){
+    const a=await answerGuide({code,language,question});
+    assert.equal(a.status,'evidence');assert.equal(a.evidence.length,1);assert.equal(a.evidence[0].id,it[i].id);
+   }
+  }
+  assert.deepEqual(pilotEvidence(code,'fr'),en);
+  assert.equal((await answerGuide({code,language:'en',question:'climatology 2050'})).status,'insufficient');
+ }
+ for(const code of ['BH','AT','CK','NU','AF'])assert.deepEqual(pilotSelection({code,language:'en',question:'sids'}),[]);
+ assert.equal(countries.filter(c=>pilotEvidence(c.code,'it').length>0).length,73);
 });

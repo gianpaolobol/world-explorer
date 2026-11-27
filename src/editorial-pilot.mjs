@@ -66,7 +66,15 @@ const lldcRows=[
  ['oceanography','oceanografia','oceanography','Questo Stato non dispone di accesso territoriale diretto all’oceano; ciò non esclude laghi, mari interni o altri ambienti acquatici.','This country has no direct territorial access to the ocean; it may still have lakes, inland seas or other aquatic environments.','https://unctad.org/topic/landlocked-developing-countries/list-of-LLDCs','UNCTAD, LLDC list',null,'2026-11-27'],
  ['economic','accesso ai porti','access to seaports','Per raggiungere via terra porti oceanici, questo Stato dipende dal transito attraverso altri Paesi; non è una stima dei costi di trasporto nazionali.','Land routes from this country to ocean seaports depend on transit through other countries; this is not an estimate of national transport costs.','https://www.un.org/en/landlocked/about-landlocked-developing-countries','UN, LLDC geographical context',null,'2026-11-27']
 ];
-const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows])]);
+// UN OHRLLS/UN DESA 39-member SIDS list, intersected with the 195-country atlas.
+ // Cook Islands and Niue are outside this registry; Bahrain is not in this specific list.
+export const sidsCodes=Object.freeze('AG BS BB BZ CV KM CU DM DO FJ GD GW GY HT JM KI MV MH FM MU NR PW PG WS ST SG KN LC VC SC SB SR TL TO TT TV VU'.split(' '));
+const sidsRows=[
+ ['political','sids','sids','Questo Stato appartiene al gruppo SIDS della lista ONU OHRLLS; la categoria riguarda esigenze di sviluppo e non implica che ogni membro sia un’isola.','This country belongs to the SIDS group on the UN OHRLLS list; the development category does not imply that every member is an island.','https://www.un.org/ohrlls/content/list-sids','UN OHRLLS, SIDS list',null,'2026-11-27'],
+ ['oceanography','oceanografia','oceanography','Per il gruppo SIDS, le risorse marine sono centrali nello sviluppo sostenibile. È un quadro collettivo, non una misura delle risorse o dei fondali di questo singolo Stato.','Marine resources are central to sustainable development for the SIDS group. This is group-level context, not a measurement of this individual country’s resources or seabed.','https://sdgs.un.org/smallislands/about-small-island-developing-states','UN DESA, SIDS context',null,'2026-11-27'],
+ ['climatology','clima','climatology','L’ONU considera il gruppo SIDS particolarmente vulnerabile agli effetti del cambiamento climatico; rischi, intensità e fenomeni variano tra i membri. Non è una previsione climatica nazionale.','The UN identifies the SIDS group as particularly vulnerable to climate change impacts; hazards and their intensity vary among members. This is not a national climate projection.','https://sdgs.un.org/smallislands/about-small-island-developing-states','UN DESA, SIDS context',null,'2026-11-27']
+];
+const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows])]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
