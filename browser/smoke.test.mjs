@@ -65,7 +65,10 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(await page.locator('#narrationCredits a[href^="https://www.adbpo.it/"]').count(),0);
   await page.locator('#lang').selectOption('fr');
   assert.equal(await page.locator('#narration').getAttribute('lang'),'fr');
-  assert.equal(await page.locator('#narrationCredits a').count(),0);
+  assert.match(await page.locator('#narration').textContent(),/Données de la Banque mondiale/);
+  assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),3);
+  assert.equal(await page.locator('#narrationCredits a[href^="https://whc.unesco.org/"]').count(),0);
+  assert.match(await page.locator('#profileStats').textContent(),/Population totale/);
   await page.locator('#lang').selectOption('it');
   const va=String(countries.findIndex(c=>c.code==='VA'));
   await page.locator('#place').selectOption(va);

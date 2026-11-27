@@ -61,3 +61,21 @@ test('verified CI snapshot contains 766 dated observations from 194 registry des
   if(id==='SP.POP.TOTL')assert.ok(Number.isSafeInteger(v));
  }
 });
+
+test('four new statistic locales retain exact observation coverage, provenance and dated query selection',async()=>{
+ const {statisticsEvidence,statisticsSelection,statisticsLanguages}=await import('../src/world-statistics.mjs');
+ assert.deepEqual(statisticsLanguages,['it','en','fr','es','de','pt']);
+ const queries={fr:['population','pib','population urbaine','superficie forestière'],es:['población','pib','población urbana','superficie forestal'],de:['bevölkerung','bip','stadtbevölkerung','waldfläche'],pt:['população','pib','população urbana','área florestal']};
+ for(const [locale,qs] of Object.entries(queries)){
+  for(const {code} of countries){
+   const base=statisticsEvidence(snapshot,code,'en'),translated=statisticsEvidence(snapshot,code,locale);
+   assert.deepEqual(translated.map(({id,source,period,checked})=>({id,source,period,checked})),base.map(({id,source,period,checked})=>({id,source,period,checked})));
+   assert.ok(translated.every(x=>x.language===locale));
+   for(let i=0;i<qs.length;i++){
+    const id='wdi-'+INDICATORS[i].id;
+    assert.deepEqual(statisticsSelection(snapshot,{code,language:locale,question:qs[i]}),base.some(x=>x.id===id)?[id]:[]);
+   }
+   assert.deepEqual(statisticsSelection(snapshot,{code,language:locale,question:qs[0]+' 2030'}),[]);
+  }
+ }
+});
