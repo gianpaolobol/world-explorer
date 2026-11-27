@@ -20,7 +20,8 @@ async function runBrowser(t,withGlobe,fn){
  const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  t.after(()=>browser.close());
  const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
- const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await context.newPage();const errors=[],failedAssets=[];page.on('pageerror',e=>errors.push(e.message));
+ page.on('response',res=>{if(res.url().startsWith(origin+'/src/')&&res.status()>=400)failedAssets.push(res.status()+' '+res.url());});
  // Never load live tiles or send test data to third-party services.
  await context.route('**/*',async route=>{
   const url=route.request().url();
@@ -36,7 +37,8 @@ async function runBrowser(t,withGlobe,fn){
   return route.abort();
  });
  await page.goto(origin+'/',{waitUntil:'load'});
- await page.waitForFunction(()=>document.querySelector('#place').options.length===195);
+ try{await page.waitForFunction(()=>document.querySelector('#place').options.length===195);}
+ catch(error){throw new Error('Atlas startup failed; browser exceptions: '+JSON.stringify(errors)+'; failed local assets: '+JSON.stringify(failedAssets),{cause:error});}
  await fn(page);
  assert.deepEqual(errors,[],'Uncaught browser exceptions');
 }
