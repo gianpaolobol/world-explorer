@@ -1,6 +1,6 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
 import {createReliefPrimitive,safeReliefHeight} from './global-relief-cesium.mjs';
-import {configureMainRelief,stopMainRelief,reportMainRelief,setReliefDestination} from './numeric-relief-ui.mjs';
+import {configureMainRelief,stopMainRelief,reportMainRelief,setReliefDestination,observeReliefSample,currentReliefNarration} from './numeric-relief-ui.mjs';
 import {countries,languages,countryName} from './countries.mjs';
 import {wrapIndex,chooseDestination,cameraHeight} from './travel.mjs';
 import {createTour} from './cinematic.mjs';
@@ -30,7 +30,17 @@ $('lang').value=lang;options();
 const narrator=createNarrator({synthesis:window.speechSynthesis,Utterance:window.SpeechSynthesisUtterance,onStatus:s=>{
  $('speechStatus').textContent=({unavailable:'Sintesi vocale non disponibile', 'no-local-voice':'Voce locale assente per questa lingua; installala sul dispositivo',speaking:'Narrazione in corso',ended:'',stopped:'',error:'Narrazione interrotta o non disponibile'})[s]||'';
 }});
-function speak(done){return narrator.speak(cinematicNarrationFor(countries[index].code,lang),typeof done==='function'?done:undefined);}
+function displayedNarration(){
+ const base=cinematicNarrationFor(countries[index].code,lang),local=currentReliefNarration();
+ return base&&local?{...base,text:base.text+' '+local.text}:base;
+}
+function refreshReliefNarration(){
+ const n=displayedNarration();$('narration').textContent=n?.text||'';$('narration').lang=n?.language||lang;
+ $('localReliefNarrationCredit')?.remove();
+ const local=currentReliefNarration();if(local){const item=document.createElement('li');item.id='localReliefNarrationCredit';item.append(creditLink('GEBCO 2025 (local file / file locale)',local.source));$('narrationCredits').append(item);}
+}
+observeReliefSample(refreshReliefNarration);
+function speak(done){return narrator.speak(displayedNarration(),typeof done==='function'?done:undefined);}
 const quizKey='world-explorer-region-quiz-v1';
 let quizMemory=loadMemory(null),question=null,answered=false,quizCorrect=null,quizStorageFailed=false,quizExhausted=false;
 try{quizMemory=loadMemory(localStorage.getItem(quizKey));}catch{quizStorageFailed=true;}
@@ -104,6 +114,7 @@ function render(fly=true,read=false){
  }
  $('narrationCoverage').textContent=n?.facts.length?'Approfondimenti con fonti · revisione indipendente in attesa.':n?.extended?'Nessun approfondimento narrativo verificato per questa destinazione.':'Narrazione regionale; statistiche narrate disponibili in italiano, inglese, francese, spagnolo, tedesco e portoghese; contenuti editoriali in italiano e inglese.';
  if(n?.facts.some(x=>x.id.startsWith('wdi-'))){const item=document.createElement('li');item.append(creditLink('Condizioni dati WDI / CC BY 4.0',TERMS));credits.append(item);}
+ refreshReliefNarration();
  $('facts').textContent='Capitale (dato iniziale): '+c.capital+' · Superficie indicativa: '+new Intl.NumberFormat(lang).format(c.area)+' km²';
  $('source').href='https://'+lang+'.wikipedia.org/w/index.php?search='+encodeURIComponent(name(c));
  $('progress').textContent='Destinazioni visitate: '+Object.keys(visits).filter(k=>visits[k]>0).length+' / '+countries.length;

@@ -145,3 +145,28 @@ export function globalSample(g,lon,lat){
  if(!Number.isFinite(height))return null;
  return {height,lon:west+col*step,lat:south+row*step,resolution:step};
 }
+
+ // Local files are user supplied, not authenticated source evidence. Keep this
+ // optional spoken observation separate from the verified editorial corpus.
+const reliefSpeech=Object.freeze({
+ it:(z,res)=>`Nel file locale non autenticato dichiarato GEBCO 2025, il campione ${res} vicino al punto di vista vale ${z} metri, senza esagerazione verticale. Non è la quota della capitale né un dato per navigazione.`,
+ en:(z,res)=>`In the unverified local file labelled GEBCO 2025, the ${res} sample near the camera target is ${z} metres, without vertical exaggeration. This is not the capital's elevation or navigation data.`,
+ fr:(z,res)=>`Dans le fichier local non authentifié indiqué GEBCO 2025, l’échantillon ${res} près du point de vue vaut ${z} mètres, sans exagération verticale. Ce n’est ni l’altitude de la capitale ni une donnée de navigation.`,
+ es:(z,res)=>`En el archivo local no autenticado identificado como GEBCO 2025, la muestra ${res} cerca del punto de cámara vale ${z} metros, sin exageración vertical. No es la altitud de la capital ni un dato de navegación.`,
+ de:(z,res)=>`In der nicht authentifizierten lokalen Datei mit der Bezeichnung GEBCO 2025 beträgt der ${res} Messwert nahe dem Kameraziel ${z} Meter, ohne vertikale Überhöhung. Dies ist weder die Höhe der Hauptstadt noch eine Navigationsangabe.`,
+ pt:(z,res)=>`No ficheiro local não autenticado identificado como GEBCO 2025, a amostra ${res} perto do alvo da câmara vale ${z} metros, sem exagero vertical. Não é a altitude da capital nem um dado de navegação.`
+});
+const resolutionSpeech=Object.freeze({
+ it:['regionale a 15 secondi d’arco','globale a 2 gradi'],
+ en:['regional 15 arc-second','global 2-degree'],
+ fr:['régional à 15 secondes d’arc','mondial à 2 degrés'],
+ es:['regional de 15 segundos de arco','global de 2 grados'],
+ de:['regionale 15-Bogensekunden','globale 2-Grad'],
+ pt:['regional de 15 segundos de arco','global de 2 graus']
+});
+export function reliefNarration(regional,global,lon,lat,locale){
+ if(!Object.hasOwn(reliefSpeech,locale))return null;
+ const native=regionalSample(regional,lon,lat),sample=native??globalSample(global,lon,lat);
+ if(!sample)return null;
+ return {text:reliefSpeech[locale](new Intl.NumberFormat(locale,{maximumFractionDigits:3}).format(sample.height),resolutionSpeech[locale][native?0:1]),source:GEBCO_DOI,sample};
+}
