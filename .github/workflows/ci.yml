@@ -71,3 +71,16 @@ jobs:
         run: |
           set -euo pipefail
           sudo unshare --net -- bash -c 'set -e; ip link set lo up; exec runuser -u "$SUDO_USER" -- env PATH="$2" OLLAMA_MODELS="$3" bash "$1"' _ "$PWD/scripts/test-ollama-offline.sh" "$PATH" "$OLLAMA_MODELS"
+
+  commons-live:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.head_ref, 'feat/commons-')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node --test integration/commons-live.test.mjs

@@ -12,4 +12,29 @@ test('Commons query only sends public camera coordinates',()=>{const u=new URL(p
 test('Commons attribution and allowed license preserved as plain text',()=>{const [p]=photoCandidates(fixture());assert.equal(p.author,'A & B');assert.equal(p.credit,'Own work');assert.equal(p.license,'CC BY-SA 4.0');assert.equal(p.title,'Landscape.jpg');});
 test('noncommercial, unknown, mismatched and restricted licenses rejected',()=>{for(const change of [m=>m.LicenseShortName.value='CC BY-NC 4.0',m=>m.LicenseShortName.value='toString',m=>m.LicenseUrl.value='https://evil.example/',m=>m.Restrictions={value:'Personality rights'},m=>{delete m.Artist;delete m.Attribution;}]){const d=fixture();change(d.query.pages[0].imageinfo[0].extmetadata);assert.deepEqual(photoCandidates(d),[]);}});
 test('non-image and untrusted URLs rejected',()=>{for(const change of [i=>i.mime='image/svg+xml',i=>i.thumburl='https://upload.wikimedia.org.evil.example/wikipedia/commons/a.jpg',i=>i.descriptionurl='javascript:alert(1)',i=>i.thumburl='https://x@upload.wikimedia.org/wikipedia/commons/a.jpg']){const d=fixture();change(d.query.pages[0].imageinfo[0]);assert.deepEqual(photoCandidates(d),[]);}});
-test('Commons network and API failures surfaced; empty responses safe',async()=>{await assert.rejects(nearbyPhotos(0,0,async()=>({ok:false})));await assert.rejects(nearbyPhotos(0,0,async()=>({ok:true,json:async()=>({error:{code:'bad'}})})));assert.deepEqual(await nearbyPhotos(0,0,async()=>({ok:true,json:async()=>({})})),[]);});
+test('Commons network and API failures surfaced; empty responses safe',async()=>{await assert.rejects(nearbyPhotos(0,0,async()=>({ok:false})));await assert.rejects(nearbyPhotos(0,0,async()=>new Response(JSON.stringify({error:{code:'bad'}}))));assert.deepEqual(await nearbyPhotos(0,0,async()=>new Response('{}')),[]);});
+
+test('Commons request identifies client, omits credentials and rejects redirects',async()=>{
+ const signal=new AbortController().signal;
+ const result=await nearbyPhotos(44,11,async(url,options)=>{
+  assert.equal(options.credentials,'omit');assert.equal(options.referrerPolicy,'no-referrer');
+  assert.equal(options.redirect,'error');assert.equal(options.signal,signal);
+  assert.match(options.headers['Api-User-Agent'],/WorldExplorer/);
+  return new Response(JSON.stringify(fixture()));
+ },signal);
+ assert.equal(result.length,1);
+});
+test('Commons metadata size is bounded even without a length header',async()=>{
+ await assert.rejects(nearbyPhotos(0,0,async()=>new Response('{}',{headers:{'content-length':'1048577'}})),/too large/);
+ await assert.rejects(nearbyPhotos(0,0,async()=>new Response(' '.repeat(1048577))),/too large/);
+ await assert.rejects(nearbyPhotos(0,0,async()=>new Response('{')),SyntaxError);
+});
+test('Commons result count and credits are bounded; duplicates excluded',()=>{
+ const d=fixture();const page=d.query.pages[0];
+ d.query.pages=Array.from({length:8},()=>structuredClone(page));
+ assert.equal(photoCandidates(d).length,1);
+ d.query.pages=Array.from({length:8},(_,i)=>{const p=structuredClone(page);p.title='File:Landscape'+i+'.jpg';p.imageinfo[0].descriptionurl='https://commons.wikimedia.org/wiki/File:Landscape'+i+'.jpg';return p;});
+ assert.equal(photoCandidates(d).length,5);
+ const long=fixture();long.query.pages[0].imageinfo[0].extmetadata.Attribution.value='x'.repeat(4097);
+ assert.deepEqual(photoCandidates(long),[]);
+});
