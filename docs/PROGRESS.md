@@ -196,3 +196,5 @@
 // Recovered prototype factual seed data; see docs/SOURCES.md and THIRD_PARTY_NOTICES.md.
 // Editorial status: unreviewed; coordinates are approximate camera targets, not legal centroids.
 const raw="AD|Andorra la Vella|42.5|1.6|468\nAE|Abu Dhabi|24|54|83600\nAF|Kabul|33|65|652230\. Full CI required. No new values committed. Full CI and source licensing/acquisition validation required. Independent 10+10/100 cross-checks, physical iPhone/projector remain open. No V1.0 claim, purchases or secrets.
+
+- Retried targeted execution using the exact registry module rather than line scanning. 18767/18767 V8 assertions passed on code ab338a4ca7c3d6a72851b1a0e5d9caa776c24b9d (statistics blob 6aebcdc4950914d7ffa7e57349fd86ec20b6e155, registry and committed snapshot evaluated with ESM declarations adapted). Checked 195 codes, all four synthetic new indicators in six locales, year mismatch and missing-year abstention, exact preservation of 2,301 existing observations, five incremental requests, and zero requests for completed snapshot. Not Node/browser CI or independent review; real new values still absent.
