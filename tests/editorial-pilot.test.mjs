@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {countries,languages} from '../src/countries.mjs';
-import {disciplines,lldcCodes,sidsCodes,euContextCodes,geoscienceCodes,regionalExtensionCodes,composeEditorialRows,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
+import {disciplines,lldcCodes,sidsCodes,euContextCodes,geoscienceCodes,regionalExtensionCodes,landscapeCodes,composeEditorialRows,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
 import {answerGuide,evidenceFor} from '../src/guide.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'orografia'};
@@ -13,7 +13,7 @@ test('pilot covers the twelve disciplines once with unique IDs and explicit sour
  for(const x of a){assert.match(x.source,/^https:\/\//);assert.ok(x.label&&x.text);assert.equal(x.checked,'2026-11-26');assert.equal(x.review,'source-checked-not-independent');}
 });
 test('pilot never transfers Italian evidence to any other country',()=>{
- for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE',...lldcCodes,...sidsCodes,...euContextCodes,...geoscienceCodes,...regionalExtensionCodes].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
+ for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE',...lldcCodes,...sidsCodes,...euContextCodes,...geoscienceCodes,...regionalExtensionCodes,...landscapeCodes].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
 });
 test('both supported pilot languages have complete distinct texts, others disclose English fallback',()=>{
  const it=pilotEvidence('IT','it'),en=pilotEvidence('IT','en');
@@ -115,7 +115,7 @@ test('UN LLDC batch: explicit partial coverage, country scope, exact guide selec
  const expected='AF AM AZ BT BO BW BF BI CF TD SZ ET KZ KG LA LS MK MW ML MN NP NE PY MD RW SS TJ TM UG UZ ZM ZW'.split(' ');
  assert.deepEqual(lldcCodes,expected);assert.equal(new Set(lldcCodes).size,32);
  for(const c of countries){
-  const n=(['IT','FR','ES','DE'].includes(c.code)?12:expected.includes(c.code)?2:sidsCodes.includes(c.code)?3:euContextCodes.includes(c.code)?2:geoscienceCodes.includes(c.code)?3:0)+(regionalExtensionCodes.includes(c.code)?3:0);
+  const n=(['IT','FR','ES','DE'].includes(c.code)?12:expected.includes(c.code)?2:sidsCodes.includes(c.code)?3:euContextCodes.includes(c.code)?2:geoscienceCodes.includes(c.code)?3:0)+(regionalExtensionCodes.includes(c.code)?3:0)+(landscapeCodes.includes(c.code)?3:0);
   for(const l of languages){
    const a=pilotEvidence(c.code,l);
    assert.equal(a.length,n);
@@ -140,7 +140,7 @@ test('UN LLDC batch: explicit partial coverage, country scope, exact guide selec
  }
  assert.equal((await answerGuide({code:'AT',language:'en',question:'access to seaports'})).status,'insufficient');
  assert.equal((await answerGuide({code:'NE',language:'en',question:'access to seaports'},async()=> '{"ids":["af-economic"]}')).mode,'fallback');
- assert.equal(countries.reduce((n,c)=>n+pilotEvidence(c.code,'it').length,0),308);
+ assert.equal(countries.reduce((n,c)=>n+pilotEvidence(c.code,'it').length,0),326);
 });
 
 test('UN OHRLLS SIDS group: registry membership, scoped facts and exact guide selection',async()=>{
@@ -167,7 +167,7 @@ test('UN OHRLLS SIDS group: registry membership, scoped facts and exact guide se
   assert.equal((await answerGuide({code,language:'en',question:'climatology 2050'})).status,'insufficient');
  }
  for(const code of ['BH','AT','CK','NU','AF'])assert.deepEqual(pilotSelection({code,language:'en',question:'sids'}),[]);
- assert.equal(countries.filter(c=>pilotEvidence(c.code,'it').length>0).length,108);
+ assert.equal(countries.filter(c=>pilotEvidence(c.code,'it').length>0).length,113);
 });
 
 test('EU context: 23 additional countries, dated membership and currency scope without overwriting pilots',async()=>{
@@ -178,9 +178,9 @@ test('EU context: 23 additional countries, dated membership and currency scope w
   assert.ok(countries.some(c=>c.code===code));
   assert.ok(!lldcCodes.includes(code)&&!sidsCodes.includes(code));
   const it=pilotEvidence(code,'it'),en=pilotEvidence(code,'en');
-  assert.deepEqual(it.map(f=>f.discipline),['political','economic']);
+  assert.deepEqual(it.slice(0,2).map(f=>f.discipline),['political','economic']);
   assert.deepEqual(it.map(f=>f.id),en.map(f=>f.id));
-  for(const f of it){assert.equal(f.review,'source-checked-not-independent');assert.equal(f.checked,'2026-11-27');}
+  for(const f of it.slice(0,2)){assert.equal(f.review,'source-checked-not-independent');assert.equal(f.checked,'2026-11-27');}
   assert.match(en[0].period,/^(1958|1973|1981|1986|1995|2004|2007|2013)$/);
   assert.equal(en[1].period,'2026-11-27');
   assert.equal(en[1].text.includes('not part'),!euro.has(code));
@@ -231,4 +231,22 @@ test('editorial batches compose without replacing prior facts, including overlap
   assert.deepEqual(pilotEvidence(code,'fr'),en);
  }
  assert.match(pilotEvidence('NP','en')[0].source,/unctad/);assert.match(pilotEvidence('NP','en')[2].source,/unesco/);
+});
+
+
+test('Six landscape profiles preserve earlier facts and provide scoped bilingual evidence',async()=>{
+ const expected={"CH":["orography","geology","biogeography"],"HR":["hydrology","geology","biogeography"],"JO":["geology","physical","historical"],"NO":["geology","orography","hydrology"],"TR":["geology","urban","historical"],"VN":["geology","physical","oceanography"]};
+ const queries={"physical":["territorio","physical geography"],"orography":["orografia","orography"],"hydrology":["idrografia","hydrology"],"oceanography":["oceanografia","oceanography"],"geology":["geologia","geology"],"climatology":["clima","climatology"],"biogeography":["biogeografia","biogeography"],"urban":["città","urban geography"],"historical":["storia","historical geography"]};
+ assert.deepEqual(landscapeCodes,Object.keys(expected));
+ for(const [code,ds] of Object.entries(expected)){
+  assert.ok(countries.some(c=>c.code===code));
+  const it=pilotEvidence(code,'it'),en=pilotEvidence(code,'en');
+  assert.deepEqual(it.map(f=>f.discipline),code==='HR'?['political','economic',...ds]:ds);
+  assert.deepEqual(it.map(f=>f.id),en.map(f=>f.id));assert.deepEqual(pilotEvidence(code,'fr'),en);
+  for(const d of ds){const a=it.find(f=>f.discipline===d),b=en.find(f=>f.discipline===d);
+   assert.equal(a.source,b.source);assert.match(a.source,/^https:\/\/whc\.unesco\.org\/en\/list\/[0-9]+\/$/);assert.equal(a.checked,'2026-11-28');assert.equal(a.review,'source-checked-not-independent');assert.notEqual(a.text,b.text);
+   for(const [i,language] of ['it','en'].entries()){const question=queries[d][i];const answer=await answerGuide({code,language,question});assert.equal(answer.status,'evidence');assert.deepEqual(answer.evidence.map(f=>f.id),[a.id]);assert.deepEqual(pilotSelection({code,language,question:question+' 2050'}),[]);}
+  }
+ }
+ assert.equal(pilotEvidence('HR','en')[0].period,'2013');
 });
