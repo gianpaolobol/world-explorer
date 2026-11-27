@@ -9,7 +9,7 @@ test('all 195 destinations retain localized M49 narration and source-scoped exte
  for(const {code} of countries)for(const locale of languages){
   const b=narrationFor(code,locale),n=cinematicNarrationFor(code,locale);
   assert.ok(n.text.startsWith(b.text));assert.equal(n.language,b.language);assert.equal(n.source,b.source);
-  assert.equal(n.extended,['it','en'].includes(locale));
+  assert.equal(n.extended,['it','en','fr','es','de','pt'].includes(locale));
   assert.ok(n.facts.every(f=>f.language===n.language&&f.source.startsWith('https://')&&n.text.includes(f.text)));
   assert.equal(new Set(n.facts.map(f=>f.id)).size,n.facts.length);
   if(!n.extended){assert.equal(n.text,b.text);assert.deepEqual(n.facts,[]);}
@@ -32,4 +32,15 @@ test('guide M49 evidence remains uncontaminated by narrative statistics',()=>{
  const input={code:'FR',language:'en',question:'statistical region'};
  const region=evidenceFor(input).find(f=>f.id==='region');
  assert.equal(region.text,narrationFor('FR','en').text);assert.ok(!region.text.includes('68,551,653'));
+});
+
+test('four additional narrative locales use only matching-language statistics and keep gaps',()=>{
+ for(const locale of ['fr','es','de','pt']){
+  const n=cinematicNarrationFor('FR',locale);
+  assert.equal(n.facts.length,3);
+  assert.ok(n.facts.every(f=>f.language===locale&&f.id.startsWith('wdi-')&&f.period==='2024'));
+  assert.ok(!n.text.includes('World Bank data'));
+  assert.deepEqual(cinematicNarrationFor('VA',locale).facts,[]);
+  assert.equal(cinematicNarrationFor('VA',locale).text,narrationFor('VA',locale).text);
+ }
 });

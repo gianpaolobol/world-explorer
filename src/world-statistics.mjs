@@ -8,6 +8,14 @@ export const INDICATORS=Object.freeze([
  Object.freeze({id:'SP.URB.TOTL.IN.ZS',it:'Popolazione urbana',en:'Urban population',unit:'%',provider:'UN Population Division, World Urbanization Prospects'}),
  Object.freeze({id:'AG.LND.FRST.ZS',it:'Superficie forestale (quota delle terre emerse)',en:'Forest area (% of land area)',unit:'%',provider:'FAO, FAOSTAT'})
 ]);
+// Original translations of indicator names, not additional data observations.
+const localizedLabels=Object.freeze({
+ fr:['Population totale','PIB à prix courants','Population urbaine','Superficie forestière (% des terres émergées)'],
+ es:['Población total','PIB a precios corrientes','Población urbana','Superficie forestal (% de la superficie terrestre)'],
+ de:['Gesamtbevölkerung','BIP zu jeweiligen Preisen','Stadtbevölkerung','Waldfläche (% der Landfläche)'],
+ pt:['População total','PIB a preços correntes','População urbana','Área florestal (% da área terrestre)']
+});
+export const statisticsLanguages=Object.freeze(['it','en',...Object.keys(localizedLabels)]);
 const codes=new Set(countries.map(x=>x.code));
 function rows(payload){
  if(!Array.isArray(payload)||payload.length!==2||!payload[0]||!Array.isArray(payload[1])||Number(payload[0].pages)!==1||Number(payload[0].page)!==1||Number(payload[0].total)!==payload[1].length)throw new Error('Incomplete WDI response');
@@ -48,11 +56,11 @@ export function parseIndicator(payload,id,map){
 }
 export function statisticsFor(snapshot,code,locale='it'){
  if(!codes.has(code)||!snapshot||snapshot.year!==YEAR||typeof snapshot.retrieved!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(snapshot.retrieved))return [];
- const language=locale==='it'?'it':'en';
- return INDICATORS.flatMap(i=>{
+ const language=statisticsLanguages.includes(locale)?locale:'en';
+ return INDICATORS.flatMap((i,index)=>{
   const v=snapshot.values?.[i.id]?.[code];if(!validValue(i.id,v))return [];
   const nf=new Intl.NumberFormat(language,{useGrouping:'always',maximumFractionDigits:i.unit==='%'?2:0});
-  return [{id:i.id,language,label:i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved:snapshot.retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
+  return [{id:i.id,language,label:localizedLabels[language]?.[index]??i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved:snapshot.retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
  });
 }
 
@@ -65,7 +73,11 @@ export function statisticsEvidence(snapshot,code,locale){
 }
 const queries={
  it:{'popolazione':'SP.POP.TOTL','qual è la popolazione':'SP.POP.TOTL','popolazione totale':'SP.POP.TOTL','pil':'NY.GDP.MKTP.CD','popolazione urbana':'SP.URB.TOTL.IN.ZS','superficie forestale':'AG.LND.FRST.ZS'},
- en:{'population':'SP.POP.TOTL','what is the population':'SP.POP.TOTL','total population':'SP.POP.TOTL','gdp':'NY.GDP.MKTP.CD','urban population':'SP.URB.TOTL.IN.ZS','forest area':'AG.LND.FRST.ZS'}
+ en:{'population':'SP.POP.TOTL','what is the population':'SP.POP.TOTL','total population':'SP.POP.TOTL','gdp':'NY.GDP.MKTP.CD','urban population':'SP.URB.TOTL.IN.ZS','forest area':'AG.LND.FRST.ZS'},
+ fr:{'population':'SP.POP.TOTL','population totale':'SP.POP.TOTL','pib':'NY.GDP.MKTP.CD','population urbaine':'SP.URB.TOTL.IN.ZS','superficie forestière':'AG.LND.FRST.ZS'},
+ es:{'población':'SP.POP.TOTL','población total':'SP.POP.TOTL','pib':'NY.GDP.MKTP.CD','población urbana':'SP.URB.TOTL.IN.ZS','superficie forestal':'AG.LND.FRST.ZS'},
+ de:{'bevölkerung':'SP.POP.TOTL','gesamtbevölkerung':'SP.POP.TOTL','bip':'NY.GDP.MKTP.CD','stadtbevölkerung':'SP.URB.TOTL.IN.ZS','waldfläche':'AG.LND.FRST.ZS'},
+ pt:{'população':'SP.POP.TOTL','população total':'SP.POP.TOTL','pib':'NY.GDP.MKTP.CD','população urbana':'SP.URB.TOTL.IN.ZS','área florestal':'AG.LND.FRST.ZS'}
 };
 export function statisticsSelection(snapshot,input){
  if(!Object.hasOwn(queries,input.language))return [];

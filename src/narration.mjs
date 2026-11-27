@@ -2,7 +2,7 @@
 import {countryName} from './countries.mjs';
 import {regionOf,regionName,M49_SOURCE} from './regions.mjs';
 import {pilotEvidence} from './editorial-pilot.mjs';
-import {statisticsEvidence} from './world-statistics.mjs';
+import {statisticsEvidence,statisticsLanguages} from './world-statistics.mjs';
 import {snapshot} from './world-statistics-data.mjs';
 // Deliberately limited to sourced statistical geography. No unreviewed capital/area claims.
 const templates=Object.freeze({
@@ -39,12 +39,19 @@ export function cinematicNarrationFor(code,locale='it'){
  const base=narrationFor(code,locale);
  if(!base)return null;
  const local=base.language;
- const extended=['it','en'].includes(local);
+ const extended=statisticsLanguages.includes(local);
  const facts=extended?[
-  ...pilotEvidence(code,local).filter(x=>['orography','hydrology'].includes(x.discipline)),
+  ...pilotEvidence(code,local).filter(x=>x.language===local&&['orography','hydrology'].includes(x.discipline)),
   ...statisticsEvidence(snapshot,code,local).filter(x=>['wdi-SP.POP.TOTL','wdi-SP.URB.TOTL.IN.ZS','wdi-AG.LND.FRST.ZS'].includes(x.id))
  ]:[];
- const introduction=local==='it'?'Dati della Banca Mondiale, anno 2024.':'World Bank data, reference year 2024.';
+ const introduction=({
+  it:'Dati della Banca Mondiale, anno 2024.',
+  en:'World Bank data, reference year 2024.',
+  fr:'Données de la Banque mondiale, année de référence 2024.',
+  es:'Datos del Banco Mundial, año de referencia 2024.',
+  de:'Daten der Weltbank, Bezugsjahr 2024.',
+  pt:'Dados do Banco Mundial, ano de referência 2024.'
+ })[local];
  const stats=facts.filter(x=>x.id.startsWith('wdi-'));
  const editorial=facts.filter(x=>!x.id.startsWith('wdi-'));
  const text=[base.text,...editorial.map(x=>x.text),...(stats.length?[introduction,...stats.map(x=>x.text)]:[])].join(' ');

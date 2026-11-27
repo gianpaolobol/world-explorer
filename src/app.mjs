@@ -102,7 +102,7 @@ function render(fly=true,read=false){
   if(fact.period)item.append(document.createTextNode(' · '+fact.period));
   credits.append(item);
  }
- $('narrationCoverage').textContent=n?.facts.length?'Approfondimenti con fonti · revisione indipendente in attesa.':n?.extended?'Nessun approfondimento narrativo verificato per questa destinazione.':'Narrazione regionale; approfondimenti disponibili in italiano e inglese.';
+ $('narrationCoverage').textContent=n?.facts.length?'Approfondimenti con fonti · revisione indipendente in attesa.':n?.extended?'Nessun approfondimento narrativo verificato per questa destinazione.':'Narrazione regionale; statistiche narrate disponibili in italiano, inglese, francese, spagnolo, tedesco e portoghese; contenuti editoriali in italiano e inglese.';
  if(n?.facts.some(x=>x.id.startsWith('wdi-'))){const item=document.createElement('li');item.append(creditLink('Condizioni dati WDI / CC BY 4.0',TERMS));credits.append(item);}
  $('facts').textContent='Capitale (dato iniziale): '+c.capital+' · Superficie indicativa: '+new Intl.NumberFormat(lang).format(c.area)+' km²';
  $('source').href='https://'+lang+'.wikipedia.org/w/index.php?search='+encodeURIComponent(name(c));
