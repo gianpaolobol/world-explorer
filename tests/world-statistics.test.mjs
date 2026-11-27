@@ -143,3 +143,22 @@ test('demographic and surface-area expansion preserves independent indicators an
  for(const v of [-1,0,131,Infinity,'80'])assert.throws(()=>parseIndicator(page([row('IT','ITA',v,ids[3])]),ids[3],map));
  assert.throws(()=>parseIndicator(page([row('IT','ITA',101,ids[1])]),ids[1],map));
 });
+
+
+test('incremental WDI acquisition requests only missing series and preserves old provenance and values',async()=>{
+ const base={year:YEAR,retrieved:'2026-11-26',values:{'SP.POP.TOTL':{IT:1234},'NY.GDP.MKTP.CD':{IT:5678}},retrievedByIndicator:{'NY.GDP.MKTP.CD':'2026-11-25'}};
+ const original=JSON.stringify(base),paths=[],waits=[];
+ const getJson=async(path,query)=>{paths.push(path);if(path==='country')return page([country('IT','ITA')]);const id=path.split('/').at(-1);assert.equal(query.date,YEAR);return page([row('IT','ITA',1,id)]);};
+ const result=await acquire({base,getJson,wait:async ms=>waits.push(ms),now:()=>new Date('2026-11-27T09:00:00Z')});
+ assert.equal(JSON.stringify(base),original);
+ assert.deepEqual(paths,['country',...INDICATORS.slice(2).map(i=>'country/all/indicator/'+i.id)]);
+ assert.deepEqual(waits,INDICATORS.slice(2).map(()=>5000));
+ assert.equal(result.values['SP.POP.TOTL'].IT,1234);assert.equal(result.values['NY.GDP.MKTP.CD'].IT,5678);
+ assert.deepEqual(Object.keys(result.values),INDICATORS.map(i=>i.id));
+ assert.deepEqual(statisticsFor(result,'IT','en').map(x=>x.retrieved),['2026-11-26','2026-11-25',...INDICATORS.slice(2).map(()=> '2026-11-27')]);
+ assert.equal(await acquire({base:result,getJson:async()=>assert.fail('complete snapshot requested network')}),result);
+ await assert.rejects(acquire({base:{...base,year:'2023'},getJson:async()=>assert.fail('invalid base requested network')}),/Invalid base/);
+ await assert.rejects(acquire({base:{...base,values:{'SP.POP.TOTL':{XX:1}}},getJson:async()=>assert.fail('invalid base requested network')}),/Invalid base/);
+ await assert.rejects(acquire({base,getJson:async p=>{if(p==='country')return page([country('IT','ITA')]);throw Error('unavailable');},wait:async()=>{}}),/unavailable/);
+ assert.equal(JSON.stringify(base),original);
+});
