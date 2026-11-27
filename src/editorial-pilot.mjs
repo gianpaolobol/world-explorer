@@ -434,7 +434,173 @@ const geoscienceRows=new Map([
  ]
 ]);
 export const geoscienceCodes=Object.freeze([...geoscienceRows.keys()].sort());
-const corpus=new Map([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows]);
+// Compose independent batches without replacing earlier country facts or changing IDs.
+// Existing discipline wins; explicitly reviewed replacements require a separate edit.
+export function composeEditorialRows(entries){
+ const result=new Map();
+ for(const [code,rows] of entries){
+  const byDiscipline=new Map((result.get(code)||[]).map(row=>[row[0],row]));
+  for(const row of rows)if(!byDiscipline.has(row[0]))byDiscipline.set(row[0],row);
+  result.set(code,[...byDiscipline.values()]);
+ }
+ return result;
+}
+const regionalExtensionRows=new Map([
+ [
+  "NP",
+  [
+   [
+    "orography",
+    "orografia",
+    "orography",
+    "Il parco nazionale di Sagarmatha, in Nepal, comprende il settore nepalese dell’Everest.",
+    "Nepal’s Sagarmatha National Park includes the Nepalese side of Everest.",
+    "https://whc.unesco.org/en/list/120/",
+    "UNESCO, Sagarmatha National Park",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "I ghiacciai del parco di Sagarmatha alimentano le risorse idriche a valle.",
+    "Glaciers in Sagarmatha National Park supply water to downstream areas.",
+    "https://whc.unesco.org/en/list/120/",
+    "UNESCO, Sagarmatha National Park",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Nel parco di Sagarmatha sono presenti il panda rosso e il leopardo delle nevi.",
+    "Red pandas and snow leopards occur in Sagarmatha National Park.",
+    "https://whc.unesco.org/en/list/120/",
+    "UNESCO, Sagarmatha National Park",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "TZ",
+  [
+   [
+    "orography",
+    "orografia",
+    "orography",
+    "La cima del Kilimangiaro, in Tanzania, raggiunge 5.895 metri, quota massima del continente africano.",
+    "Tanzania’s Kilimanjaro reaches 5,895 metres, Africa’s highest elevation.",
+    "https://whc.unesco.org/en/list/403/",
+    "UNESCO, Kilimanjaro National Park",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Il massiccio del Kilimangiaro comprende tre edifici vulcanici principali: Shira, Mawenzi e Kibo.",
+    "The Kilimanjaro massif comprises the three principal volcanic peaks Shira, Mawenzi and Kibo.",
+    "https://whc.unesco.org/en/list/403/",
+    "UNESCO, Kilimanjaro National Park",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Sul Kilimangiaro la fascia forestale montana lascia spazio, salendo di quota, a brughiere e ambienti di deserto alpino.",
+    "Higher on Kilimanjaro, heathland and alpine desert succeed the montane forest belt.",
+    "https://whc.unesco.org/en/list/403/",
+    "UNESCO, Kilimanjaro National Park",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "EC",
+  [
+   [
+    "oceanography",
+    "oceanografia",
+    "oceanography",
+    "Le Galápagos sorgono in una zona del Pacifico orientale dove convergono tre correnti oceaniche.",
+    "Three ocean currents converge in the eastern Pacific near the Galápagos.",
+    "https://whc.unesco.org/en/list/1/",
+    "UNESCO, Galápagos Islands",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Nelle Galápagos le isole occidentali di Isabela e Fernandina sono geologicamente più giovani di Española e San Cristóbal a oriente.",
+    "The western Galápagos islands Isabela and Fernandina are geologically younger than Española and San Cristóbal to the east.",
+    "https://whc.unesco.org/en/list/1/",
+    "UNESCO, Galápagos Islands",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "L’isolamento delle Galápagos ha favorito l’evoluzione di forme endemiche, fra cui l’iguana marina.",
+    "Isolation of the Galápagos fostered endemic forms such as the marine iguana.",
+    "https://whc.unesco.org/en/list/1/",
+    "UNESCO, Galápagos Islands",
+    null,
+    "2026-11-27"
+   ]
+  ]
+ ],
+ [
+  "US",
+  [
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Il parco di Yellowstone negli Stati Uniti presenta fenomeni geotermici, fra cui numerosi geyser.",
+    "Geothermal phenomena in the US Yellowstone park include numerous geysers.",
+    "https://whc.unesco.org/en/list/28/",
+    "UNESCO, Yellowstone National Park",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Il parco di Yellowstone ospita bisonti, lupi e orsi grizzly.",
+    "Bison, wolves and grizzly bears inhabit Yellowstone National Park.",
+    "https://whc.unesco.org/en/list/28/",
+    "UNESCO, Yellowstone National Park",
+    null,
+    "2026-11-27"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "Il parco nazionale di Yellowstone fu istituito nel 1872.",
+    "Yellowstone National Park was established in 1872.",
+    "https://whc.unesco.org/en/list/28/",
+    "UNESCO, Yellowstone National Park",
+    "1872",
+    "2026-11-27"
+   ]
+  ]
+ ]
+]);
+export const regionalExtensionCodes=Object.freeze([...regionalExtensionRows.keys()].sort());
+const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
