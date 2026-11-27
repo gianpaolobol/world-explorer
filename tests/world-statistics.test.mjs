@@ -47,15 +47,15 @@ test('WDI retries timeout but not invalid JSON, with bounded attempts',async()=>
 
 import {snapshot} from '../src/world-statistics-data.mjs';
 import {countries} from '../src/countries.mjs';
-test('verified CI snapshot contains 2301 dated observations from 194 registry destinations',()=>{
+test('verified CI snapshot contains 2660 dated observations from 194 registry destinations',()=>{
  assert.equal(snapshot.year,'2024');assert.equal(snapshot.retrieved,'2026-11-27');
- assert.deepEqual(Object.keys(snapshot.values),INDICATORS.slice(0,12).map(i=>i.id));
- assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191,193,193,192,190,192,194,187,194]);
+ assert.deepEqual(Object.keys(snapshot.values),INDICATORS.map(i=>i.id));
+ assert.deepEqual(Object.values(snapshot.values).map(v=>Object.keys(v).length),[194,187,194,191,193,193,192,190,192,194,187,194,179,180]);
  const allowed=new Set(countries.map(c=>c.code));
  const union=new Set(Object.values(snapshot.values).flatMap(Object.keys));
  assert.equal(union.size,194);assert.ok([...union].every(c=>allowed.has(c)));
  assert.deepEqual(statisticsFor(snapshot,'VA'),[]);
- assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),2301);
+ assert.equal(countries.reduce((n,c)=>n+statisticsFor(snapshot,c.code).length,0),2660);
  for(const [id,values] of Object.entries(snapshot.values))for(const [code,v] of Object.entries(values)){
   assert.ok(Number.isFinite(v)&&v>=0);if(id.endsWith('.ZS'))assert.ok(v<=100);
   if(id==='SP.POP.TOTL')assert.ok(Number.isSafeInteger(v));if(id==='SP.DYN.LE00.IN')assert.ok(v>0&&v<=130);
@@ -174,5 +174,22 @@ test('environmental series enforce individual reference years and exact localize
   assert.ok(!INDICATORS.some(i=>i.id===id));assert.throws(()=>parseIndicator(page([row('IT','ITA',10,id,'2025')]),id,map),/Unknown indicator/);
   assert.ok(!statisticsFor({...candidate,values:{...values,[id]:{IT:10}},yearByIndicator:{...yearByIndicator,[id]:'2025'}},'IT').some(x=>x.id===id));
   await assert.rejects(acquire({base:{...candidate,values:{...values,[id]:{IT:10}}},getJson:async()=>assert.fail('restricted series must be rejected before network')}),/Invalid base WDI series/);
+ }
+});
+
+test('real environmental observations retain years and exact guide selection in six languages',async()=>{
+ const {statisticsEvidence,statisticsSelection}=await import('../src/world-statistics.mjs');
+ const queries={"it":["precipitazione media","risorse idriche interne pro capite"],"en":["average precipitation","internal freshwater per capita"],"fr":["précipitations moyennes","eau douce interne par habitant"],"es":["precipitación media","agua dulce interna por habitante"],"de":["jahresniederschlag","internes süßwasser pro kopf"],"pt":["precipitação média","água doce interna per capita"]};
+ for(const {code} of countries)for(const [language,questions] of Object.entries(queries)){
+  const facts=statisticsEvidence(snapshot,code,language);
+  for(const [j,indicator] of INDICATORS.slice(12).entries()){
+   const id='wdi-'+indicator.id, expected=Object.hasOwn(snapshot.values[indicator.id],code)?[id]:[];
+   const fact=facts.find(x=>x.id===id);assert.equal(Boolean(fact),expected.length===1);
+   if(fact){assert.equal(fact.period,'2022');assert.equal(fact.checked,snapshot.retrievedByIndicator[indicator.id]);assert.equal(fact.language,language);}
+   const input={code,language,question:questions[j]};
+   assert.deepEqual(statisticsSelection(snapshot,input),expected);
+   assert.deepEqual(statisticsSelection(snapshot,{...input,question:input.question+' 2022?'}),expected);
+   assert.deepEqual(statisticsSelection(snapshot,{...input,question:input.question+' 2024'}),[]);
+  }
  }
 });

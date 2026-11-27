@@ -49,12 +49,14 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(await page.locator('#name').textContent(),'Italia');
   assert.match(await page.locator('#narration').textContent(),/Monviso/);
   assert.match(await page.locator('#narration').textContent(),/Banca Mondiale, anno 2024/);
-  assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),3);
+  assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),5);
   await page.locator('#profile summary').click();
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
-  assert.match(await page.locator('#statisticsStatus').textContent(),/12 \/ 14 indicatori/);
-  assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),12);
+  assert.match(await page.locator('#statisticsStatus').textContent(),/14 \/ 14 indicatori/);
+  assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),14);
+  assert.match(await page.locator('#narration').textContent(),/Banca Mondiale, anno 2022/);
+  assert.match(await page.locator('#profileStats').textContent(),/832 mm\/yr · 2022/);
   const fr=String(countries.findIndex(c=>c.code==='FR'));
   await page.locator('#place').selectOption(fr);
   assert.equal(await page.locator('#profileFacts a').count(),12);
@@ -66,7 +68,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#lang').selectOption('fr');
   assert.equal(await page.locator('#narration').getAttribute('lang'),'fr');
   assert.match(await page.locator('#narration').textContent(),/Données de la Banque mondiale/);
-  assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),3);
+  assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),5);
   assert.equal(await page.locator('#narrationCredits a[href^="https://whc.unesco.org/"]').count(),0);
   assert.match(await page.locator('#profileStats').textContent(),/Population totale/);
   await page.locator('#lang').selectOption('it');

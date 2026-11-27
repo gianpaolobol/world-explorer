@@ -42,18 +42,20 @@ export function cinematicNarrationFor(code,locale='it'){
  const extended=statisticsLanguages.includes(local);
  const facts=extended?[
   ...pilotEvidence(code,local).filter(x=>x.language===local&&['orography','hydrology'].includes(x.discipline)),
-  ...statisticsEvidence(snapshot,code,local).filter(x=>['wdi-SP.POP.TOTL','wdi-SP.URB.TOTL.IN.ZS','wdi-AG.LND.FRST.ZS'].includes(x.id))
+  ...statisticsEvidence(snapshot,code,local).filter(x=>['wdi-SP.POP.TOTL','wdi-SP.URB.TOTL.IN.ZS','wdi-AG.LND.FRST.ZS','wdi-AG.LND.PRCP.MM','wdi-ER.H2O.INTR.PC'].includes(x.id))
  ]:[];
- const introduction=({
+ const introductions=({
   it:'Dati della Banca Mondiale, anno 2024.',
   en:'World Bank data, reference year 2024.',
   fr:'Données de la Banque mondiale, année de référence 2024.',
   es:'Datos del Banco Mundial, año de referencia 2024.',
   de:'Daten der Weltbank, Bezugsjahr 2024.',
   pt:'Dados do Banco Mundial, ano de referência 2024.'
- })[local];
+ });
  const stats=facts.filter(x=>x.id.startsWith('wdi-'));
  const editorial=facts.filter(x=>!x.id.startsWith('wdi-'));
- const text=[base.text,...editorial.map(x=>x.text),...(stats.length?[introduction,...stats.map(x=>x.text)]:[])].join(' ');
+ const periods=[...new Set(stats.map(x=>x.period))];
+ const sections=periods.flatMap(period=>[introductions[local].replace('2024',period),...stats.filter(x=>x.period===period).map(x=>x.text)]);
+ const text=[base.text,...editorial.map(x=>x.text),...sections].join(' ');
  return {language:local,text,facts,extended,source:base.source};
 }
