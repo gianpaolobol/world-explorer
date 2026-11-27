@@ -14,14 +14,19 @@ export const INDICATORS=Object.freeze([
  Object.freeze({"id":"AG.SRF.TOTL.K2","it":"Superficie totale (terre e acque interne)","en":"Surface area (land and inland water)","unit":"km²","digits":2,"provider":"FAO, FAOSTAT"}),
  Object.freeze({"id":"SP.RUR.TOTL.ZS","it":"Popolazione rurale (% del totale)","en":"Rural population (% of total)","unit":"%","provider":"UN Population Division, World Urbanization Prospects; World Bank estimates"}),
  Object.freeze({"id":"NY.GDP.PCAP.CD","it":"PIL pro capite a prezzi correnti","en":"GDP per capita, current prices","unit":"USD","digits":2,"provider":"National statistical organizations / central banks; OECD; World Bank"}),
- Object.freeze({"id":"SP.DYN.LE00.IN","it":"Speranza di vita alla nascita (anni)","en":"Life expectancy at birth (years)","unit":"","digits":2,"provider":"UN Population Division, World Population Prospects; national statistical offices; Eurostat"})
+ Object.freeze({"id":"SP.DYN.LE00.IN","it":"Speranza di vita alla nascita (anni)","en":"Life expectancy at birth (years)","unit":"","digits":2,"provider":"UN Population Division, World Population Prospects; national statistical offices; Eurostat"}),
+ Object.freeze({"id":"AG.LND.PRCP.MM","year":"2022","it":"Precipitazione media annua","en":"Average precipitation depth","unit":"mm","digits":2,"provider":"FAO, FAOSTAT"}),
+ Object.freeze({"id":"ER.H2O.INTR.PC","year":"2022","it":"Risorse idriche interne rinnovabili pro capite","en":"Renewable internal freshwater resources per capita","unit":"m³","digits":2,"provider":"FAO, AQUASTAT"}),
+ Object.freeze({"id":"ER.MRN.PTMR.ZS","year":"2025","it":"Aree marine protette (quota delle acque territoriali)","en":"Marine protected areas (% of territorial waters)","unit":"%","digits":2,"provider":"Protected Planet, UNEP-WCMC and IUCN"}),
+ Object.freeze({"id":"ER.LND.PTLD.ZS","year":"2025","it":"Aree terrestri protette (quota delle terre emerse)","en":"Terrestrial protected areas (% of land area)","unit":"%","digits":2,"provider":"Protected Planet, UNEP-WCMC and IUCN"})
 ]);
+export const indicatorYear=id=>INDICATORS.find(i=>i.id===id)?.year??YEAR;
 // Original translations of indicator names, not additional data observations.
 const localizedLabels=Object.freeze({
- fr:['Population totale','PIB à prix courants','Population urbaine','Superficie forestière (% des terres émergées)',"Superficie des terres émergées","Densité de population","Terres agricoles (% des terres émergées)","Terres arables (% des terres émergées)","Superficie totale (terres et eaux intérieures)","Population rurale (% du total)","PIB par habitant à prix courants","Espérance de vie à la naissance (ans)"],
- es:['Población total','PIB a precios corrientes','Población urbana','Superficie forestal (% de la superficie terrestre)',"Superficie terrestre","Densidad de población","Tierras agrícolas (% de la superficie terrestre)","Tierras cultivables (% de la superficie terrestre)","Superficie total (tierra y aguas interiores)","Población rural (% del total)","PIB per cápita a precios corrientes","Esperanza de vida al nacer (años)"],
- de:['Gesamtbevölkerung','BIP zu jeweiligen Preisen','Stadtbevölkerung','Waldfläche (% der Landfläche)',"Landfläche","Bevölkerungsdichte","Landwirtschaftliche Fläche (% der Landfläche)","Ackerland (% der Landfläche)","Gesamtfläche (Land und Binnengewässer)","Landbevölkerung (% der Gesamtbevölkerung)","BIP je Einwohner zu jeweiligen Preisen","Lebenserwartung bei Geburt (Jahre)"],
- pt:['População total','PIB a preços correntes','População urbana','Área florestal (% da área terrestre)',"Área terrestre","Densidade populacional","Área agrícola (% da área terrestre)","Terra arável (% da área terrestre)","Área total (terra e águas interiores)","População rural (% do total)","PIB per capita a preços correntes","Esperança de vida ao nascer (anos)"]
+ fr:['Population totale','PIB à prix courants','Population urbaine','Superficie forestière (% des terres émergées)',"Superficie des terres émergées","Densité de population","Terres agricoles (% des terres émergées)","Terres arables (% des terres émergées)","Superficie totale (terres et eaux intérieures)","Population rurale (% du total)","PIB par habitant à prix courants","Espérance de vie à la naissance (ans)","Précipitations moyennes","Ressources internes renouvelables en eau douce par habitant","Aires marines protégées (% des eaux territoriales)","Aires terrestres protégées (% des terres)"],
+ es:['Población total','PIB a precios corrientes','Población urbana','Superficie forestal (% de la superficie terrestre)',"Superficie terrestre","Densidad de población","Tierras agrícolas (% de la superficie terrestre)","Tierras cultivables (% de la superficie terrestre)","Superficie total (tierra y aguas interiores)","Población rural (% del total)","PIB per cápita a precios corrientes","Esperanza de vida al nacer (años)","Precipitación media","Recursos internos renovables de agua dulce por habitante","Áreas marinas protegidas (% de aguas territoriales)","Áreas terrestres protegidas (% de superficie terrestre)"],
+ de:['Gesamtbevölkerung','BIP zu jeweiligen Preisen','Stadtbevölkerung','Waldfläche (% der Landfläche)',"Landfläche","Bevölkerungsdichte","Landwirtschaftliche Fläche (% der Landfläche)","Ackerland (% der Landfläche)","Gesamtfläche (Land und Binnengewässer)","Landbevölkerung (% der Gesamtbevölkerung)","BIP je Einwohner zu jeweiligen Preisen","Lebenserwartung bei Geburt (Jahre)","Mittlerer Jahresniederschlag","Erneuerbare interne Süßwasserressourcen pro Kopf","Meeresschutzgebiete (% der Territorialgewässer)","Landschutzgebiete (% der Landfläche)"],
+ pt:['População total','PIB a preços correntes','População urbana','Área florestal (% da área terrestre)',"Área terrestre","Densidade populacional","Área agrícola (% da área terrestre)","Terra arável (% da área terrestre)","Área total (terra e águas interiores)","População rural (% do total)","PIB per capita a preços correntes","Esperança de vida ao nascer (anos)","Precipitação média","Recursos internos renováveis de água doce por habitante","Áreas marinhas protegidas (% das águas territoriais)","Áreas terrestres protegidas (% da área terrestre)"]
 });
 export const statisticsLanguages=Object.freeze(['it','en',...Object.keys(localizedLabels)]);
 const codes=new Set(countries.map(x=>x.code));
@@ -50,7 +55,7 @@ export function parseIndicator(payload,id,map){
  if(!INDICATORS.some(x=>x.id===id))throw new Error('Unknown indicator');
  const values={},seen=new Set();
  for(const row of rows(payload)){
-  if(row?.indicator?.id!==id||row?.date!==YEAR)throw new Error('Wrong indicator/year');
+  if(row?.indicator?.id!==id||row?.date!==indicatorYear(id))throw new Error('Wrong indicator/year');
   const code=row.country?.id;
   if(!map.has(code))continue;
   if(row.countryiso3code!==map.get(code))throw new Error('Country code mismatch');
@@ -67,11 +72,13 @@ export function statisticsFor(snapshot,code,locale='it'){
  if(!codes.has(code)||!snapshot||snapshot.year!==YEAR||typeof snapshot.retrieved!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(snapshot.retrieved))return [];
  const language=statisticsLanguages.includes(locale)?locale:'en';
  return INDICATORS.flatMap((i,index)=>{
+  const year=indicatorYear(i.id);
+  if((snapshot.yearByIndicator?.[i.id]??snapshot.year)!==year)return [];
   const v=snapshot.values?.[i.id]?.[code];if(!validValue(i.id,v))return [];
   const retrieved=snapshot.retrievedByIndicator?.[i.id]??snapshot.retrieved;
   if(typeof retrieved!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(retrieved))return [];
   const nf=new Intl.NumberFormat(language,{useGrouping:'always',maximumFractionDigits:i.digits??(i.unit==='%'?2:0)});
-  return [{id:i.id,language,label:localizedLabels[language]?.[index]??i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year:YEAR,retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
+  return [{id:i.id,language,label:localizedLabels[language]?.[index]??i[language],value:nf.format(v)+(i.unit?' '+i.unit:''),year,retrieved,source:'https://data.worldbank.org/indicator/'+i.id,attribution:'World Bank: World Development Indicators: '+i.provider}];
  });
 }
 
@@ -97,14 +104,21 @@ Object.assign(queries.fr,{"superficie totale":"AG.SRF.TOTL.K2","population rural
 Object.assign(queries.es,{"superficie total":"AG.SRF.TOTL.K2","población rural":"SP.RUR.TOTL.ZS","pib per cápita":"NY.GDP.PCAP.CD","esperanza de vida":"SP.DYN.LE00.IN"});
 Object.assign(queries.de,{"gesamtfläche":"AG.SRF.TOTL.K2","landbevölkerung":"SP.RUR.TOTL.ZS","bip je einwohner":"NY.GDP.PCAP.CD","lebenserwartung":"SP.DYN.LE00.IN"});
 Object.assign(queries.pt,{"área total":"AG.SRF.TOTL.K2","população rural":"SP.RUR.TOTL.ZS","pib per capita":"NY.GDP.PCAP.CD","esperança de vida":"SP.DYN.LE00.IN"});
+Object.assign(queries.it,{"precipitazione media":"AG.LND.PRCP.MM","risorse idriche interne pro capite":"ER.H2O.INTR.PC","aree marine protette":"ER.MRN.PTMR.ZS","aree terrestri protette":"ER.LND.PTLD.ZS"});
+Object.assign(queries.en,{"average precipitation":"AG.LND.PRCP.MM","internal freshwater per capita":"ER.H2O.INTR.PC","marine protected areas":"ER.MRN.PTMR.ZS","terrestrial protected areas":"ER.LND.PTLD.ZS"});
+Object.assign(queries.fr,{"précipitations moyennes":"AG.LND.PRCP.MM","eau douce interne par habitant":"ER.H2O.INTR.PC","aires marines protégées":"ER.MRN.PTMR.ZS","aires terrestres protégées":"ER.LND.PTLD.ZS"});
+Object.assign(queries.es,{"precipitación media":"AG.LND.PRCP.MM","agua dulce interna por habitante":"ER.H2O.INTR.PC","áreas marinas protegidas":"ER.MRN.PTMR.ZS","áreas terrestres protegidas":"ER.LND.PTLD.ZS"});
+Object.assign(queries.de,{"jahresniederschlag":"AG.LND.PRCP.MM","internes süßwasser pro kopf":"ER.H2O.INTR.PC","meeresschutzgebiete":"ER.MRN.PTMR.ZS","landschutzgebiete":"ER.LND.PTLD.ZS"});
+Object.assign(queries.pt,{"precipitação média":"AG.LND.PRCP.MM","água doce interna per capita":"ER.H2O.INTR.PC","áreas marinhas protegidas":"ER.MRN.PTMR.ZS","áreas terrestres protegidas":"ER.LND.PTLD.ZS"});
 export function statisticsSelection(snapshot,input){
  if(!Object.hasOwn(queries,input.language))return [];
  let q=input.question.normalize('NFC').toLowerCase().trim().replace(/[?!.]+$/u,'').trim();
  // Explicit year queries are supported only for the exact snapshot year.
  const dated=q.match(/^(.*?)\s+(\d{4})$/u);
- if(dated){if(dated[2]!==YEAR)return [];q=dated[1].trim();}
+ if(dated)q=dated[1].trim();
  const aliases=queries[input.language];
  if(!Object.hasOwn(aliases,q))return [];
+ if(dated&&dated[2]!==indicatorYear(aliases[q]))return [];
  const id='wdi-'+aliases[q];
  return statisticsEvidence(snapshot,input.code,input.language).filter(x=>x.id===id).map(x=>x.id);
 }

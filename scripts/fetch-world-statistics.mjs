@@ -2,7 +2,7 @@
 import {writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
-import {countryMap,parseIndicator,INDICATORS,YEAR,statisticsFor} from '../src/world-statistics.mjs';
+import {countryMap,parseIndicator,INDICATORS,YEAR,indicatorYear,statisticsFor} from '../src/world-statistics.mjs';
 import {snapshot as committedSnapshot} from '../src/world-statistics-data.mjs';
 
 export function retryDelay(header,attempt,now=Date.now()){
@@ -58,12 +58,13 @@ export async function acquire({getJson=get,wait=delay,now=()=>new Date(),base=nu
  const map=countryMap(await getJson('country',{}));
  for(const {id} of missing){
   await wait(base===null?1500:5000);
-  entries.push([id,parseIndicator(await getJson('country/all/indicator/'+id,{source:'2',date:YEAR}),id,map)]);
+  entries.push([id,parseIndicator(await getJson('country/all/indicator/'+id,{source:'2',date:indicatorYear(id)}),id,map)]);
   dates[id]=now().toISOString().slice(0,10);
  }
  const values=Object.fromEntries(INDICATORS.map(({id})=>[id,entries.find(([key])=>key===id)[1]]));
  const retrieved=now().toISOString().slice(0,10);
- return {year:YEAR,retrieved,values,...(base!==null||Object.values(dates).some(d=>d!==retrieved)?{retrievedByIndicator:dates}:{})};
+ const yearByIndicator=Object.fromEntries(INDICATORS.filter(i=>indicatorYear(i.id)!==YEAR).map(i=>[i.id,indicatorYear(i.id)]));
+ return {year:YEAR,retrieved,values,...(Object.keys(yearByIndicator).length?{yearByIndicator}:{}),...(base!==null||Object.values(dates).some(d=>d!==retrieved)?{retrievedByIndicator:dates}:{})};
 }
 async function main(){
  const snapshot=await acquire({base:process.argv.includes('--extend')?committedSnapshot:null});
