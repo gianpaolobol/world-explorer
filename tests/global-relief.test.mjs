@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseGlobalGrid,globalMesh,projectGlobalMesh,GLOBAL_MAX_BYTES,GLOBAL_ROWS,GLOBAL_COLS,globalSample,regionalSample,parseRegionalGrid} from '../src/numeric-relief.mjs';
+import {parseGlobalGrid,globalMesh,projectGlobalMesh,GLOBAL_MAX_BYTES,GLOBAL_ROWS,GLOBAL_COLS,globalSample,regionalSample,parseRegionalGrid,reliefNarration,GEBCO_DOI} from '../src/numeric-relief.mjs';
 const payload=(values=Array(GLOBAL_ROWS*GLOBAL_COLS).fill(0))=>JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:GLOBAL_ROWS,cols:GLOBAL_COLS,values});
 test('global grid has fixed shape and preserves deep negative values and gaps',()=>{
  const v=Array(16200).fill(0);v[0]=-9999;v[1]=null;v[2]=8848;
@@ -62,4 +62,20 @@ test('coarse samples close longitude seam, preserve zero and exclude polar caps'
   if(v[row*180+col]===null){assert.equal(s,null);continue;}
   assert.equal(s.height,v[row*180+col]);assert.ok(Math.abs(s.lon-lon)<1e-9);assert.ok(Math.abs(s.lat-lat)<1e-9);
  }
+});
+
+test('relief narration is optional, local, signed, resolution-labelled and never invents gaps',()=>{
+ const g=parseGlobalGrid(payload(Array(16200).fill(-5000)));
+ const region=parseRegionalGrid('ncols 2\nnrows 2\nxllcorner 10\nyllcorner 40\ncellsize 0.004166666667\n-100 -9999\n30 40');
+ for(const locale of ['it','en','fr','es','de','pt']){
+  const r=reliefNarration(region,g,10.001,40.006,locale);
+  assert.equal(r.sample.height,-100);assert.equal(r.source,GEBCO_DOI);assert.match(r.text,/15/);assert.match(r.text,/-100/);
+  const fallback=reliefNarration(region,g,10.006,40.006,locale);
+  assert.equal(fallback.sample.height,-5000);assert.match(fallback.text,/2/);
+  assert.equal(reliefNarration(region,null,10.006,40.006,locale),null);
+  assert.equal(reliefNarration(null,g,0,90,locale),null);
+  assert.equal(reliefNarration(null,null,0,0,locale),null);
+ }
+ assert.equal(reliefNarration(region,g,10.001,40.006,'ja'),null);
+ assert.equal(reliefNarration(region,g,10.001,40.006,'__proto__'),null);
 });
