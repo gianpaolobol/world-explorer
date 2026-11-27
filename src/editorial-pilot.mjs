@@ -1,6 +1,6 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
-// Original short factual summaries; primary sources consulted 2026-11-26.
-// Pilot only: no independent editorial approval and no other country inferred.
+// Original short factual summaries; primary sources consulted 2026-11-26/27.
+// Pilot only: no independent editorial approval; facts are scoped to their country.
 export const disciplines=Object.freeze(['physical','orography','hydrology','oceanography','geology','climatology','biogeography','political','human','economic','urban','historical']);
 const yearbook='https://www.istat.it/wp-content/uploads/2026/03/Italian-Statistical-Yearbook-2025-Executive-summary.pdf';
 const rows=[
@@ -17,16 +17,31 @@ const rows=[
  ['urban','città','urban geography','Al 31 dicembre 2024 solo 11 comuni italiani superavano i 250.000 residenti, ospitando il 14,7% della popolazione nazionale.','On 31 December 2024, just 11 Italian municipalities had over 250,000 residents, representing 14.7% of the national population.',yearbook,'ISTAT, Annuario 2025, cap. 1','2024-12-31'],
  ['historical','storia','historical geography','Venezia si sviluppò su isole lagunari dal V secolo e acquisì un ruolo marittimo di primo piano nel X secolo; città e laguna sono patrimonio UNESCO dal 1987.','Venice developed on lagoon islands from the fifth century and rose as a maritime power in the tenth; the city and lagoon became a UNESCO World Heritage property in 1987.','https://whc.unesco.org/en/list/394','UNESCO, Venice and its Lagoon','1987']
 ];
+const franceRows=[
+ ['orography','orografia','orography','Nei Pirenei, sul versante francese del sito transfrontaliero del Monte Perdido, si trovano grandi circhi glaciali.','On the French side of the transboundary Mont Perdu site in the Pyrenees, large glacial cirques shape the mountain landscape.','https://whc.unesco.org/en/list/773/','UNESCO, Pyrénées – Mont Perdu',null],
+ ['hydrology','idrografia','hydrology','Il tratto della Loira tutelato come paesaggio culturale UNESCO si estende per circa 280 km fra Sully-sur-Loire e Chalonnes, lungo il corso medio del fiume.','The UNESCO cultural landscape along the middle Loire spans about 280 km between Sully-sur-Loire and Chalonnes.','https://whc.unesco.org/en/list/933/','UNESCO, Loire Valley',null],
+ ['geology','geologia','geology','In Alvernia, la faglia di Limagne e i vulcani della Chaîne des Puys documentano la distensione della crosta continentale.','In Auvergne, the Limagne fault and Chaîne des Puys volcanoes provide geological evidence of continental extension.','https://whc.unesco.org/en/list/1434','UNESCO, Chaîne des Puys – Limagne fault',null],
+ ['biogeography','biogeografia','biogeography','La riserva corsa di Scandola comprende ambienti marini e costieri con macchia mediterranea e habitat per uccelli marini.','Corsica’s Scandola reserve contains coastal and marine habitats, including Mediterranean scrub and seabird habitat.','https://whc.unesco.org/en/list/258/','UNESCO, Gulf of Porto',null],
+ ['human','popolazione 2026','population 2026','Al 1º gennaio 2026, INSEE stimava 69,1 milioni di residenti: la Francia metropolitana e i cinque dipartimenti d’oltremare.','On 1 January 2026, INSEE estimated 69.1 million residents in metropolitan France and the five overseas departments.','https://www.insee.fr/fr/statistiques/8996934','INSEE, Démographie : évolutions récentes et à venir','2026-01-01'],
+ ['historical','storia','historical geography','Nel 2000 il Comitato del patrimonio mondiale iscrisse il paesaggio culturale della Valle della Loira; i suoi castelli testimoniano fra l’altro il Rinascimento francese.','In 2000 the World Heritage Committee listed the Loire Valley cultural landscape, whose castles include notable examples of French Renaissance heritage.','https://whc.unesco.org/en/decisions/2459/','UNESCO, Decision 24 COM X.C.1','2000'],
+ ["physical","territorio","physical geography","La Francia metropolitana si affaccia su quattro bacini marittimi: Mare del Nord, Manica, Atlantico e Mediterraneo.","Metropolitan France has coastlines facing the North Sea, English Channel, Atlantic and Mediterranean.","https://www.france.fr/es/articulo/clima-y-geografia-francia/","Atout France, clima e geografia",null,"2026-11-27"],
+ ["oceanography","oceanografia","oceanography","Nella baia di Mont-Saint-Michel le maree determinano l’alternanza tra distese sabbiose esposte e superfici sommerse.","Tidal fluctuations in the Bay of Mont-Saint-Michel periodically expose and inundate extensive sand flats.","https://whc.unesco.org/en/list/80/","UNESCO, Mont-Saint-Michel and its Bay",null,"2026-11-27"],
+ ["climatology","clima","climatology","Météo-France distingue cinque tipi climatici nella Francia esagonale e in Corsica, tra cui quello oceanico, montano e mediterraneo.","Météo-France distinguishes five climate types in mainland France and Corsica, including oceanic, mountain and Mediterranean climates.","https://meteofrance.com/changement-climatique/le-climat-en-france-hexagonale-et-corse","Météo-France, climat en France hexagonale et Corse",null,"2026-11-27"],
+ ["political","capitale","capital","Parigi è la capitale della Francia.","Paris is the capital of France.","https://www.france.fr/de/artikel/steckbrief-frankreich/","Atout France, Steckbrief Frankreich",null,"2026-11-27"],
+ ["economic","economia 2024","economy 2024","Nei conti nazionali INSEE pubblicati nel 2025, il PIL francese del 2024 era pari a 2.919,9 miliardi di euro a prezzi correnti; il dato è soggetto a revisioni.","In INSEE’s national accounts published in 2025, France’s 2024 GDP at current prices was EUR 2,919.9 billion; estimates may be revised.","https://www.insee.fr/en/statistiques/8574734","INSEE, National accounts in 2024","2024","2026-11-27"],
+ ["urban","città","urban geography","Nel censimento 2023 il comune di Parigi contava 2.103.778 abitanti, mentre l’unità urbana di Parigi ne contava 11.013.774: due perimetri distinti.","In the 2023 census, the municipality of Paris had 2,103,778 residents and the Paris urban unit had 11,013,774: two distinct geographical definitions.","https://www.insee.fr/fr/statistiques/1405599?geo=REG-11+COM-75056+AAV2020-001+UU2020-00851","INSEE, Comparateur de territoires","2023","2026-11-27"]
+];
+const corpus=new Map([['IT',rows],['FR',franceRows]]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
- if(code!=='IT')return [];
+ const records=corpus.get(code);if(!records)return [];
  const locale=language==='it'?'it':'en';
- return rows.map(([discipline,itQuery,enQuery,it,en,source,label,period])=>({id:'it-'+discipline,discipline,text:locale==='it'?it:en,language:locale,source,label,period,checked:'2026-11-26',review:'source-checked-not-independent'}));
+ return records.map(([discipline,itQuery,enQuery,it,en,source,label,period,checked='2026-11-26'])=>({id:code.toLowerCase()+'-'+discipline,discipline,text:locale==='it'?it:en,language:locale,source,label,period,checked,review:'source-checked-not-independent'}));
 }
 export function pilotSelection(input){
- if(input.code!=='IT'||!['it','en'].includes(input.language))return [];
+ const records=corpus.get(input.code);if(!records||!['it','en'].includes(input.language))return [];
  const q=normalize(input.question);
  const alias=input.language==='it'?{'qual è la capitale':'capitale','qual è la popolazione':'popolazione','geografia fisica':'territorio','idrologia':'idrografia','climatologia':'clima','geografia politica':'capitale','geografia umana':'popolazione','geografia economica':'economia','geografia urbana':'città','geografia storica':'storia'}:{'what is the capital':'capital','what is the population':'population','climate':'climatology'};
  const key=Object.hasOwn(alias,q)?alias[q]:q;
- return rows.filter(r=>r[input.language==='it'?1:2]===key).map(r=>'it-'+r[0]);
+ return records.filter(r=>r[input.language==='it'?1:2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
 }

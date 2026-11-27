@@ -41,7 +41,7 @@ export function cinematicNarrationFor(code,locale='it'){
  const local=base.language;
  const extended=['it','en'].includes(local);
  const facts=extended?[
-  ...pilotEvidence(code,local).filter(x=>['it-orography','it-hydrology'].includes(x.id)),
+  ...pilotEvidence(code,local).filter(x=>['orography','hydrology'].includes(x.discipline)),
   ...statisticsEvidence(snapshot,code,local).filter(x=>['wdi-SP.POP.TOTL','wdi-SP.URB.TOTL.IN.ZS','wdi-AG.LND.FRST.ZS'].includes(x.id))
  ]:[];
  const introduction=local==='it'?'Dati della Banca Mondiale, anno 2024.':'World Bank data, reference year 2024.';

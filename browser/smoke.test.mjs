@@ -57,8 +57,9 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),4);
   const fr=String(countries.findIndex(c=>c.code==='FR'));
   await page.locator('#place').selectOption(fr);
-  assert.equal(await page.locator('#profileFacts a').count(),0);
-  assert.match(await page.locator('#profileStatus').textContent(),/non ancora disponibile/);
+  assert.equal(await page.locator('#profileFacts a').count(),12);
+  assert.match(await page.locator('#profileStatus').textContent(),/12 \/ 12 discipline/);
+  assert.match(await page.locator('#narration').textContent(),/Pirenei/);
   assert.match(await page.locator('#profileStats').textContent(),/68\.551\.653/);
   assert.match(await page.locator('#narration').textContent(),/68\.551\.653/);
   assert.equal(await page.locator('#narrationCredits a[href^="https://www.adbpo.it/"]').count(),0);
