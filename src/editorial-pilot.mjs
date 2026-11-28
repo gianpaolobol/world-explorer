@@ -832,7 +832,173 @@ const landscapeRows=new Map([
  ]
 ]);
 export const landscapeCodes=Object.freeze([...landscapeRows.keys()].sort());
-const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows]);
+// Local urban and historical evidence; not a national urbanisation statistic.
+const urbanHistoryRows=new Map([
+ [
+  "AT",
+  [
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "Il viale della Ringstrasse, realizzato nella seconda metà dell’Ottocento, organizza una parte importante del centro monumentale di Vienna.",
+    "Vienna’s monumental core includes the Ringstrasse boulevard, laid out in the latter half of the nineteenth century.",
+    "https://whc.unesco.org/en/list/1033/",
+    "UNESCO, Historic Centre of Vienna",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "Vienna fu la capitale della monarchia austro-ungarica.",
+    "Vienna served as the capital of the Austro-Hungarian monarchy.",
+    "https://whc.unesco.org/en/list/1033/",
+    "UNESCO, Historic Centre of Vienna",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "BE",
+  [
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "La Grand-Place di Bruxelles è delimitata da edifici civici e privati, tra cui il municipio e le case delle corporazioni.",
+    "Brussels’ Grand-Place is enclosed by civic and private buildings, including the town hall and guild houses.",
+    "https://whc.unesco.org/en/list/857/",
+    "UNESCO, La Grand-Place, Brussels",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "La maggior parte degli edifici che circondano la Grand-Place di Bruxelles risale alla fine del Seicento.",
+    "Most buildings around Brussels’ Grand-Place date to the late seventeenth century.",
+    "https://whc.unesco.org/en/list/857/",
+    "UNESCO, La Grand-Place, Brussels",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "CZ",
+  [
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "Il centro storico di Praga comprende la Città Vecchia, Malá Strana e la Città Nuova, articolate sulle rive della Moldava.",
+    "Prague’s historic core includes the Old Town, Lesser Town and New Town on the banks of the Vltava.",
+    "https://whc.unesco.org/en/list/616/",
+    "UNESCO, Historic Centre of Prague",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "Il ponte Carlo e numerosi monumenti di Praga risalgono all’epoca di Carlo IV, nel Trecento.",
+    "Charles Bridge and many Prague monuments date to the fourteenth-century reign of Charles IV.",
+    "https://whc.unesco.org/en/list/616/",
+    "UNESCO, Historic Centre of Prague",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "HU",
+  [
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "Il paesaggio urbano tutelato di Budapest comprende entrambe le rive del Danubio, il quartiere del castello di Buda e il viale Andrássy.",
+    "Budapest’s protected urban landscape includes both Danube banks, the Buda Castle district and Andrássy Avenue.",
+    "https://whc.unesco.org/en/list/400/",
+    "UNESCO, Budapest, Banks of the Danube, Buda Castle Quarter and Andrássy Avenue",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "A Budapest le vestigia di Aquincum documentano la presenza romana nell’area della capitale ungherese.",
+    "The remains of Aquincum attest to Roman settlement in the area of Hungary’s capital, Budapest.",
+    "https://whc.unesco.org/en/list/400/",
+    "UNESCO, Budapest, Banks of the Danube, Buda Castle Quarter and Andrássy Avenue",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "PL",
+  [
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "Nel centro storico di Cracovia la grande piazza del mercato è il fulcro dell’impianto urbano mercantile medievale.",
+    "Kraków’s large market square anchors the medieval merchant-town layout.",
+    "https://whc.unesco.org/en/list/29/",
+    "UNESCO, Historic Centre of Kraków",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "Cracovia fu capitale della Polonia; la cattedrale sul Wawel ospita sepolture di sovrani polacchi.",
+    "Kraków was once Poland’s capital; Wawel Cathedral contains the tombs of Polish monarchs.",
+    "https://whc.unesco.org/en/list/29/",
+    "UNESCO, Historic Centre of Kraków",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "PT",
+  [
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "Il centro storico di Porto si sviluppa sui pendii che dominano il tratto finale del fiume Douro.",
+    "Porto’s historic centre occupies hillsides above the lower Douro River.",
+    "https://whc.unesco.org/en/list/755/",
+    "UNESCO, Historic Centre of Oporto",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "La storia urbana di Porto si estende per circa due millenni ed è legata all’attività portuale.",
+    "Porto’s urban history spans roughly two millennia and is closely tied to its port.",
+    "https://whc.unesco.org/en/list/755/",
+    "UNESCO, Historic Centre of Oporto",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ]
+]);
+export const urbanHistoryCodes=Object.freeze([...urbanHistoryRows.keys()].sort());
+const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows,...urbanHistoryRows]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
