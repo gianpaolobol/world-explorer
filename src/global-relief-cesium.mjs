@@ -1,18 +1,18 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
-import {globalMesh,globalCellCentre} from './numeric-relief.mjs';
+import {globalFaces,globalCellCentre,validateGlobalExaggeration} from './numeric-relief.mjs';
 
 // Build actual Earth-fixed WGS84 geometry from the imported signed grid.
 // One solid-color batch per elevation band; no fictitious samples or polar caps.
 const bands=[[-12000,'#102c5b'],[-6000,'#16437b'],[-4000,'#205b99'],[-2000,'#327eb2'],[-500,'#50a6c5'],[0,'#54885c'],[500,'#789c62'],[1500,'#ad9a6b'],[3000,'#987d62'],[5000,'#e2ded6']];
 export function reliefBatches(g,ex){
- const mesh=globalMesh(g,ex);
- const vertices=mesh.vertices.map((v,i)=>v&&({
+ validateGlobalExaggeration(ex);
+ const vertices=g.values.map((z,i)=>z===null?null:({
   ...globalCellCentre(g,i),
-  height:v.height*ex
+  height:z*ex
  }));
  const buckets=bands.map(([min,color])=>({min,color,faces:[]}));
- for(const face of mesh.faces){
-  const z=face.reduce((sum,i)=>sum+mesh.vertices[i].height,0)/3;
+ for(const face of globalFaces(g)){
+  const z=face.reduce((sum,i)=>sum+g.values[i],0)/3;
   let b=buckets.length-1;while(b>0&&z<buckets[b].min)b--;
   buckets[b].faces.push(face);
  }
