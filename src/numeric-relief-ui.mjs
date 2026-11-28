@@ -6,7 +6,7 @@ let current=null,epoch=0,destination=null,onSampleChange=()=>{};
 export function observeReliefSample(handler){onSampleChange=handler;}
 export function currentReliefNarration(){return destination?reliefNarration(current,globalGrid,destination.lon,destination.lat,destination.locale):null;}
 const destinationStatus=$('localReliefSample');
-export function setReliefDestination(lon,lat,locale='it'){destination={lon,lat,locale};renderDestinationSample();}
+export function setReliefDestination(lon,lat,locale='it'){destination={lon,lat,locale};renderDestinationSample();syncGlobalDestination();}
 function renderDestinationSample(){
  if(!destination)return;
  const {lon,lat,locale}=destination,fmt=(n,d=4)=>new Intl.NumberFormat(locale,{maximumFractionDigits:d}).format(n);
@@ -60,7 +60,17 @@ const controls=element('div');
 function control(label,id,min,max,value,step){
  const l=element('label',label,controls),i=element('input','',l);i.id=id;i.type='range';i.min=min;i.max=max;i.value=value;i.step=step;i.disabled=true;return i;
 }
-const lon=control('Longitudine vista','globalLon',-180,180,0,5),lat=control('Latitudine vista','globalLat',-90,90,0,5);
+const lon=control('Longitudine vista','globalLon',-180,180,0,'any'),lat=control('Latitudine vista','globalLat',-90,90,0,'any');
+const followLabel=element('label','Segui la destinazione del viaggio ',controls),follow=element('input','',followLabel);
+follow.type='checkbox';follow.id='globalFollow';follow.disabled=true;
+function syncGlobalDestination(redraw=true){
+ if(!globalGrid||!follow.checked||!destination)return false;
+ const changed=Number(lon.value)!==destination.lon||Number(lat.value)!==destination.lat;
+ lon.value=String(destination.lon);lat.value=String(destination.lat);
+ if(changed&&redraw)drawGlobal();
+ return changed;
+}
+follow.onchange=()=>syncGlobalDestination();
 const exLabel=element('label','Esagerazione verticale',controls),ex=element('select','',exLabel);ex.id='globalScale';for(const v of [1,20,50])ex.add(new Option(v+'×',String(v)));ex.disabled=true;
 const mainToggle=element('button','Mostra sul globo principale');mainToggle.id='globalMainToggle';mainToggle.disabled=true;
 const mainStatus=element('p');mainStatus.id='globalMainStatus';mainStatus.setAttribute('role','status');
@@ -77,7 +87,7 @@ $('numericRelief').after(globalPanel);
 const gc=globalCanvas.getContext('2d');
 let globalGrid=null,globalEpoch=0,mesh=null;
 function clearGlobal(){
- stopMainRelief();mainToggle.disabled=true;globalGrid=null;mesh=null;renderDestinationSample();globalCanvas.hidden=true;for(const c of [lon,lat,ex,globalClear])c.disabled=true;
+ stopMainRelief();mainToggle.disabled=true;globalGrid=null;mesh=null;renderDestinationSample();globalCanvas.hidden=true;follow.checked=false;for(const c of [lon,lat,ex,globalClear,follow])c.disabled=true;
  gc?.clearRect(0,0,globalCanvas.width,globalCanvas.height);
 }
 function drawGlobal(rebuild=false){
@@ -100,8 +110,8 @@ globalInput.onchange=async()=>{
   if(!gc)throw new Error('Canvas 2D non disponibile');
   if(file.size>GLOBAL_MAX_BYTES)throw new Error('File troppo grande');
   const grid=parseGlobalGrid(await file.text());if(epoch!==globalEpoch)return;
-  globalGrid=grid;mainToggle.disabled=!mainHandler;for(const c of [lon,lat,ex,globalClear])c.disabled=false;drawGlobal(true);renderDestinationSample();
+  globalGrid=grid;mainToggle.disabled=!mainHandler;for(const c of [lon,lat,ex,globalClear,follow])c.disabled=false;drawGlobal(true);renderDestinationSample();
  }catch(e){if(epoch===globalEpoch){clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale non valida: '+e.message;}}
 };
-lon.onchange=lat.onchange=()=>drawGlobal();ex.onchange=()=>{stopMainRelief();drawGlobal(true);};
+lon.onchange=lat.onchange=()=>{follow.checked=false;drawGlobal();};ex.onchange=()=>{stopMainRelief();drawGlobal(true);};
 globalClear.onclick=()=>{globalEpoch++;clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale rimossa dalla memoria.';};
