@@ -1,5 +1,5 @@
 // Copyright 2026 Gian Paolo Franceschini. All rights reserved.
-import {globalMesh,GLOBAL_COLS,GLOBAL_FIRST,GLOBAL_STRIDE} from './numeric-relief.mjs';
+import {globalMesh,globalCellCentre} from './numeric-relief.mjs';
 
 // Build actual Earth-fixed WGS84 geometry from the imported signed grid.
 // One solid-color batch per elevation band; no fictitious samples or polar caps.
@@ -7,8 +7,7 @@ const bands=[[-12000,'#102c5b'],[-6000,'#16437b'],[-4000,'#205b99'],[-2000,'#327
 export function reliefBatches(g,ex){
  const mesh=globalMesh(g,ex);
  const vertices=mesh.vertices.map((v,i)=>v&&({
-  lon:-180+(GLOBAL_FIRST+(i%GLOBAL_COLS)*GLOBAL_STRIDE+.5)/240,
-  lat:-90+(GLOBAL_FIRST+Math.floor(i/GLOBAL_COLS)*GLOBAL_STRIDE+.5)/240,
+  ...globalCellCentre(g,i),
   height:v.height*ex
  }));
  const buckets=bands.map(([min,color])=>({min,color,faces:[]}));
