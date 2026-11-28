@@ -846,3 +846,21 @@ export function pilotSelection(input){
  const key=Object.hasOwn(alias,q)?alias[q]:q;
  return records.filter(r=>r[input.language==='it'?1:2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
 }
+
+/** Editorial slots only: statistics and regional classifications are not independent reviews. */
+export function editorialCoverage(codes){
+ const unique=[...new Set(codes)];
+ const byDiscipline=Object.fromEntries(disciplines.map(d=>[d,0]));
+ const profiles=unique.map(code=>{
+  const available=new Set(pilotEvidence(code,'en').map(f=>f.discipline));
+  const covered=disciplines.filter(d=>available.has(d));
+  const missing=disciplines.filter(d=>!available.has(d));
+  for(const d of covered)byDiscipline[d]++;
+  return {code,covered,missing};
+ });
+ const filled=Object.values(byDiscipline).reduce((sum,n)=>sum+n,0);
+ return {totalCountries:unique.length,totalSlots:unique.length*disciplines.length,filled,
+  complete:profiles.filter(p=>!p.missing.length).length,
+  partial:profiles.filter(p=>p.covered.length&&p.missing.length).length,
+  empty:profiles.filter(p=>!p.covered.length).length,byDiscipline,profiles};
+}

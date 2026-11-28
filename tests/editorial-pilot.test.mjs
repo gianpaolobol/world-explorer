@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {countries,languages} from '../src/countries.mjs';
-import {disciplines,lldcCodes,sidsCodes,euContextCodes,geoscienceCodes,regionalExtensionCodes,landscapeCodes,composeEditorialRows,pilotEvidence,pilotSelection} from '../src/editorial-pilot.mjs';
+import {disciplines,lldcCodes,sidsCodes,euContextCodes,geoscienceCodes,regionalExtensionCodes,landscapeCodes,composeEditorialRows,pilotEvidence,pilotSelection,editorialCoverage} from '../src/editorial-pilot.mjs';
 import {answerGuide,evidenceFor} from '../src/guide.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
 const input={code:'IT',language:'it',question:'orografia'};
@@ -249,4 +249,20 @@ test('Six landscape profiles preserve earlier facts and provide scoped bilingual
   }
  }
  assert.equal(pilotEvidence('HR','en')[0].period,'2013');
+});
+
+test('editorial coverage counts unique country-discipline slots, gaps and explicitly partial evidence',()=>{
+ const codes=countries.map(c=>c.code), report=editorialCoverage(codes);
+ assert.equal(report.totalCountries,195);assert.equal(report.totalSlots,2340);
+ assert.equal(report.filled,326);assert.equal(report.complete,4);assert.equal(report.partial,109);assert.equal(report.empty,82);
+ for(const p of report.profiles){
+  const facts=pilotEvidence(p.code,'en');
+  assert.deepEqual(p.covered,disciplines.filter(d=>facts.some(f=>f.discipline===d)));
+  assert.deepEqual(p.missing,disciplines.filter(d=>!p.covered.includes(d)));
+  assert.ok(facts.every(f=>f.review==='source-checked-not-independent'));
+ }
+ for(const d of disciplines)assert.equal(report.byDiscipline[d],report.profiles.filter(p=>p.covered.includes(d)).length);
+ assert.equal(editorialCoverage(['IT','IT','ZZ']).filled,12);
+ assert.equal(editorialCoverage(['IT','IT','ZZ']).totalCountries,2);
+ assert.equal(editorialCoverage([]).totalSlots,0);
 });

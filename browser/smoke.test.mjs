@@ -52,9 +52,31 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.match(await page.locator('#narration').textContent(),/Monviso/);
   assert.match(await page.locator('#narration').textContent(),/Banca Mondiale, anno 2024/);
   assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),5);
-  await page.locator('#profile summary').click();
+  await page.locator('#profile > summary').click();
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
+  await page.locator('#editorialCoverage summary').click();
+  assert.match(await page.locator('#editorialCoverageStatus').textContent(),/326 \/ 2340/);
+  assert.equal(await page.locator('#editorialCoverageList li').count(),12);
+  await page.locator('#editorialFilter').selectOption('human');
+  assert.equal(await page.locator('#editorialDestination option').count(),4);
+  assert.match(await page.locator('#profileMissing').textContent(),/Tutte le discipline/);
+  for(const [locale,label] of [['en','Go to destination'],['fr','Aller à la destination'],['de','Zum Ziel'],['es','Ir al destino'],['pt','Ir para o destino'],['ja','Go to destination']]){
+   await page.locator('#lang').selectOption(locale);
+   assert.equal(await page.locator('#editorialGo').textContent(),label);
+   assert.equal(await page.locator('#editorialFilter').getAttribute('lang'),locale==='ja'?'en':locale);
+   assert.equal(await page.locator('#editorialDestination').getAttribute('lang'),locale);
+   assert.equal(await page.locator('#editorialFilter').inputValue(),'human');
+   assert.equal(await page.locator('#editorialDestination option').count(),4);
+  }
+  await page.locator('#lang').selectOption('it');
+  await page.locator('#editorialDestination').selectOption('DE');
+  await page.locator('#editorialGo').click();
+  assert.equal(await page.locator('#place').inputValue(),String(countries.findIndex(c=>c.code==='DE')));
+  await page.locator('#editorialDestination').selectOption('IT');
+  await page.locator('#editorialGo').click();
+  assert.equal(await page.locator('#place').inputValue(),it);
+  await page.locator('#editorialCoverage summary').click();
   assert.match(await page.locator('#statisticsStatus').textContent(),/14 \/ 14 indicatori/);
   assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),14);
   assert.match(await page.locator('#narration').textContent(),/Banca Mondiale, anno 2022/);
@@ -78,8 +100,9 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#place').selectOption(va);
   assert.equal(await page.locator('#narrationCredits a').count(),0);
   assert.match(await page.locator('#narrationCoverage').textContent(),/Nessun approfondimento/);
+  assert.match(await page.locator('#profileMissing').textContent(),/Geografia fisica.*Geografia storica/);
   await page.locator('#place').selectOption(it);
-  await page.locator('#profile summary').click();
+  await page.locator('#profile > summary').click();
   await page.locator('#lang').selectOption('en');
   assert.equal(await page.locator('#name').textContent(),'Italy');
   await page.locator('#next').click();
