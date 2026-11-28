@@ -283,13 +283,16 @@ test('Chromium real Cesium WebGL with offline tile fixture: globe and tour contr
 
  // Explicit live-data mode: regular offline checks do not require a download.
 if(process.env.WORLD_EXPLORER_REAL_RELIEF==='1'){
- test('Chromium renders acquired global and native coastal GEBCO data',{timeout:120000},async t=>{
-  const [global,regional,globalReport,regionalReport]=await Promise.all([
+ test('Chromium renders acquired global and native coastal GEBCO data',{timeout:240000},async t=>{
+  const [global,regional,globalReport,regionalReport,dense,denseReport]=await Promise.all([
    readFile('global-relief.json'),readFile('regional-relief.asc'),
-   readFile('relief-report.json','utf8').then(JSON.parse),readFile('regional-report.json','utf8').then(JSON.parse)
+   readFile('relief-report.json','utf8').then(JSON.parse),readFile('regional-report.json','utf8').then(JSON.parse),
+   readFile('global-relief-1deg.json'),readFile('relief-report-1deg.json','utf8').then(JSON.parse)
   ]);
-  for(const [bytes,report] of [[global,globalReport],[regional,regionalReport]])assert.equal(createHash('sha256').update(bytes).digest('hex'),report.sha256);
+  for(const [bytes,report] of [[global,globalReport],[regional,regionalReport],[dense,denseReport]])assert.equal(createHash('sha256').update(bytes).digest('hex'),report.sha256);
   assert.equal(globalReport.valid_samples,16200);
+  assert.equal(denseReport.sample_degrees,1);assert.equal(denseReport.valid_samples,64800);
+  assert.ok(denseReport.min_m < -4000 && denseReport.max_m > 4000);
   assert.ok(globalReport.min_m < -4000 && globalReport.max_m > 4000);
   assert.ok(regionalReport.valid_samples>=16057 && regionalReport.min_m<0 && regionalReport.max_m>0);
   await runBrowser(t,true,async page=>{
@@ -315,6 +318,15 @@ if(process.env.WORLD_EXPLORER_REAL_RELIEF==='1'){
    assert.equal(await page.locator('#mainReliefCredit').isVisible(),true);
    await page.locator('#globe canvas').screenshot({path:'global-render.png'});
    await page.locator('#next').click();
+   await page.locator('#globalClear').click();
+   await page.locator('#globalReliefFile').setInputFiles({name:'global-relief-1deg.json',mimeType:'application/json',buffer:dense});
+   await page.locator('#globalCanvas').waitFor({state:'visible'});
+   assert.match(await page.locator('#globalStatus').textContent(),/64800\/64800.*Risoluzione campionata 1°/);
+   assert.match(await page.locator('#localReliefSample').textContent(),/GEBCO globale 1°:/);
+   await page.locator('#globalMainToggle').click();
+   await page.waitForFunction(()=>document.querySelector('#globalMainStatus').textContent.includes('Cesium pronta'),{},{timeout:60000});
+   assert.match(await page.locator('#mainReliefCredit').textContent(),/campioni 1°/);
+   await page.locator('#globe canvas').screenshot({path:'global-render-1deg.png'});
    await page.locator('#globalClear').click();
    assert.equal(await page.locator('#mainReliefCredit').isVisible(),false);
    assert.equal(await page.locator('#terrain').isDisabled(),false);
