@@ -67,11 +67,21 @@ export function projectMesh(mesh){
  // Coarse local GEBCO preview: sample native pixel centres at fixed stride 480.
  // Not a terrain provider or a survey-grade model. No inferred polar cap values.
 export const GLOBAL_ROWS=90,GLOBAL_COLS=180,GLOBAL_STRIDE=480,GLOBAL_FIRST=239,GLOBAL_MAX_BYTES=512*1024;
+// Two bounded native-centre sampling layouts; never infer a format from file size.
+const GLOBAL_LAYOUTS=Object.freeze({
+ 'gebco-2025-ice-surface-stride480-v1':Object.freeze({rows:90,cols:180,stride:480,first:239}),
+ 'gebco-2025-ice-surface-stride240-v1':Object.freeze({rows:180,cols:360,stride:240,first:119})
+});
+export function globalCellCentre(g,i){
+ const {cols,stride,first}=g;
+ return {lon:-180+(first+(i%cols)*stride+.5)/240,lat:-90+(first+Math.floor(i/cols)*stride+.5)/240};
+}
 export function parseGlobalGrid(text){
  if(typeof text!=='string'||text.length>GLOBAL_MAX_BYTES)throw new Error('Global grid too large');
  const g=JSON.parse(text);
- if(!g||g.format!=='gebco-2025-ice-surface-stride480-v1'||g.rows!==GLOBAL_ROWS||g.cols!==GLOBAL_COLS||
- !Array.isArray(g.values)||g.values.length!==GLOBAL_ROWS*GLOBAL_COLS)throw new Error('Invalid global grid format');
+ const layout=g&&Object.hasOwn(GLOBAL_LAYOUTS,g.format)?GLOBAL_LAYOUTS[g.format]:null;
+ if(!layout||g.rows!==layout.rows||g.cols!==layout.cols||
+ !Array.isArray(g.values)||g.values.length!==layout.rows*layout.cols)throw new Error('Invalid global grid format');
  let min=Infinity,max=-Infinity,count=0;
  for(const z of g.values){
   if(z===null)continue;
@@ -79,21 +89,19 @@ export function parseGlobalGrid(text){
   min=Math.min(min,z);max=Math.max(max,z);count++;
  }
  if(!count)throw new Error('No valid global samples');
- return {values:g.values,min,max,count};
+ return {...layout,resolution:layout.stride/240,values:g.values,min,max,count};
 }
 export function globalMesh(g,exaggeration=1){
  if(![1,20,50].includes(exaggeration))throw new Error('Invalid global exaggeration');
  const vertices=g.values.map((z,i)=>{
   if(z===null)return null;
-  const row=Math.floor(i/GLOBAL_COLS),col=i%GLOBAL_COLS;
-  const lat=(-90+(GLOBAL_FIRST+row*GLOBAL_STRIDE+.5)/240)*Math.PI/180;
-  const lon=(-180+(GLOBAL_FIRST+col*GLOBAL_STRIDE+.5)/240)*Math.PI/180;
+  const centre=globalCellCentre(g,i),lat=centre.lat*Math.PI/180,lon=centre.lon*Math.PI/180;
   const radius=1+z*exaggeration/6371008.8;
   return {x:radius*Math.cos(lat)*Math.cos(lon),y:radius*Math.cos(lat)*Math.sin(lon),z:radius*Math.sin(lat),height:z};
  });
  const faces=[];
- for(let row=0;row<GLOBAL_ROWS-1;row++)for(let col=0;col<GLOBAL_COLS;col++){
-  const a=row*GLOBAL_COLS+col,b=row*GLOBAL_COLS+(col+1)%GLOBAL_COLS,c=a+GLOBAL_COLS,d=b+GLOBAL_COLS;
+ for(let row=0;row<g.rows-1;row++)for(let col=0;col<g.cols;col++){
+  const a=row*g.cols+col,b=row*g.cols+(col+1)%g.cols,c=a+g.cols,d=b+g.cols;
   // Keep actual data gaps open; close the longitude seam, not the poles.
   if([a,b,c,d].some(i=>vertices[i]===null))continue;
   faces.push([a,b,c],[b,d,c]);
@@ -134,14 +142,15 @@ export function regionalSample(g,lon,lat){
 }
 export function globalSample(g,lon,lat){
  coordinateCheck(lon,lat);
- const step=GLOBAL_STRIDE/240,first=(GLOBAL_FIRST+.5)/240;
- const south=-90+first,north=south+(GLOBAL_ROWS-1)*step;
+ if(!g)return null;
+ const step=g.resolution,first=(g.first+.5)/240;
+ const south=-90+first,north=south+(g.rows-1)*step;
  // No extrapolation into the unrepresented polar caps.
  if(!g||lat<south||lat>north)return null;
- const row=Math.max(0,Math.min(GLOBAL_ROWS-1,Math.round((lat-south)/step)));
+ const row=Math.max(0,Math.min(g.rows-1,Math.round((lat-south)/step)));
  const west=-180+first;
- const col=((Math.round((lon-west)/step)%GLOBAL_COLS)+GLOBAL_COLS)%GLOBAL_COLS;
- const height=g.values[row*GLOBAL_COLS+col];
+ const col=((Math.round((lon-west)/step)%g.cols)+g.cols)%g.cols;
+ const height=g.values[row*g.cols+col];
  if(!Number.isFinite(height))return null;
  return {height,lon:west+col*step,lat:south+row*step,resolution:step};
 }
@@ -168,5 +177,5 @@ export function reliefNarration(regional,global,lon,lat,locale){
  if(!Object.hasOwn(reliefSpeech,locale))return null;
  const native=regionalSample(regional,lon,lat),sample=native??globalSample(global,lon,lat);
  if(!sample)return null;
- return {text:reliefSpeech[locale](new Intl.NumberFormat(locale,{maximumFractionDigits:3}).format(sample.height),resolutionSpeech[locale][native?0:1]),source:GEBCO_DOI,sample};
+ return {text:reliefSpeech[locale](new Intl.NumberFormat(locale,{maximumFractionDigits:3}).format(sample.height),native?resolutionSpeech[locale][0]:resolutionSpeech[locale][1].replace('2',String(sample.resolution))),source:GEBCO_DOI,sample};
 }
