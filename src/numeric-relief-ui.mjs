@@ -56,6 +56,9 @@ function element(tag,text,parent=globalPanel){const e=document.createElement(tag
 element('summary','Globo numerico GEBCO (anteprima 1° / 2°)');
 element('p','Importa il JSON prodotto da scripts/acquire-ceda-relief.py (acquisizione selettiva) o scripts/prepare-global-relief.py (NetCDF locale). Puoi visualizzare quote e fondali campionati ogni 1° o 2° anche sul globo principale. Per una zona a 15 secondi d’arco, usa scripts/acquire-ceda-region.py e importa il file ASCII nel pannello regionale. File locali non autenticati; non per navigazione.');
 const globalInput=element('input');globalInput.type='file';globalInput.accept='.json';globalInput.id='globalReliefFile';globalInput.setAttribute('aria-label','Griglia globale GEBCO JSON');
+const preparedButton=element('button','Carica griglia predisposta sul computer');
+preparedButton.id='globalPreparedLoad';preparedButton.type='button';
+element('p','Facoltativo: carica la griglia locale predisposta dall’operatore all’avvio del server. Nessun download da Internet; rimane disponibile anche l’importazione manuale.');
 const controls=element('div');
 function control(label,id,min,max,value,step){
  const l=element('label',label,controls),i=element('input','',l);i.id=id;i.type='range';i.min=min;i.max=max;i.value=value;i.step=step;i.disabled=true;return i;
@@ -103,15 +106,37 @@ function drawGlobal(rebuild=false){
  globalCanvas.hidden=false;
  globalStatus.textContent=globalGrid.count+'/'+globalGrid.values.length+' campioni validi; quota min '+globalGrid.min+' m, max '+globalGrid.max+' m; vista '+lon.value+'° / '+lat.value+'°; esagerazione '+ex.value+'×. Risoluzione campionata '+globalGrid.resolution+'°, non nativa; dati locali dichiarati GEBCO 2025. I vuoti e i poli non sono interpolati.';
 }
-globalInput.onchange=async()=>{
- const epoch=++globalEpoch,file=globalInput.files?.[0];clearGlobal();globalStatus.textContent='';
- if(!file)return;
+async function loadGlobalText(getText){
+ const epoch=++globalEpoch;clearGlobal();globalStatus.textContent='Caricamento griglia globale…';
+ // Permit cancelling a pending load as well as removing an active grid.
+ globalClear.disabled=false;
  try{
   if(!gc)throw new Error('Canvas 2D non disponibile');
-  if(file.size>GLOBAL_MAX_BYTES)throw new Error('File troppo grande');
-  const grid=parseGlobalGrid(await file.text());if(epoch!==globalEpoch)return;
+  const text=await getText();if(epoch!==globalEpoch)return;
+  const grid=parseGlobalGrid(text);
   globalGrid=grid;mainToggle.disabled=!mainHandler;for(const c of [lon,lat,ex,globalClear,follow])c.disabled=false;drawGlobal(true);renderDestinationSample();
- }catch(e){if(epoch===globalEpoch){clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale non valida: '+e.message;}}
+ }catch(e){if(epoch===globalEpoch){clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale non disponibile: '+e.message;}}
+}
+globalInput.onchange=()=>{
+ const file=globalInput.files?.[0];
+ if(!file){globalEpoch++;clearGlobal();globalStatus.textContent='';return;}
+ return loadGlobalText(()=>{
+  if(file.size>GLOBAL_MAX_BYTES)throw new Error('File troppo grande');
+  return file.text();
+ });
+};
+preparedButton.onclick=()=>{
+ globalInput.value='';
+ return loadGlobalText(async()=>{
+  const response=await fetch('/api/relief/prepared',{method:'POST',credentials:'same-origin',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(5000)});
+  if(!response.ok)throw new Error('Griglia predisposta assente o non abilitata; usa l’importazione manuale.');
+  // The loopback server returns only a bounded, canonical grid.
+  const length=Number(response.headers.get('content-length'));
+  if(length>GLOBAL_MAX_BYTES)throw new Error('File troppo grande');
+  const text=await response.text();
+  if(new TextEncoder().encode(text).length>GLOBAL_MAX_BYTES)throw new Error('File troppo grande');
+  return text;
+ });
 };
 lon.onchange=lat.onchange=()=>{follow.checked=false;drawGlobal();};ex.onchange=()=>{stopMainRelief();drawGlobal(true);};
 globalClear.onclick=()=>{globalEpoch++;clearGlobal();globalInput.value='';globalStatus.textContent='Griglia globale rimossa dalla memoria.';};
