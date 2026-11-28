@@ -282,3 +282,29 @@ test('Six European urban and historical profiles preserve EU context and answer 
  }
  const report=editorialCoverage(countries.map(c=>c.code));assert.equal(report.byDiscipline.urban,11);assert.equal(report.byDiscipline.historical,13);
 });
+
+test('localized scientific topic queries retain exact scope, dates and disclosed English evidence',async()=>{
+ const locales={
+  fr:['géographie physique','orographie','hydrologie','océanographie','géologie','climatologie','biogéographie','capitale','économie','géographie urbaine','géographie historique','union européenne','zone euro','accès aux ports maritimes','sids'],
+  de:['physische geographie','orographie','hydrologie','ozeanographie','geologie','klimatologie','biogeographie','hauptstadt','wirtschaft','stadtgeographie','historische geographie','europäische union','eurozone','zugang zu seehäfen','sids'],
+  es:['geografía física','orografía','hidrología','oceanografía','geología','climatología','biogeografía','capital','economía','geografía urbana','geografía histórica','unión europea','zona euro','acceso a puertos marítimos','sids'],
+  pt:['geografia física','orografia','hidrologia','oceanografia','geologia','climatologia','biogeografia','capital','economia','geografia urbana','geografia histórica','união europeia','zona euro','acesso a portos marítimos','sids']
+ };
+ const english=['physical geography','orography','hydrology','oceanography','geology','climatology','biogeography','capital','economy','urban geography','historical geography','european union','euro area','access to seaports','sids'];
+ for(const [language,topics] of Object.entries(locales))for(const {code} of countries){
+  for(let i=0;i<topics.length;i++)for(const suffix of ['', ' 2024',' 2025',' 2050']){
+   const input={code,language,question:topics[i]+suffix};
+   const expected=pilotSelection({...input,language:'en',question:english[i]+suffix});
+   assert.deepEqual(pilotSelection(input),expected);
+   if(expected.length){
+    const answer=await answerGuide(input);
+    assert.deepEqual(answer.evidence.map(f=>f.id),expected);
+    assert.ok(answer.evidence.every(f=>f.language==='en'&&f.id.startsWith(code.toLowerCase()+'-')));
+   }
+  }
+  for(const question of ['constructor','__proto__',topics[0]+' 2024 2050',topics[0]+' xyz'])assert.deepEqual(pilotSelection({code,language,question}),[]);
+ }
+ assert.deepEqual(pilotSelection({code:'IT',language:'fr',question:'  GÉOLOGIE?  '}),['it-geology']);
+ assert.deepEqual(pilotSelection({code:'IT',language:'ja',question:'geology'}),[]);
+ assert.equal((await answerGuide({code:'FR',language:'de',question:'bevölkerung 2024'})).evidence[0].id,'wdi-SP.POP.TOTL');
+});
