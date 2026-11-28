@@ -61,6 +61,12 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#editorialFilter').selectOption('human');
   assert.equal(await page.locator('#editorialDestination option').count(),4);
   assert.match(await page.locator('#profileMissing').textContent(),/Tutte le discipline/);
+  await page.locator('#editorialDestination').selectOption('DE');
+  await page.locator('#editorialGo').click();
+  assert.equal(await page.locator('#place').inputValue(),String(countries.findIndex(c=>c.code==='DE')));
+  await page.locator('#editorialDestination').selectOption('IT');
+  await page.locator('#editorialGo').click();
+  assert.equal(await page.locator('#place').inputValue(),it);
   await page.locator('#editorialCoverage summary').click();
   assert.match(await page.locator('#statisticsStatus').textContent(),/14 \/ 14 indicatori/);
   assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),14);
@@ -85,6 +91,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#place').selectOption(va);
   assert.equal(await page.locator('#narrationCredits a').count(),0);
   assert.match(await page.locator('#narrationCoverage').textContent(),/Nessun approfondimento/);
+  assert.match(await page.locator('#profileMissing').textContent(),/Geografia fisica.*Geografia storica/);
   await page.locator('#place').selectOption(it);
   await page.locator('#profile summary').click();
   await page.locator('#lang').selectOption('en');
