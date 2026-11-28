@@ -44,11 +44,15 @@ export function quizStats(memory,now=Date.now()){
   retryDue:records.filter(v=>v.streak===0&&v.wrong>0&&v.due<=now).length,
   nextDue:scheduled.length?Math.min(...scheduled):null};
 }
-export function quizExport(memory){return exportMemory(memory);}
+export function quizExport(memory){return exportMemory(memory,'region');}
 
 // Quiz interface translations; other atlas languages explicitly fall back to English.
 const quizCatalog={
  "it": {
+  "import": "Importa quiz (JSON)",
+  "importConfirm": "Sostituire la memoria locale di questo argomento con il backup?",
+  "importOk": "Backup importato.",
+  "importError": "Backup non valido, incompatibile o troppo grande. Memoria invariata.",
   "questions": "Domande esercitate: ",
   "countries": "Paesi esercitati: ",
   "due": " · Disponibili: ",
@@ -76,6 +80,10 @@ const quizCatalog={
   "notice": "Le domande utilizzano la classificazione ONU M49 oppure le osservazioni WDI con anno e fonte indicati; revisione indipendente in attesa. La memoria rimane locale e separata per argomento."
  },
  "en": {
+  "import": "Import quiz (JSON)",
+  "importConfirm": "Replace local memory for this topic with the backup?",
+  "importOk": "Backup imported.",
+  "importError": "Invalid, incompatible or oversized backup. Memory unchanged.",
   "questions": "Questions practiced: ",
   "countries": "Countries practiced: ",
   "due": " · Due: ",
@@ -103,6 +111,10 @@ const quizCatalog={
   "notice": "Questions use UN M49 classifications or WDI observations with year and source; independent review pending. Memory stays local and separate by topic."
  },
  "fr": {
+  "import": "Importer le quiz (JSON)",
+  "importConfirm": "Remplacer la mémoire locale de ce thème par la sauvegarde ?",
+  "importOk": "Sauvegarde importée.",
+  "importError": "Sauvegarde invalide, incompatible ou trop volumineuse. Mémoire inchangée.",
   "questions": "Questions travaillées : ",
   "countries": "Pays étudiés : ",
   "due": " · À réviser : ",
@@ -130,6 +142,10 @@ const quizCatalog={
   "notice": "Les questions utilisent la classification ONU M49 ou des observations WDI avec année et source ; révision indépendante en attente. La mémoire reste locale et distincte par thème."
  },
  "de": {
+  "import": "Quiz importieren (JSON)",
+  "importConfirm": "Lokalen Lernstand für dieses Thema durch die Sicherung ersetzen?",
+  "importOk": "Sicherung importiert.",
+  "importError": "Ungültige, inkompatible oder zu große Sicherung. Lernstand unverändert.",
   "questions": "Bearbeitete Fragen: ",
   "countries": "Geübte Länder: ",
   "due": " · Fällig: ",
@@ -157,6 +173,10 @@ const quizCatalog={
   "notice": "Fragen verwenden die UN-M49-Klassifikation oder WDI-Daten mit Jahr und Quelle; unabhängige Prüfung steht aus. Der Lernstand bleibt lokal und nach Thema getrennt."
  },
  "es": {
+  "import": "Importar cuestionario (JSON)",
+  "importConfirm": "¿Sustituir la memoria local de este tema por la copia?",
+  "importOk": "Copia importada.",
+  "importError": "Copia no válida, incompatible o demasiado grande. Memoria sin cambios.",
   "questions": "Preguntas practicadas: ",
   "countries": "Países practicados: ",
   "due": " · Pendientes: ",
@@ -184,6 +204,10 @@ const quizCatalog={
   "notice": "Las preguntas usan la clasificación ONU M49 u observaciones WDI con año y fuente; revisión independiente pendiente. La memoria es local y separada por tema."
  },
  "pt": {
+  "import": "Importar questionário (JSON)",
+  "importConfirm": "Substituir a memória local deste tema pela cópia de segurança?",
+  "importOk": "Cópia importada.",
+  "importError": "Cópia inválida, incompatível ou demasiado grande. Memória inalterada.",
   "questions": "Perguntas praticadas: ",
   "countries": "Países praticados: ",
   "due": " · Pendentes: ",

@@ -51,5 +51,5 @@ export function createStatisticsQuiz(snapshot){
   const keys=[...tasks.keys()],records=keys.map(k=>memory[k]).filter(Boolean),scheduled=records.filter(v=>v.due>now).map(v=>v.due);
   return {total:keys.length,practiced:records.length,due:keys.filter(k=>(memory[k]?.due||0)<=now).length,mastered:records.filter(v=>v.streak>=3).length,retryDue:records.filter(v=>v.streak===0&&v.wrong>0&&v.due<=now).length,nextDue:scheduled.length?Math.min(...scheduled):null};
  }
- return Object.freeze({load,make,describe,grade,stats,export:exportMemory});
+ return Object.freeze({load,make,describe,grade,stats,export:memory=>exportMemory(memory,'statistics')});
 }

@@ -169,6 +169,23 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#quiz').evaluate(el=>el.open=true);
   await page.locator('#quizMode').selectOption('statistics');
   assert.match(await page.locator('#quizStats').textContent(),/1 \/ 2\d{3}/);
+  const quizFile=(data)=>({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
+  await page.locator('#quizImport').setInputFiles(quizFile({version:1,topic:'region',memory:saved}));
+  await page.waitForFunction(()=>document.querySelector('#quizImportStatus').textContent.includes('Backup non valido'));
+  assert.match(await page.locator('#quizStats').textContent,/1 \/ 2\d{3}/);
+  await page.locator('#quizMode').selectOption('region');
+  const restored={IT:{streak:3,correct:3,wrong:0,due:86400000},FR:{streak:1,correct:1,wrong:0,due:86400000}};
+  const dismissed=new Promise(resolve=>page.once('dialog',async d=>{await d.dismiss();resolve();}));
+  await page.locator('#quizImport').setInputFiles(quizFile({version:1,topic:'region',memory:restored}));
+  await dismissed;
+  assert.match(await page.locator('#quizStats').textContent,/1 \/ 195/);
+  page.once('dialog',d=>d.accept());
+  await page.locator('#quizImport').setInputFiles(quizFile({version:1,topic:'region',memory:restored}));
+  await page.waitForFunction(()=>document.querySelector('#quizImportStatus').textContent==='Backup importato.');
+  assert.match(await page.locator('#quizStats').textContent,/2 \/ 195/);
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('world-explorer-region-quiz-v1'))),restored);
+  await page.locator('#quizMode').selectOption('statistics');
+  assert.match(await page.locator('#quizStats').textContent,/1 \/ 2\d{3}/);
   // Reload intentionally resets the selected country; select Italy for the scoped corpus.
   await page.locator('#place').selectOption(it);
   await page.locator('#guide summary').click();

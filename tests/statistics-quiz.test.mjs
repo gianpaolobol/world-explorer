@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {importMemory} from '../src/learning.mjs';
 import {createStatisticsQuiz} from '../src/statistics-quiz.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
 import {INDICATORS} from '../src/world-statistics.mjs';
@@ -31,4 +32,13 @@ test('wrong answers retry first, preserve local history and reject forged questi
 });
 test('empty or invalid snapshots have no fabricated questions',()=>{
  const empty=createStatisticsQuiz(null);assert.equal(empty.stats(empty.load(null)).total,0);assert.equal(empty.make({}),null);
+});
+
+test('statistical backup roundtrips only known tasks and refuses region or partially invalid backups',()=>{
+ const memory=quiz.load(null),q=quiz.make(memory,0,()=>0.5);quiz.grade(q,q.answer,memory,0);
+ const backup=quiz.export(memory);assert.equal(JSON.parse(backup).topic,'statistics');
+ assert.deepEqual(importMemory(backup,'statistics',quiz.load),memory);
+ assert.deepEqual(importMemory(JSON.stringify({version:1,memory}),'statistics',quiz.load),memory);
+ for(const data of [{...memory,IT:memory[q.key]},{[q.key]:{...memory[q.key],due:-1}}])assert.throws(()=>importMemory(JSON.stringify({version:1,memory:data}),'statistics',quiz.load),RangeError);
+ assert.throws(()=>importMemory(backup,'region',quiz.load),RangeError);
 });
