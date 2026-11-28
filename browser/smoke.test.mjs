@@ -304,10 +304,15 @@ test('Chromium real Cesium WebGL with offline tile fixture: globe and tour contr
   await page.locator('#globalClear').click();
   assert.equal(await page.locator('#mainReliefCredit').isVisible(),false);
   assert.equal(await page.locator('#terrain').isDisabled(),false);
-  await page.locator('#auto').click();
-  await page.locator('#pause').click();
+  const before=await page.locator('#progress').textContent();
+  // Synchronous click/pause prevents a camera arrival between the two actions.
+  await page.evaluate(()=>{document.querySelector('#auto').click();document.querySelector('#pause').click();});
   assert.equal(await page.locator('#pause').textContent(),'Riprendi');
+  assert.equal(await page.locator('#progress').textContent(),before);
   await page.locator('#pause').click();
+  await page.waitForFunction(()=>document.querySelector('#tourState').textContent==='Sosta',{}, {timeout:20000});
+  const after=await page.locator('#progress').textContent();
+  assert.equal(Number(after.match(/\d+/)[0]),Number(before.match(/\d+/)[0])+1);
   await page.locator('#auto').click();
   assert.equal(await page.locator('#pause').isDisabled(),true);
   assert.equal(await page.locator('#auto').textContent(),'Viaggio automatico');

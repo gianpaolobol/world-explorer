@@ -171,14 +171,16 @@ function render(fly=true,read=false){
  refreshReliefNarration();
  $('facts').textContent='Capitale (dato iniziale): '+c.capital+' · Superficie indicativa: '+new Intl.NumberFormat(lang).format(c.area)+' km²';
  $('source').href='https://'+lang+'.wikipedia.org/w/index.php?search='+encodeURIComponent(name(c));
- $('progress').textContent='Destinazioni visitate: '+Object.keys(visits).filter(k=>visits[k]>0).length+' / '+countries.length;
+ renderVisitProgress();
  if(fly&&viewer){viewer.camera.cancelFlight();viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(c.lon,c.lat,flightHeight(c)),orientation:{heading:0,pitch:Cesium.Math.toRadians(-75),roll:0},duration:5});}
  if(read)speak();
 }
+function renderVisitProgress(){$('progress').textContent='Destinazioni visitate: '+Object.keys(visits).filter(k=>visits[k]>0).length+' / '+countries.length;}
 function visit(i,read=false){index=wrapIndex(i,countries.length);const c=countries[index];visits[c.code]=(visits[c.code]||0)+1;save();render(true,read);}
 const tour=createTour({
  choose:()=>chooseDestination(countries,visits,countries[index].code),
- visit:c=>{index=countries.indexOf(c);visits[c.code]=(visits[c.code]||0)+1;save();render(false);},
+ visit:c=>{index=countries.indexOf(c);render(false);},
+ arrive:c=>{visits[c.code]=(visits[c.code]||0)+1;save();renderVisitProgress();},
  fly:(c,complete,cancel)=>{if(!viewer){complete();return;}viewer.camera.cancelFlight();viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(c.lon,c.lat,flightHeight(c)),orientation:{heading:0,pitch:Cesium.Math.toRadians(-75),roll:0},duration:5,complete,cancel});},
  speak:(_,done)=>speak(done),stopSpeech:()=>narrator.stop(),cancel:()=>{viewer?.camera.cancelFlight();narrator.stop();},
  delay:()=>Number($('interval').value)*1000,
