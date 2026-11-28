@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseGlobalGrid} from '../src/numeric-relief.mjs';
+import {parseGlobalGrid,globalMesh,globalFaces,globalCellCentre} from '../src/numeric-relief.mjs';
 import {reliefBatches,safeReliefHeight,indexedBandGeometry} from '../src/global-relief-cesium.mjs';
 const grid=(values)=>parseGlobalGrid(JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:90,cols:180,values}));
 test('Earth-fixed batches preserve native sample centres, signed height and missing cells',()=>{
@@ -66,4 +66,32 @@ test('indexed geometry selects index width without wrapping at the 16-bit limit'
  const small=indexedBandGeometry(world,faces.slice(0,-1));
  assert.ok(small.indices instanceof Uint16Array);
  assert.equal(small.indices[65534],65534);
+});
+
+test('shared topology preserves every signed sample, face order and color band in both rendering paths',()=>{
+ for(const [rows,cols,stride] of [[90,180,480],[180,360,240]]){
+  const values=Array.from({length:rows*cols},(_,i)=>i%113===0?null:(i*37)%20001-11000);
+  const g=parseGlobalGrid(JSON.stringify({format:`gebco-2025-ice-surface-stride${stride}-v1`,rows,cols,values}));
+  const expected=[];
+  for(let row=0;row<rows-1;row++)for(let col=0;col<cols;col++){
+   const a=row*cols+col,b=row*cols+(col+1)%cols,c=a+cols,d=b+cols;
+   if([a,b,c,d].some(i=>values[i]===null))continue;
+   expected.push([a,b,c],[b,d,c]);
+  }
+  assert.deepEqual(Array.from(globalFaces(g)),expected);
+  const thresholds=[-12000,-6000,-4000,-2000,-500,0,500,1500,3000,5000];
+  const bands=thresholds.map(min=>({min,faces:[]}));
+  for(const face of expected){
+   const z=face.reduce((sum,i)=>sum+values[i],0)/3;
+   let i=bands.length-1;while(i>0&&z<bands[i].min)i--;
+   bands[i].faces.push(face);
+  }
+  const expectedBands=bands.filter(x=>x.faces.length);
+  for(const ex of [1,20,50]){
+   const {vertices,buckets}=reliefBatches(g,ex);
+   assert.deepEqual(globalMesh(g,ex).faces,expected);
+   assert.deepEqual(buckets.map(({min,faces})=>({min,faces})),expectedBands);
+   for(let i=0;i<values.length;i++)assert.deepEqual(vertices[i],values[i]===null?null:{...globalCellCentre(g,i),height:values[i]*ex});
+  }
+ }
 });
