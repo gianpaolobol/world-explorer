@@ -1017,7 +1017,7 @@ export function pilotSelection(input){
  const q=normalize(input.question);
  if(Object.hasOwn(topicAliases,input.language)){
   const aliases=topicAliases[input.language];
-  const dated=q.match(/^(.*?)\\s+(\\d{4})$/u);
+  const dated=q.match(/^(.*?)\s+(\d{4})$/u);
   const topic=dated?dated[1]:q;
   if(!Object.hasOwn(aliases,topic))return [];
   // A year is never discarded; it must match the stored query verbatim.
