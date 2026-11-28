@@ -999,15 +999,32 @@ const urbanHistoryRows=new Map([
 ]);
 export const urbanHistoryCodes=Object.freeze([...urbanHistoryRows.keys()].sort());
 const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows,...urbanHistoryRows]);
-const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
+// Exact localized topic aliases only; English evidence remains explicitly labelled as English.
+const topicAliases=Object.freeze({
+ fr:Object.freeze({'géographie physique':'physical geography','orographie':'orography','hydrologie':'hydrology','océanographie':'oceanography','géologie':'geology','climatologie':'climatology','biogéographie':'biogeography','capitale':'capital','économie':'economy','géographie urbaine':'urban geography','géographie historique':'historical geography','union européenne':'european union','zone euro':'euro area','accès aux ports maritimes':'access to seaports','sids':'sids'}),
+ de:Object.freeze({'physische geographie':'physical geography','orographie':'orography','hydrologie':'hydrology','ozeanographie':'oceanography','geologie':'geology','klimatologie':'climatology','biogeographie':'biogeography','hauptstadt':'capital','wirtschaft':'economy','stadtgeographie':'urban geography','historische geographie':'historical geography','europäische union':'european union','eurozone':'euro area','zugang zu seehäfen':'access to seaports','sids':'sids'}),
+ es:Object.freeze({'geografía física':'physical geography','orografía':'orography','hidrología':'hydrology','oceanografía':'oceanography','geología':'geology','climatología':'climatology','biogeografía':'biogeography','capital':'capital','economía':'economy','geografía urbana':'urban geography','geografía histórica':'historical geography','unión europea':'european union','zona euro':'euro area','acceso a puertos marítimos':'access to seaports','sids':'sids'}),
+ pt:Object.freeze({'geografia física':'physical geography','orografia':'orography','hidrologia':'hydrology','oceanografia':'oceanography','geologia':'geology','climatologia':'climatology','biogeografia':'biogeography','capital':'capital','economia':'economy','geografia urbana':'urban geography','geografia histórica':'historical geography','união europeia':'european union','zona euro':'euro area','acesso a portos marítimos':'access to seaports','sids':'sids'})
+});
+const normalize=q=>q.normalize('NFC').toLowerCase().trim().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
  const locale=language==='it'?'it':'en';
  return records.map(([discipline,itQuery,enQuery,it,en,source,label,period,checked='2026-11-26'])=>({id:code.toLowerCase()+'-'+discipline,discipline,text:locale==='it'?it:en,language:locale,source,label,period,checked,review:'source-checked-not-independent'}));
 }
 export function pilotSelection(input){
- const records=corpus.get(input.code);if(!records||!['it','en'].includes(input.language))return [];
+ const records=corpus.get(input.code);if(!records)return [];
  const q=normalize(input.question);
+ if(Object.hasOwn(topicAliases,input.language)){
+  const aliases=topicAliases[input.language];
+  const dated=q.match(/^(.*?)\\s+(\\d{4})$/u);
+  const topic=dated?dated[1]:q;
+  if(!Object.hasOwn(aliases,topic))return [];
+  // A year is never discarded; it must match the stored query verbatim.
+  const key=aliases[topic]+(dated?' '+dated[2]:'');
+  return records.filter(r=>r[2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
+ }
+ if(!['it','en'].includes(input.language))return [];
  const alias=input.language==='it'?{'qual è la capitale':'capitale','qual è la popolazione':'popolazione','geografia fisica':'territorio','idrologia':'idrografia','climatologia':'clima','geografia politica':'capitale','geografia umana':'popolazione','geografia economica':'economia','geografia urbana':'città','geografia storica':'storia'}:{'what is the capital':'capital','what is the population':'population','climate':'climatology'};
  const key=Object.hasOwn(alias,q)?alias[q]:q;
  return records.filter(r=>r[input.language==='it'?1:2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
