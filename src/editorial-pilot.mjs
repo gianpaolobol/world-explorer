@@ -998,7 +998,146 @@ const urbanHistoryRows=new Map([
  ]
 ]);
 export const urbanHistoryCodes=Object.freeze([...urbanHistoryRows.keys()].sort());
-const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows,...urbanHistoryRows]);
+// Site-scoped hydrological and complementary evidence; shared sites explicitly transboundary.
+const hydrologyRows=new Map([
+ [
+  "BW",
+  [
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Nel Botswana nordoccidentale il delta dell’Okavango disperde le proprie acque nel bacino del Kalahari, senza sbocco marino.",
+    "In northwestern Botswana, the Okavango Delta drains into the Kalahari Basin rather than the sea.",
+    "https://whc.unesco.org/en/list/1432/",
+    "UNESCO, Okavango Delta",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Nel delta dell’Okavango i cicli vitali di numerosi organismi delle praterie allagabili sono adattati alle piene della stagione secca.",
+    "Many organisms in the Okavango Delta’s floodable grasslands have life cycles adapted to dry-season inundation.",
+    "https://whc.unesco.org/en/list/1432/",
+    "UNESCO, Okavango Delta",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "RO",
+  [
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Nella Romania orientale il Danubio raggiunge il Mar Nero attraverso un sistema deltizio con laghi e paludi.",
+    "In eastern Romania the Danube reaches the Black Sea through a delta system with lakes and marshes.",
+    "https://whc.unesco.org/en/list/588/",
+    "UNESCO, Danube Delta",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "La scheda UNESCO del delta del Danubio documenta oltre 300 specie di uccelli e 45 specie di pesci d’acqua dolce.",
+    "UNESCO’s site description reports more than 300 bird species and 45 freshwater fish species in the Danube Delta.",
+    "https://whc.unesco.org/en/list/588/",
+    "UNESCO, Danube Delta",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "ZM",
+  [
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Sul confine con lo Zimbabwe, il fiume Zambesi forma le cascate Mosi-oa-Tunya, larghe circa 1.708 metri secondo UNESCO.",
+    "On the Zimbabwe border, the Zambezi forms the Mosi-oa-Tunya falls, approximately 1,708 metres wide according to UNESCO.",
+    "https://whc.unesco.org/en/list/509/",
+    "UNESCO, Mosi-oa-Tunya / Victoria Falls",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Nel sito transfrontaliero delle cascate Vittoria, l’erosione fluviale ha inciso una sequenza di gole nelle rocce basaltiche.",
+    "At the transboundary Victoria Falls site, river erosion has cut a sequence of gorges into basalt rock.",
+    "https://whc.unesco.org/en/list/509/",
+    "UNESCO, Mosi-oa-Tunya / Victoria Falls",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "ZW",
+  [
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Lungo il confine con lo Zambia, le cascate Vittoria costituiscono un salto del fiume Zambesi seguito da una successione di gole.",
+    "Along the Zambian border, Victoria Falls is a drop in the Zambezi River followed by a series of gorges.",
+    "https://whc.unesco.org/en/list/509/",
+    "UNESCO, Mosi-oa-Tunya / Victoria Falls",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Le gole delle cascate Vittoria testimoniano lo spostamento della cascata nel tempo geologico per erosione dei basalti.",
+    "The Victoria Falls gorges record the waterfall’s changing position over geological time as basalt is eroded.",
+    "https://whc.unesco.org/en/list/509/",
+    "UNESCO, Mosi-oa-Tunya / Victoria Falls",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "IQ",
+  [
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Le paludi dell’Ahwar nell’Iraq meridionale sono alimentate soprattutto dai fiumi Tigri ed Eufrate.",
+    "The Ahwar marshes of southern Iraq receive most of their water from the Tigris and Euphrates rivers.",
+    "https://whc.unesco.org/en/list/1481/",
+    "UNESCO, The Ahwar of Southern Iraq",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "Nel paesaggio dell’Ahwar, i siti di Ur, Uruk ed Eridu documentano gli insediamenti sumeri sviluppati nella pianura deltizia mesopotamica.",
+    "The Ahwar landscape includes Ur, Uruk and Eridu, archaeological evidence of Sumerian settlements in the Mesopotamian delta plain.",
+    "https://whc.unesco.org/en/list/1481/",
+    "UNESCO, The Ahwar of Southern Iraq",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ]
+]);
+export const hydrologyCodes=Object.freeze([...hydrologyRows.keys()].sort());
+const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows,...urbanHistoryRows,...hydrologyRows]);
 // Exact localized topic aliases only; English evidence remains explicitly labelled as English.
 const topicAliases=Object.freeze({
  fr:Object.freeze({'géographie physique':'physical geography','orographie':'orography','hydrologie':'hydrology','océanographie':'oceanography','géologie':'geology','climatologie':'climatology','biogéographie':'biogeography','capitale':'capital','économie':'economy','géographie urbaine':'urban geography','géographie historique':'historical geography','union européenne':'european union','zone euro':'euro area','accès aux ports maritimes':'access to seaports','sids':'sids'}),

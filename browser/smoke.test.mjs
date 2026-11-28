@@ -56,7 +56,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
   await page.locator('#editorialCoverage summary').click();
-  assert.match(await page.locator('#editorialCoverageStatus').textContent(),/338 \/ 2340/);
+  assert.match(await page.locator('#editorialCoverageStatus').textContent(),/348 \/ 2340/);
   assert.equal(await page.locator('#editorialCoverageList li').count(),12);
   await page.locator('#editorialFilter').selectOption('human');
   assert.equal(await page.locator('#editorialDestination option').count(),4);
