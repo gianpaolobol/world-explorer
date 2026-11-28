@@ -13,7 +13,7 @@ test('pilot covers the twelve disciplines once with unique IDs and explicit sour
  for(const x of a){assert.match(x.source,/^https:\/\//);assert.ok(x.label&&x.text);assert.equal(x.checked,'2026-11-26');assert.equal(x.review,'source-checked-not-independent');}
 });
 test('pilot never transfers Italian evidence to any other country',()=>{
- for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE',...lldcCodes,...sidsCodes,...euContextCodes,...geoscienceCodes,...regionalExtensionCodes,...landscapeCodes].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
+ for(const c of countries.filter(c=>c.code!=='IT'))for(const language of languages){assert.ok(pilotEvidence(c.code,language).every(f=>!f.id.startsWith('it-')));if(!['FR','ES','DE',...lldcCodes,...sidsCodes,...euContextCodes,...geoscienceCodes,...regionalExtensionCodes,...landscapeCodes,...urbanHistoryCodes].includes(c.code))assert.deepEqual(pilotEvidence(c.code,language),[]);assert.deepEqual(pilotSelection({code:c.code,language,question:'popolazione'}),[]);}
 });
 test('both supported pilot languages have complete distinct texts, others disclose English fallback',()=>{
  const it=pilotEvidence('IT','it'),en=pilotEvidence('IT','en');
@@ -115,7 +115,7 @@ test('UN LLDC batch: explicit partial coverage, country scope, exact guide selec
  const expected='AF AM AZ BT BO BW BF BI CF TD SZ ET KZ KG LA LS MK MW ML MN NP NE PY MD RW SS TJ TM UG UZ ZM ZW'.split(' ');
  assert.deepEqual(lldcCodes,expected);assert.equal(new Set(lldcCodes).size,32);
  for(const c of countries){
-  const n=(['IT','FR','ES','DE'].includes(c.code)?12:expected.includes(c.code)?2:sidsCodes.includes(c.code)?3:euContextCodes.includes(c.code)?2:geoscienceCodes.includes(c.code)?3:0)+(regionalExtensionCodes.includes(c.code)?3:0)+(landscapeCodes.includes(c.code)?3:0);
+  const n=(['IT','FR','ES','DE'].includes(c.code)?12:expected.includes(c.code)?2:sidsCodes.includes(c.code)?3:euContextCodes.includes(c.code)?2:geoscienceCodes.includes(c.code)?3:0)+(regionalExtensionCodes.includes(c.code)?3:0)+(landscapeCodes.includes(c.code)?3:0)+(urbanHistoryCodes.includes(c.code)?2:0);
   for(const l of languages){
    const a=pilotEvidence(c.code,l);
    assert.equal(a.length,n);
@@ -140,7 +140,7 @@ test('UN LLDC batch: explicit partial coverage, country scope, exact guide selec
  }
  assert.equal((await answerGuide({code:'AT',language:'en',question:'access to seaports'})).status,'insufficient');
  assert.equal((await answerGuide({code:'NE',language:'en',question:'access to seaports'},async()=> '{"ids":["af-economic"]}')).mode,'fallback');
- assert.equal(countries.reduce((n,c)=>n+pilotEvidence(c.code,'it').length,0),326);
+ assert.equal(countries.reduce((n,c)=>n+pilotEvidence(c.code,'it').length,0),338);
 });
 
 test('UN OHRLLS SIDS group: registry membership, scoped facts and exact guide selection',async()=>{
