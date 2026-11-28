@@ -5,10 +5,10 @@ import {validateGuideInput,evidenceFor,parseSelection,answerGuide,ollamaSelector
 import {makeServer} from '../server.mjs';
 import {statisticsFor} from '../src/world-statistics.mjs';
 import {snapshot} from '../src/world-statistics-data.mjs';
-import {lldcCodes,sidsCodes,euContextCodes,geoscienceCodes,regionalExtensionCodes} from '../src/editorial-pilot.mjs';
+import {lldcCodes,sidsCodes,euContextCodes,geoscienceCodes,regionalExtensionCodes,landscapeCodes} from '../src/editorial-pilot.mjs';
 const input={code:'IT',language:'it',question:'Regione statistica'};
 test('guide validates all registry countries and supported languages',()=>{
- for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,(['IT','FR','ES','DE'].includes(c.code)?14:lldcCodes.includes(c.code)?4:sidsCodes.includes(c.code)?5:euContextCodes.includes(c.code)?4:geoscienceCodes.includes(c.code)?5:2)+(regionalExtensionCodes.includes(c.code)?3:0)+statisticsFor(snapshot,c.code,language).length);}
+ for(const c of countries)for(const language of languages){const x={...input,code:c.code,language};assert.ok(validateGuideInput(x));assert.equal(evidenceFor(x).length,(['IT','FR','ES','DE'].includes(c.code)?14:lldcCodes.includes(c.code)?4:sidsCodes.includes(c.code)?5:euContextCodes.includes(c.code)?4:geoscienceCodes.includes(c.code)?5:2)+(regionalExtensionCodes.includes(c.code)?3:0)+(landscapeCodes.includes(c.code)?3:0)+statisticsFor(snapshot,c.code,language).length);}
 });
 test('guide rejects unknown fields, codes, languages and long questions',()=>{
  for(const x of [null,[],{...input,model:'remote'},{...input,code:'XX'},{...input,language:'zz'},{...input,question:'x'.repeat(501)},{...input,question:' '}])assert.equal(validateGuideInput(x),null);

@@ -600,7 +600,239 @@ const regionalExtensionRows=new Map([
  ]
 ]);
 export const regionalExtensionCodes=Object.freeze([...regionalExtensionRows.keys()].sort());
-const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows]);
+// Site-specific landscape evidence, complementary to existing batches.
+const landscapeRows=new Map([
+ [
+  "CH",
+  [
+   [
+    "orography",
+    "orografia",
+    "orography",
+    "Nelle Alpi svizzere il sito Jungfrau-Aletsch comprende valli a U e cime modellate dall’erosione glaciale.",
+    "In Switzerland, Jungfrau-Aletsch includes U-shaped valleys and peaks shaped by glacial erosion.",
+    "https://whc.unesco.org/en/list/1037/",
+    "UNESCO, Swiss Alps Jungfrau-Aletsch",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Nel sito Jungfrau-Aletsch rocce cristalline antiche sovrastano rocce carbonatiche più giovani per effetto della tettonica.",
+    "At Jungfrau-Aletsch, tectonic movement placed older crystalline rocks above younger carbonate rocks.",
+    "https://whc.unesco.org/en/list/1037/",
+    "UNESCO, Swiss Alps Jungfrau-Aletsch",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "Nell’area Jungfrau-Aletsch la vegetazione colonizza i terreni liberati dal ritiro dei ghiacciai.",
+    "At Jungfrau-Aletsch, vegetation colonizes ground exposed by retreating glaciers.",
+    "https://whc.unesco.org/en/list/1037/",
+    "UNESCO, Swiss Alps Jungfrau-Aletsch",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "HR",
+  [
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "In Croazia i laghi di Plitvice comunicano attraverso corsi d’acqua superficiali e sotterranei.",
+    "Croatia’s Plitvice lakes are linked by surface and underground watercourses.",
+    "https://whc.unesco.org/en/list/98/",
+    "UNESCO, Plitvice Lakes National Park",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "A Plitvice la precipitazione di carbonato di calcio contribuisce alla formazione di sbarramenti naturali di tufo calcareo.",
+    "At Plitvice, calcium carbonate deposition builds natural tufa barriers.",
+    "https://whc.unesco.org/en/list/98/",
+    "UNESCO, Plitvice Lakes National Park",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "biogeography",
+    "biogeografia",
+    "biogeography",
+    "I boschi del parco di Plitvice ospitano orso bruno, lupo e lince.",
+    "The forests of Plitvice National Park support brown bears, wolves and lynx.",
+    "https://whc.unesco.org/en/list/98/",
+    "UNESCO, Plitvice Lakes National Park",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "JO",
+  [
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Nel Wadi Rum, in Giordania meridionale, l’arenaria continentale costituisce il substrato di spettacolari forme desertiche.",
+    "Continental sandstone underlies desert landforms in southern Jordan’s Wadi Rum.",
+    "https://whc.unesco.org/en/list/1377/",
+    "UNESCO, Wadi Rum Protected Area",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "Nel Wadi Rum il paesaggio comprende gole incise e archi rocciosi naturali.",
+    "Wadi Rum contains incised gorges and natural rock arches.",
+    "https://whc.unesco.org/en/list/1377/",
+    "UNESCO, Wadi Rum Protected Area",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "Nel Wadi Rum incisioni rupestri e reperti attestano circa dodici millenni di presenza umana.",
+    "Rock markings and archaeological finds at Wadi Rum document roughly twelve millennia of human presence.",
+    "https://whc.unesco.org/en/list/1377/",
+    "UNESCO, Wadi Rum Protected Area",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "NO",
+  [
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "I fiordi norvegesi di Geiranger e Nærøy occupano antiche valli glaciali invase dal mare.",
+    "Norway’s Geiranger and Nærøy fjords occupy former glacial valleys flooded by seawater.",
+    "https://whc.unesco.org/en/list/1195/",
+    "UNESCO, West Norwegian Fjords",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "orography",
+    "orografia",
+    "orography",
+    "Sui due fiordi norvegesi le pareti rocciose raggiungono localmente circa 1.400 metri sopra il livello marino.",
+    "Rock walls beside the two Norwegian fjords rise locally to about 1,400 metres above sea level.",
+    "https://whc.unesco.org/en/list/1195/",
+    "UNESCO, West Norwegian Fjords",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Numerose cascate scendono lungo i versanti dei fiordi di Geiranger e Nærøy.",
+    "Many waterfalls descend the slopes of the Geiranger and Nærøy fjords.",
+    "https://whc.unesco.org/en/list/1195/",
+    "UNESCO, West Norwegian Fjords",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "TR",
+  [
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "In Cappadocia l’erosione del terreno vulcanico ha prodotto pinnacoli detti camini delle fate.",
+    "Erosion of volcanic terrain in Cappadocia has produced pinnacles known as fairy chimneys.",
+    "https://whc.unesco.org/en/list/357/",
+    "UNESCO, Göreme National Park and the Rock Sites of Cappadocia",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "Nel paesaggio della Cappadocia si trovano insediamenti sotterranei, tra cui Kaymaklı e Derinkuyu.",
+    "Cappadocia’s settlement landscape includes underground towns such as Kaymaklı and Derinkuyu.",
+    "https://whc.unesco.org/en/list/357/",
+    "UNESCO, Göreme National Park and the Rock Sites of Cappadocia",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "I santuari scavati nella roccia della valle di Göreme conservano testimonianze dell’arte bizantina successiva all’iconoclastia.",
+    "Rock-cut sanctuaries in the Göreme valley preserve Byzantine art from after the Iconoclastic period.",
+    "https://whc.unesco.org/en/list/357/",
+    "UNESCO, Göreme National Park and the Rock Sites of Cappadocia",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "VN",
+  [
+   [
+    "geology",
+    "geologia",
+    "geology",
+    "Nel sito vietnamita Ha Long–Cat Ba la sommersione marina del carsismo calcareo ha creato un paesaggio di torri rocciose.",
+    "At Vietnam’s Ha Long–Cat Ba site, seawater flooded limestone karst, leaving a landscape of rock towers.",
+    "https://whc.unesco.org/en/list/672/",
+    "UNESCO, Ha Long Bay - Cat Ba Archipelago",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "Il paesaggio di Ha Long–Cat Ba include isole calcaree vegetate e scogliere a picco sul mare.",
+    "Ha Long–Cat Ba includes vegetated limestone islands and steep sea cliffs.",
+    "https://whc.unesco.org/en/list/672/",
+    "UNESCO, Ha Long Bay - Cat Ba Archipelago",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "oceanography",
+    "oceanografia",
+    "oceanography",
+    "L’erosione lungo la costa di Ha Long–Cat Ba produce cavità e incavi alla base delle formazioni calcaree.",
+    "Coastal erosion at Ha Long–Cat Ba forms cavities and notches at the base of limestone features.",
+    "https://whc.unesco.org/en/list/672/",
+    "UNESCO, Ha Long Bay - Cat Ba Archipelago",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ]
+]);
+export const landscapeCodes=Object.freeze([...landscapeRows.keys()].sort());
+const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows]);
 const normalize=q=>q.normalize('NFC').toLowerCase().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
