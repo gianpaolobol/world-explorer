@@ -59,7 +59,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.match(await page.locator('#editorialCoverageStatus').textContent(),/360 \/ 2340/);
   assert.equal(await page.locator('#editorialCoverageList li').count(),12);
   await page.locator('#editorialFilter').selectOption('human');
-  assert.equal(await page.locator('#editorialDestination option').count(),4);
+  assert.deepEqual((await page.locator('#editorialDestination option').evaluateAll(options=>options.map(o=>o.value))).sort(),['DE','ES','FR','ID','IT','MX','PE','PH']);
   assert.match(await page.locator('#profileMissing').textContent(),/Tutte le discipline/);
   for(const [locale,label] of [['en','Go to destination'],['fr','Aller à la destination'],['de','Zum Ziel'],['es','Ir al destino'],['pt','Ir para o destino'],['ja','Go to destination']]){
    await page.locator('#lang').selectOption(locale);
@@ -67,9 +67,14 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
    assert.equal(await page.locator('#editorialFilter').getAttribute('lang'),locale==='ja'?'en':locale);
    assert.equal(await page.locator('#editorialDestination').getAttribute('lang'),locale);
    assert.equal(await page.locator('#editorialFilter').inputValue(),'human');
-   assert.equal(await page.locator('#editorialDestination option').count(),4);
+   assert.deepEqual((await page.locator('#editorialDestination option').evaluateAll(options=>options.map(o=>o.value))).sort(),['DE','ES','FR','ID','IT','MX','PE','PH']);
   }
   await page.locator('#lang').selectOption('it');
+  await page.locator('#editorialDestination').selectOption('ID');
+  await page.locator('#editorialGo').click();
+  assert.equal(await page.locator('#place').inputValue(),String(countries.findIndex(c=>c.code==='ID')));
+  assert.equal(await page.locator('#profileFacts a').count(),3);
+  assert.match(await page.locator('#profileFacts').textContent(),/subak/);
   await page.locator('#editorialDestination').selectOption('DE');
   await page.locator('#editorialGo').click();
   assert.equal(await page.locator('#place').inputValue(),String(countries.findIndex(c=>c.code==='DE')));
@@ -185,6 +190,12 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#guideAsk').click();
   await page.waitForFunction(()=>document.querySelector('#guideAnswer').textContent.includes('68.551.653'));
   assert.equal(await page.locator('#guideAnswer a').first().getAttribute('href'),'https://data.worldbank.org/indicator/SP.POP.TOTL');
+  await page.locator('#lang').selectOption('fr');
+  await page.locator('#guideQuestion').fill('géographie humaine');
+  await page.locator('#guideAsk').click();
+  await page.waitForFunction(()=>document.querySelector('#guideAnswer a')?.href.includes('insee.fr'));
+  assert.match(await page.locator('#guideAnswer').textContent(),/2026-01-01/);
+  await page.locator('#lang').selectOption('it');
   await page.locator('#place').selectOption(it);
   const es=String(countries.findIndex(c=>c.code==='ES'));
   await page.locator('#place').selectOption(es);

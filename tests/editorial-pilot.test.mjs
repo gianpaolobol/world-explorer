@@ -359,3 +359,19 @@ test('Cultural landscapes extend human geography without substituting local fact
  assert.equal(pilotSelection({code:'IT',language:'it',question:'geografia umana'})[0],'it-human');
  assert.equal(editorialCoverage(countries.map(c=>c.code)).byDiscipline.human,8);
 });
+
+
+test('Undated human geography selects scoped evidence consistently in six languages',async()=>{
+ const topics={it:'geografia umana',en:'human geography',fr:'géographie humaine',de:'humangeographie',es:'geografía humana',pt:'geografia humana'};
+ const expected=new Set(['DE','ES','FR','ID','IT','MX','PE','PH']);
+ for(const {code} of countries)for(const [language,question] of Object.entries(topics)){
+  const ids=expected.has(code)?[code.toLowerCase()+'-human']:[];
+  for(const q of [question,'  '+question.toUpperCase()+'?  ',question.normalize('NFD')]){
+   const input={code,language,question:q};assert.deepEqual(pilotSelection(input),ids);
+   const a=await answerGuide(input);assert.deepEqual(a.evidence.map(f=>f.id),ids);
+   assert.equal(a.status,ids.length?'evidence':'insufficient');
+   if(ids.length){assert.equal(a.evidence[0].language,language==='it'?'it':'en');assert.equal(a.evidence[0].review,'source-checked-not-independent');}
+  }
+  for(const year of ['2024','2025','2050'])assert.deepEqual(pilotSelection({code,language,question:question+' '+year}),[]);
+ }
+});

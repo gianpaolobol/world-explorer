@@ -1301,6 +1301,8 @@ const topicAliases=Object.freeze({
  es:Object.freeze({'geografía física':'physical geography','orografía':'orography','hidrología':'hydrology','oceanografía':'oceanography','geología':'geology','climatología':'climatology','biogeografía':'biogeography','capital':'capital','economía':'economy','geografía humana':'human geography','geografía urbana':'urban geography','geografía histórica':'historical geography','unión europea':'european union','zona euro':'euro area','acceso a puertos marítimos':'access to seaports','sids':'sids'}),
  pt:Object.freeze({'geografia física':'physical geography','orografia':'orography','hidrologia':'hydrology','oceanografia':'oceanography','geologia':'geology','climatologia':'climatology','biogeografia':'biogeography','capital':'capital','economia':'economy','geografia humana':'human geography','geografia urbana':'urban geography','geografia histórica':'historical geography','união europeia':'european union','zona euro':'euro area','acesso a portos marítimos':'access to seaports','sids':'sids'})
 });
+// Explicit undated discipline questions select the available scoped fact, not a population-statistic alias.
+const humanTopics=Object.freeze({it:'geografia umana',en:'human geography',fr:'géographie humaine',de:'humangeographie',es:'geografía humana',pt:'geografia humana'});
 const normalize=q=>q.normalize('NFC').toLowerCase().trim().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
  const records=corpus.get(code);if(!records)return [];
@@ -1310,6 +1312,7 @@ export function pilotEvidence(code,language){
 export function pilotSelection(input){
  const records=corpus.get(input.code);if(!records)return [];
  const q=normalize(input.question);
+ if(Object.hasOwn(humanTopics,input.language)&&q===humanTopics[input.language])return records.filter(r=>r[0]==='human').map(r=>input.code.toLowerCase()+'-'+r[0]);
  if(Object.hasOwn(topicAliases,input.language)){
   const aliases=topicAliases[input.language];
   const dated=q.match(/^(.*?)\s+(\d{4})$/u);
@@ -1320,7 +1323,7 @@ export function pilotSelection(input){
   return records.filter(r=>r[2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
  }
  if(!['it','en'].includes(input.language))return [];
- const alias=input.language==='it'?{'qual è la capitale':'capitale','qual è la popolazione':'popolazione','geografia fisica':'territorio','idrologia':'idrografia','climatologia':'clima','geografia politica':'capitale','geografia umana':'popolazione','geografia economica':'economia','geografia urbana':'città','geografia storica':'storia'}:{'what is the capital':'capital','what is the population':'population','climate':'climatology'};
+ const alias=input.language==='it'?{'qual è la capitale':'capitale','qual è la popolazione':'popolazione','geografia fisica':'territorio','idrologia':'idrografia','climatologia':'clima','geografia politica':'capitale','geografia economica':'economia','geografia urbana':'città','geografia storica':'storia'}:{'what is the capital':'capital','what is the population':'population','climate':'climatology'};
  const key=records.some(r=>r[input.language==='it'?1:2]===q)?q:(Object.hasOwn(alias,q)?alias[q]:q);
  return records.filter(r=>r[input.language==='it'?1:2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
 }
