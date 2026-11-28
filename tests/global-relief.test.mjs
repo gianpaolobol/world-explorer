@@ -79,3 +79,24 @@ test('relief narration is optional, local, signed, resolution-labelled and never
  assert.equal(reliefNarration(region,g,10.001,40.006,'ja'),null);
  assert.equal(reliefNarration(region,g,10.001,40.006,'__proto__'),null);
 });
+
+test('one-degree layout preserves every native sample, missing cells, and seam',()=>{
+ const rows=180,cols=360,values=Array.from({length:rows*cols},(_,i)=>i%97===0?null:i%10000-5000);
+ const payload={format:'gebco-2025-ice-surface-stride240-v1',rows,cols,values};
+ const g=parseGlobalGrid(JSON.stringify(payload));
+ assert.equal(g.resolution,1);assert.equal(g.count,values.filter(v=>v!==null).length);
+ for(let i=0;i<values.length;i++){
+  const lat=-90+(119.5+Math.floor(i/cols)*240)/240,lon=-180+(119.5+(i%cols)*240)/240;
+  const sample=globalSample(g,lon,lat);
+  if(values[i]===null)assert.equal(sample,null);
+  else{assert.equal(sample.height,values[i]);assert.ok(Math.abs(sample.lat-lat)<1e-9);assert.ok(Math.abs(sample.lon-lon)<1e-9);assert.equal(sample.resolution,1);}
+ }
+ const mesh=globalMesh(g,20);
+ assert.equal(mesh.vertices.length,64800);assert.ok(mesh.faces.every(f=>f.every(i=>values[i]!==null)));
+ assert.ok(mesh.faces.some(f=>f.some(i=>i%cols===0)&&f.some(i=>i%cols===359)));
+ assert.deepEqual(globalSample(g,-180,0),globalSample(g,180,0));
+ assert.equal(globalSample(g,0,90),null);assert.equal(globalSample(g,0,-90),null);
+ for(const locale of ['it','en','fr','es','de','pt'])assert.match(reliefNarration(null,g,0,0,locale).text,/1/);
+ assert.throws(()=>parseGlobalGrid(JSON.stringify({...payload,rows:90})));
+ assert.throws(()=>parseGlobalGrid(JSON.stringify({...payload,format:'__proto__'})));
+});
