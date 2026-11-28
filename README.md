@@ -5,6 +5,13 @@ Anteprima V0.6.2, non una release definitiva.
 ## Avvio locale
 Dal repository, con Node 22, eseguire `npm start`. Il server ascolta solo su 127.0.0.1. Non esporlo tramite proxy o su LAN. Aprire http://127.0.0.1:8765/ in Chrome o Edge. Internet e WebGL necessari per il globo. Usare Schermo intero per proiettare. Il rilievo Esri è opzionale e non collaudato; il viaggio automatico privilegia le destinazioni meno visitate.
 
+### Globo numerico predisposto (facoltativo)
+Per evitare di selezionare a ogni sessione la griglia globale, creare la cartella locale `local-data/` (esclusa da Git) e salvare una griglia GEBCO 2025 acquisita con lo script previsto:
+```sh
+python scripts/acquire-ceda-relief.py local-data/global-relief.json --degrees 1
+```
+La dipendenza Python e l’acquisizione selettiva sono descritte nelle istruzioni GEBCO; la preparazione richiede rete, il successivo caricamento no. Avviare il server con `WORLD_EXPLORER_PREPARED_RELIEF=1` (PowerShell: `$env:WORLD_EXPLORER_PREPARED_RELIEF="1"; npm start`). Aprire il pannello Globo numerico e premere **Carica griglia predisposta sul computer**. Il server mantiene in RAM uno snapshot validato e limitato a 512 KiB; non espone la cartella, non accetta percorsi dal browser e non invia dati al telecomando. Non carica file automaticamente se l’opzione non è abilitata. L’importazione manuale rimane disponibile. La validazione è strutturale, non certifica la provenienza del file; resta l’attribuzione GEBCO con risoluzione e limiti espliciti. La griglia a 1° è un'anteprima campionata, non un DEM globale a risoluzione nativa né un prodotto per navigazione.
+
 ## Test
 Node 22: `npm test`. La CI esegue i test unitari, la sintassi del modulo browser e una suite Chromium con Cesium reale in WebGL software e tessere sintetiche, oltre alla modalità testuale senza rete. Per riprodurre: `npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 cesium@1.127.0`, `npx playwright install chromium`, `node --test browser/smoke.test.mjs`. Nessun test di rete live, Safari o proiettore implicato.
 
