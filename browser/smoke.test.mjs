@@ -61,6 +61,15 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#editorialFilter').selectOption('human');
   assert.equal(await page.locator('#editorialDestination option').count(),4);
   assert.match(await page.locator('#profileMissing').textContent(),/Tutte le discipline/);
+  for(const [locale,label] of [['en','Go to destination'],['fr','Aller à la destination'],['de','Zum Ziel'],['es','Ir al destino'],['pt','Ir para o destino'],['ja','Go to destination']]){
+   await page.locator('#lang').selectOption(locale);
+   assert.equal(await page.locator('#editorialGo').textContent(),label);
+   assert.equal(await page.locator('#editorialFilter').getAttribute('lang'),locale==='ja'?'en':locale);
+   assert.equal(await page.locator('#editorialDestination').getAttribute('lang'),locale);
+   assert.equal(await page.locator('#editorialFilter').inputValue(),'human');
+   assert.equal(await page.locator('#editorialDestination option').count(),4);
+  }
+  await page.locator('#lang').selectOption('it');
   await page.locator('#editorialDestination').selectOption('DE');
   await page.locator('#editorialGo').click();
   assert.equal(await page.locator('#place').inputValue(),String(countries.findIndex(c=>c.code==='DE')));
