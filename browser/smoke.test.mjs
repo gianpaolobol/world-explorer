@@ -55,6 +55,13 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#profile summary').click();
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
+  await page.locator('#editorialCoverage summary').click();
+  assert.match(await page.locator('#editorialCoverageStatus').textContent(),/326 \/ 2340/);
+  assert.equal(await page.locator('#editorialCoverageList li').count(),12);
+  await page.locator('#editorialFilter').selectOption('human');
+  assert.equal(await page.locator('#editorialDestination option').count(),4);
+  assert.match(await page.locator('#profileMissing').textContent(),/Tutte le discipline/);
+  await page.locator('#editorialCoverage summary').click();
   assert.match(await page.locator('#statisticsStatus').textContent(),/14 \/ 14 indicatori/);
   assert.equal(await page.locator('#profileStats a[href^="https://data.worldbank.org/indicator/"]').count(),14);
   assert.match(await page.locator('#narration').textContent(),/Banca Mondiale, anno 2022/);
