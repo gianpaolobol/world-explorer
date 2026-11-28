@@ -2,7 +2,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {makeServer} from '../server.mjs';
+import {makeServer,readPreparedGlobalRelief} from '../server.mjs';
 import {once} from 'node:events';
 import {resolve,extname,sep} from 'node:path';
 import {readFile} from 'node:fs/promises';
@@ -13,8 +13,8 @@ const root=resolve('node_modules/cesium/Build/Cesium');
 const cdn='https://cdn.jsdelivr.net/npm/cesium@1.127.0/Build/Cesium/';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6XcAAAAASUVORK5CYII=','base64');
 const types={'.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.wasm':'application/wasm','.xml':'application/xml'};
-async function runBrowser(t,withGlobe,fn){
- const server=makeServer();server.listen(0,'127.0.0.1');await once(server,'listening');
+async function runBrowser(t,withGlobe,fn,serverOptions={}){
+ const server=makeServer(serverOptions);server.listen(0,'127.0.0.1');await once(server,'listening');
  t.after(()=>new Promise(resolve=>server.close(resolve)));
  const origin='http://127.0.0.1:'+server.address().port;
  const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -225,6 +225,10 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   await page.locator('#reliefClear').click();
   assert.equal(await page.locator('#reliefCanvas').isVisible(),false);
   await page.locator('#globalRelief summary').click();
+  await page.locator('#globalPreparedLoad').click();
+  await page.waitForFunction(()=>document.querySelector('#globalStatus').textContent.includes('assente o non abilitata'));
+  assert.equal(await page.locator('#globalCanvas').isVisible(),false);
+  assert.equal(await page.locator('#globalClear').isDisabled(),true);
   const values=Array(16200).fill(0);values[100]=-5000;values[200]=4000;values[300]=null;
   await page.locator('#globalReliefFile').setInputFiles({name:'synthetic-global.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'gebco-2025-ice-surface-stride480-v1',rows:90,cols:180,values}))});
   await page.locator('#globalCanvas').waitFor({state:'visible'});
@@ -337,7 +341,7 @@ if(process.env.WORLD_EXPLORER_REAL_RELIEF==='1'){
    await page.locator('#globe canvas').screenshot({path:'global-render.png'});
    await page.locator('#next').click();
    await page.locator('#globalClear').click();
-   await page.locator('#globalReliefFile').setInputFiles({name:'global-relief-1deg.json',mimeType:'application/json',buffer:dense});
+   await page.locator('#globalPreparedLoad').click();
    await page.locator('#globalCanvas').waitFor({state:'visible'});
    assert.match(await page.locator('#globalStatus').textContent(),/64800\/64800.*Risoluzione campionata 1°/);
    assert.match(await page.locator('#localReliefSample').textContent(),/GEBCO globale 1°:/);
@@ -348,6 +352,6 @@ if(process.env.WORLD_EXPLORER_REAL_RELIEF==='1'){
    await page.locator('#globalClear').click();
    assert.equal(await page.locator('#mainReliefCredit').isVisible(),false);
    assert.equal(await page.locator('#terrain').isDisabled(),false);
-  });
+  },{preparedRelief:await readPreparedGlobalRelief('global-relief-1deg.json')});
  });
 }

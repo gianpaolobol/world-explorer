@@ -91,6 +91,12 @@ export function parseGlobalGrid(text){
  if(!count)throw new Error('No valid global samples');
  return {...layout,resolution:layout.stride/240,values:g.values,min,max,count};
 }
+// Strip arbitrary metadata before a configured local grid is served to the browser.
+export function canonicalGlobalGrid(text){
+ const grid=parseGlobalGrid(text);
+ const format=Object.keys(GLOBAL_LAYOUTS).find(key=>GLOBAL_LAYOUTS[key].stride===grid.stride);
+ return {format,rows:grid.rows,cols:grid.cols,values:grid.values};
+}
 export function validateGlobalExaggeration(exaggeration){
  if(![1,20,50].includes(exaggeration))throw new Error('Invalid global exaggeration');
 }
