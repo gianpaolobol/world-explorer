@@ -10,7 +10,7 @@ import {fetchBoundaries} from './boundaries.mjs';
 import {nearbyPhotos} from './photos.mjs';
 import {cinematicNarrationFor} from './narration.mjs';
 import {regionName,M49_SOURCE} from './regions.mjs';
-import {pilotEvidence} from './editorial-pilot.mjs';
+import {pilotEvidence,disciplines,editorialCoverage} from './editorial-pilot.mjs';
 import {statisticsFor,statisticsEvidence,TERMS,INDICATORS} from './world-statistics.mjs';
 import {snapshot} from './world-statistics-data.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport,quizLanguage,quizMessage} from './region-quiz.mjs';
@@ -102,9 +102,36 @@ $('quizMode').onchange=()=>{question=null;answered=false;quizCorrect=null;quizEx
 $('quizReset').onclick=()=>{if(!confirm(quizText('confirm')))return;if(statMode())statMemory=statQuiz.load(null);else quizMemory=loadMemory(null);question=null;answered=false;quizCorrect=null;quizExhausted=false;saveQuiz();renderQuiz();};
 $('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([statMode()?statQuiz.export(statMemory):quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=statMode()?'world-explorer-statistics-quiz.json':'world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 renderQuiz();
+const coverage=editorialCoverage(countries.map(c=>c.code));
+const disciplineNames={it:['Geografia fisica','Orografia','Idrologia','Oceanografia','Geologia','Climatologia','Biogeografia','Geografia politica','Geografia umana','Geografia economica','Geografia urbana','Geografia storica'],en:['Physical geography','Orography','Hydrology','Oceanography','Geology','Climatology','Biogeography','Political geography','Human geography','Economic geography','Urban geography','Historical geography']};
+const disciplineName=d=>disciplineNames[lang==='it'?'it':'en'][disciplines.indexOf(d)];
+function renderCoverageDestinations(){
+ const d=$('editorialFilter').value,previous=$('editorialDestination').value;
+ const choices=coverage.profiles.filter(p=>p.covered.includes(d)).map(p=>new Option(countryName(p.code,lang),p.code)).sort((a,b)=>a.text.localeCompare(b.text,lang));
+ $('editorialDestination').replaceChildren(...choices);
+ if(choices.some(c=>c.value===previous))$('editorialDestination').value=previous;
+ $('editorialGo').disabled=!choices.length;
+}
+function renderEditorialCoverage(code){
+ const it=lang==='it',locale=it?'it':'en',profile=coverage.profiles.find(p=>p.code===code);
+ for(const id of ['profileMissing','editorialCoverageHeading','editorialCoverageStatus','editorialCoverageList','editorialFilterLabel','editorialDestinationLabel','editorialGo'])$(id).lang=locale;
+ $('profileMissing').textContent=profile?.missing.length?(it?'Discipline senza contenuto editoriale: ':'Disciplines without editorial content: ')+profile.missing.map(disciplineName).join(', '):(it?'Tutte le discipline hanno almeno un contenuto pilota.':'All disciplines have at least one pilot fact.');
+ $('editorialCoverageHeading').textContent=it?'Copertura delle dodici discipline':'Coverage of the twelve disciplines';
+ $('editorialCoverageStatus').textContent=coverage.filled+' / '+coverage.totalSlots+(it?' coppie Stato-disciplina con almeno un fatto pilota; non equivalgono a revisioni indipendenti. ':' country-discipline slots with at least one pilot fact; not independent reviews. ')+coverage.complete+' / '+coverage.totalCountries+(it?' Stati con tutte le discipline.':' countries with all disciplines.');
+ $('editorialCoverageList').replaceChildren(...disciplines.map(d=>{const li=document.createElement('li');li.textContent=disciplineName(d)+': '+coverage.byDiscipline[d]+' / '+coverage.totalCountries;return li;}));
+ const prev=$('editorialFilter').value;
+ $('editorialFilter').replaceChildren(...disciplines.map(d=>new Option(disciplineName(d),d)));
+ if(disciplines.includes(prev))$('editorialFilter').value=prev;
+ $('editorialFilterLabel').textContent=it?'Disciplina da esplorare':'Discipline to explore';
+ $('editorialDestinationLabel').textContent=it?'Destinazioni con contenuti':'Destinations with content';
+ $('editorialGo').textContent=it?'Vai alla destinazione':'Go to destination';
+ renderCoverageDestinations();
+}
+$('editorialFilter').onchange=renderCoverageDestinations;
+$('editorialGo').onclick=()=>{const i=countries.findIndex(c=>c.code===$('editorialDestination').value);if(i>=0){tour.stop();visit(i);}};
 function renderProfile(code){
  const box=$('profileFacts'),stats=$('profileStats');box.replaceChildren();stats.replaceChildren();
- const facts=pilotEvidence(code,lang);
+ const facts=pilotEvidence(code,lang);renderEditorialCoverage(code);
  $('profileStatus').textContent=facts.length?new Set(facts.map(f=>f.discipline)).size+' / 12 discipline con almeno un fatto pilota; revisione indipendente mancante.':'Profilo multidisciplinare non ancora disponibile per questa destinazione.';
  for(const item of facts){
   const p=document.createElement('p');p.lang=item.language;p.dir='auto';
