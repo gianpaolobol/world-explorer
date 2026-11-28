@@ -1137,13 +1137,169 @@ const hydrologyRows=new Map([
  ]
 ]);
 export const hydrologyCodes=Object.freeze([...hydrologyRows.keys()].sort());
-const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows,...urbanHistoryRows,...hydrologyRows]);
+// Cultural landscapes: human geography is not a population statistic.
+const culturalLandscapeRows=new Map([
+ [
+  "ID",
+  [
+   [
+    "human",
+    "geografia umana",
+    "human geography",
+    "A Bali le associazioni agricole subak organizzano collettivamente la distribuzione dell’acqua per le risaie, in relazione ai templi dell’acqua.",
+    "In Bali, subak farming associations collectively organize water distribution for rice fields in connection with water temples.",
+    "https://whc.unesco.org/en/list/1194/",
+    "UNESCO, Cultural Landscape of Bali Province",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Nel paesaggio rurale di Bali sorgenti e corsi d’acqua alimentano una rete di canali irrigui che raggiunge le risaie.",
+    "In rural Bali, springs and streams feed irrigation channels supplying rice fields.",
+    "https://whc.unesco.org/en/list/1194/",
+    "UNESCO, Cultural Landscape of Bali Province",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "climatology",
+    "clima",
+    "climatology",
+    "A Bali il clima tropicale umido favorisce la coltivazione del riso sui terreni di origine vulcanica.",
+    "Bali’s humid tropical climate favors rice cultivation on volcanic soils.",
+    "https://whc.unesco.org/en/list/1194/",
+    "UNESCO, Cultural Landscape of Bali Province",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "MX",
+  [
+   [
+    "human",
+    "geografia umana",
+    "human geography",
+    "Nella regione messicana di Jalisco la coltivazione dell’agave blu ha modellato il paesaggio rurale e le tradizioni delle comunità locali.",
+    "Blue agave cultivation has shaped the rural landscape and local community traditions in Mexico’s Jalisco region.",
+    "https://whc.unesco.org/en/list/1209/",
+    "UNESCO, Agave Landscape",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "economic",
+    "economia",
+    "economy",
+    "Nel paesaggio tutelato di Jalisco i campi di agave blu sono associati a distillerie tuttora produttive.",
+    "In the protected Jalisco landscape, blue agave fields are associated with working distilleries.",
+    "https://whc.unesco.org/en/list/1209/",
+    "UNESCO, Agave Landscape",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "Il sito UNESCO di Jalisco comprende gli insediamenti di Tequila, Arenal e Amatitán, legati alla lavorazione dell’agave.",
+    "The UNESCO property in Jalisco includes the settlements of Tequila, Arenal and Amatitán, associated with agave processing.",
+    "https://whc.unesco.org/en/list/1209/",
+    "UNESCO, Agave Landscape",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "PE",
+  [
+   [
+    "human",
+    "geografia umana",
+    "human geography",
+    "Nel sistema viario andino transnazionale Qhapaq Ñan, alcune comunità locali custodiscono tratti delle vie storiche e tramandano tradizioni culturali, anche linguistiche.",
+    "Within the transnational Qhapaq Ñan road system, some local communities care for historic road sections and maintain cultural traditions, including languages.",
+    "https://whc.unesco.org/en/list/1459/",
+    "UNESCO, Qhapaq Ñan",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "urban",
+    "città",
+    "urban geography",
+    "A Cusco, in Perù, dalla piazza centrale dell’antica capitale inca si diramavano le quattro principali direttrici del Qhapaq Ñan.",
+    "In Cusco, Peru, the four principal routes of the Qhapaq Ñan radiated from the former Inca capital’s central square.",
+    "https://whc.unesco.org/en/list/1459/",
+    "UNESCO, Qhapaq Ñan",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "historical",
+    "storia",
+    "historical geography",
+    "Il Qhapaq Ñan raggiunse la massima estensione nel Quattrocento, collegando regioni andine oggi appartenenti a diversi Stati, tra cui il Perù.",
+    "The Qhapaq Ñan reached its greatest extent in the fifteenth century, connecting Andean regions now belonging to several countries, including Peru.",
+    "https://whc.unesco.org/en/list/1459/",
+    "UNESCO, Qhapaq Ñan",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ],
+ [
+  "PH",
+  [
+   [
+    "human",
+    "geografia umana",
+    "human geography",
+    "Nella Cordigliera di Luzon la manutenzione delle risaie terrazzate Ifugao si fonda sulla cooperazione della comunità e sulla trasmissione delle conoscenze agricole.",
+    "In Luzon’s Cordillera, maintenance of the Ifugao rice terraces relies on community cooperation and transmission of agricultural knowledge.",
+    "https://whc.unesco.org/en/list/722/",
+    "UNESCO, Rice Terraces of the Philippine Cordilleras",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "hydrology",
+    "idrografia",
+    "hydrology",
+    "Le terrazze Ifugao utilizzano sistemi irrigui che raccolgono acqua proveniente dalle foreste montane sovrastanti.",
+    "The Ifugao terraces use irrigation systems collecting water from forests higher in the mountains.",
+    "https://whc.unesco.org/en/list/722/",
+    "UNESCO, Rice Terraces of the Philippine Cordilleras",
+    null,
+    "2026-11-28"
+   ],
+   [
+    "physical",
+    "territorio",
+    "physical geography",
+    "Nelle Cordigliere filippine i campi terrazzati seguono il profilo dei versanti ripidi, sostenuti da muri in pietra o terra.",
+    "In the Philippine Cordilleras, terraced fields follow steep hillsides and are retained by stone or earthen walls.",
+    "https://whc.unesco.org/en/list/722/",
+    "UNESCO, Rice Terraces of the Philippine Cordilleras",
+    null,
+    "2026-11-28"
+   ]
+  ]
+ ]
+]);
+export const culturalLandscapeCodes=Object.freeze([...culturalLandscapeRows.keys()].sort());
+const corpus=composeEditorialRows([['IT',rows],['FR',franceRows],['ES',spainRows],['DE',germanyRows],...lldcCodes.map(code=>[code,lldcRows]),...sidsCodes.map(code=>[code,sidsRows]),...euContextCodes.map(code=>[code,euRows(code)]),...geoscienceRows,...regionalExtensionRows,...landscapeRows,...urbanHistoryRows,...hydrologyRows,...culturalLandscapeRows]);
 // Exact localized topic aliases only; English evidence remains explicitly labelled as English.
 const topicAliases=Object.freeze({
- fr:Object.freeze({'géographie physique':'physical geography','orographie':'orography','hydrologie':'hydrology','océanographie':'oceanography','géologie':'geology','climatologie':'climatology','biogéographie':'biogeography','capitale':'capital','économie':'economy','géographie urbaine':'urban geography','géographie historique':'historical geography','union européenne':'european union','zone euro':'euro area','accès aux ports maritimes':'access to seaports','sids':'sids'}),
- de:Object.freeze({'physische geographie':'physical geography','orographie':'orography','hydrologie':'hydrology','ozeanographie':'oceanography','geologie':'geology','klimatologie':'climatology','biogeographie':'biogeography','hauptstadt':'capital','wirtschaft':'economy','stadtgeographie':'urban geography','historische geographie':'historical geography','europäische union':'european union','eurozone':'euro area','zugang zu seehäfen':'access to seaports','sids':'sids'}),
- es:Object.freeze({'geografía física':'physical geography','orografía':'orography','hidrología':'hydrology','oceanografía':'oceanography','geología':'geology','climatología':'climatology','biogeografía':'biogeography','capital':'capital','economía':'economy','geografía urbana':'urban geography','geografía histórica':'historical geography','unión europea':'european union','zona euro':'euro area','acceso a puertos marítimos':'access to seaports','sids':'sids'}),
- pt:Object.freeze({'geografia física':'physical geography','orografia':'orography','hidrologia':'hydrology','oceanografia':'oceanography','geologia':'geology','climatologia':'climatology','biogeografia':'biogeography','capital':'capital','economia':'economy','geografia urbana':'urban geography','geografia histórica':'historical geography','união europeia':'european union','zona euro':'euro area','acesso a portos marítimos':'access to seaports','sids':'sids'})
+ fr:Object.freeze({'géographie physique':'physical geography','orographie':'orography','hydrologie':'hydrology','océanographie':'oceanography','géologie':'geology','climatologie':'climatology','biogéographie':'biogeography','capitale':'capital','économie':'economy','géographie humaine':'human geography','géographie urbaine':'urban geography','géographie historique':'historical geography','union européenne':'european union','zone euro':'euro area','accès aux ports maritimes':'access to seaports','sids':'sids'}),
+ de:Object.freeze({'physische geographie':'physical geography','orographie':'orography','hydrologie':'hydrology','ozeanographie':'oceanography','geologie':'geology','klimatologie':'climatology','biogeographie':'biogeography','hauptstadt':'capital','wirtschaft':'economy','humangeographie':'human geography','stadtgeographie':'urban geography','historische geographie':'historical geography','europäische union':'european union','eurozone':'euro area','zugang zu seehäfen':'access to seaports','sids':'sids'}),
+ es:Object.freeze({'geografía física':'physical geography','orografía':'orography','hidrología':'hydrology','oceanografía':'oceanography','geología':'geology','climatología':'climatology','biogeografía':'biogeography','capital':'capital','economía':'economy','geografía humana':'human geography','geografía urbana':'urban geography','geografía histórica':'historical geography','unión europea':'european union','zona euro':'euro area','acceso a puertos marítimos':'access to seaports','sids':'sids'}),
+ pt:Object.freeze({'geografia física':'physical geography','orografia':'orography','hidrologia':'hydrology','oceanografia':'oceanography','geologia':'geology','climatologia':'climatology','biogeografia':'biogeography','capital':'capital','economia':'economy','geografia humana':'human geography','geografia urbana':'urban geography','geografia histórica':'historical geography','união europeia':'european union','zona euro':'euro area','acesso a portos marítimos':'access to seaports','sids':'sids'})
 });
 const normalize=q=>q.normalize('NFC').toLowerCase().trim().replace(/[?!.]+$/u,'').trim();
 export function pilotEvidence(code,language){
@@ -1165,7 +1321,7 @@ export function pilotSelection(input){
  }
  if(!['it','en'].includes(input.language))return [];
  const alias=input.language==='it'?{'qual è la capitale':'capitale','qual è la popolazione':'popolazione','geografia fisica':'territorio','idrologia':'idrografia','climatologia':'clima','geografia politica':'capitale','geografia umana':'popolazione','geografia economica':'economia','geografia urbana':'città','geografia storica':'storia'}:{'what is the capital':'capital','what is the population':'population','climate':'climatology'};
- const key=Object.hasOwn(alias,q)?alias[q]:q;
+ const key=records.some(r=>r[input.language==='it'?1:2]===q)?q:(Object.hasOwn(alias,q)?alias[q]:q);
  return records.filter(r=>r[input.language==='it'?1:2]===key).map(r=>input.code.toLowerCase()+'-'+r[0]);
 }
 
