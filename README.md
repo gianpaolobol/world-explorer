@@ -52,3 +52,6 @@ The locally imported GEBCO grids also report the signed, unexaggerated nearest s
 
 ### Quiz comparativi WDI
 Il secondo argomento propone confronti fra quattro Stati con valori reali dello stesso indicatore e anno, senza risposte inventate e con distanza minima del 5% dal valore corretto. Mostra i valori e la fonte dopo la risposta. Il ripasso adattivo e l'esportazione/cancellazione sono separati dal quiz M49. Interfaccia di entrambi i quiz disponibile in IT/EN/FR/DE/ES/PT, con fallback inglese esplicito per le altre lingue dell’atlante; revisione editoriale indipendente ancora aperta.
+
+### Ripristino della memoria dei quiz
+Seleziona l'argomento corretto, esporta la memoria come JSON e conserva il file localmente. Puoi ripristinarlo dal selettore Importa quiz: il file (massimo 512 KiB) viene letto nel browser, validato interamente e sostituisce soltanto la memoria dell'argomento selezionato dopo conferma. I precedenti backup v1 non vuoti sono compatibili se tutti i record appartengono all'argomento attuale; backup corrotti, di altro argomento o con chiavi non più disponibili vengono rifiutati senza importazioni parziali. Nessun upload o account; l'utente è responsabile della custodia dei file esportati.

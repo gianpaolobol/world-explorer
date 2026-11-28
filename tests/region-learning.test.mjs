@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {importMemory} from '../src/learning.mjs';
 import {countries,languages} from '../src/countries.mjs';
 import {classifiedCountries,regionOf,regionCodes,regionName,M49_SOURCE} from '../src/regions.mjs';
 import {narrationFor} from '../src/narration.mjs';
@@ -38,8 +39,20 @@ test('empty quiz exposes next review without presenting future questions',()=>{
 });
 
 test('quiz interface has six complete locales and explicit English fallback',()=>{
- const keys=["questions","countries","due","mastered","mistakes","nextDue","storage","region","statistics","topic","next","reset","export","exhausted","start","unavailable","highest","lowest","correct","wrong","regionQuestion","regionSource","confirm","heading","notice"];
+ const keys=["questions","countries","due","mastered","mistakes","nextDue","storage","region","statistics","topic","next","reset","export","import","importConfirm","importOk","importError","exhausted","start","unavailable","highest","lowest","correct","wrong","regionQuestion","regionSource","confirm","heading","notice"];
  for(const locale of languages){const resolved=quizLanguage(locale);assert.equal(resolved,['it','en','fr','de','es','pt'].includes(locale)?locale:'en');for(const k of keys){assert.ok(quizMessage(k,locale).trim());assert.equal(quizMessage(k,locale),quizMessage(k,resolved));}}
  for(const l of ['fr','de','es','pt'])assert.notEqual(quizMessage('next',l),quizMessage('next','en'));
  assert.equal(quizLanguage('__proto__'),'en');assert.throws(()=>quizMessage('__proto__','it'));
+});
+
+test('region backups roundtrip strictly, accept nonempty legacy files and reject foreign or corrupt records',()=>{
+ const memory=loadMemory(null),q=makeQuestion(memory,0,()=>0.5);gradeQuestion(q,q.answer,memory,0);
+ const backup=quizExport(memory);assert.equal(JSON.parse(backup).topic,'region');
+ assert.deepEqual(importMemory(backup,'region',loadMemory),memory);
+ assert.deepEqual(importMemory(JSON.stringify({version:1,memory}),'region',loadMemory),memory);
+ const value=memory[q.code];
+ for(const data of [{...memory,ZZ:value},{[q.code]:{...value,streak:value.correct+1}},{[q.code]:{...value,extra:1}},{[q.code]:{...value,due:-1}},{['SP.POP.TOTL:'+q.code]:value}]){
+  assert.throws(()=>importMemory(JSON.stringify({version:1,topic:'region',memory:data}),'region',loadMemory),RangeError);
+ }
+ assert.throws(()=>importMemory(backup,'statistics',loadMemory),RangeError);
 });

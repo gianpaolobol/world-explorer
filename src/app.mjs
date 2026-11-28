@@ -14,6 +14,7 @@ import {pilotEvidence,disciplines,editorialCoverage} from './editorial-pilot.mjs
 import {statisticsFor,statisticsEvidence,TERMS,INDICATORS} from './world-statistics.mjs';
 import {snapshot} from './world-statistics-data.mjs';
 import {loadMemory,makeQuestion,gradeQuestion,quizStats,quizExport,quizLanguage,quizMessage} from './region-quiz.mjs';
+import {importMemory} from './learning.mjs';
 import {createStatisticsQuiz} from './statistics-quiz.mjs';
 const $=id=>document.getElementById(id), key='world-explorer-visits-v1';
 let visits={},lang='it',index=0,viewer=null,terrainOn=false,terrainBusy=false,bathyLayer=null,probeEpoch=0;
@@ -47,6 +48,7 @@ const statQuizKey='world-explorer-statistics-quiz-v1';
 const statQuiz=createStatisticsQuiz(snapshot);
 let statMemory=statQuiz.load(null);
 const statMode=()=>$('quizMode').value==='statistics';
+let quizImportEpoch=0,quizImportResult='';
 let quizMemory=loadMemory(null),question=null,answered=false,quizCorrect=null,quizStorageFailed=false,quizExhausted=false;
 try{quizMemory=loadMemory(localStorage.getItem(quizKey));statMemory=statQuiz.load(localStorage.getItem(statQuizKey));}catch{quizStorageFailed=true;}
 const quizLocale=()=>quizLanguage(lang);
@@ -61,6 +63,7 @@ function updateQuizStats(){
  if(!s.due&&s.nextDue!==null)$('quizStats').textContent+=quizText('nextDue')+new Date(s.nextDue).toLocaleString(quizLocale());
 }
 function saveQuiz(){
+ quizImportEpoch++;quizImportResult='';
  try{localStorage.setItem(statMode()?statQuizKey:quizKey,JSON.stringify(statMode()?statMemory:quizMemory));quizStorageFailed=false;}
  catch{quizStorageFailed=true;}
  updateQuizStorage();
@@ -71,7 +74,7 @@ function updateQuizStorage(){
 }
 function renderQuiz(){
  $('quizOptions').replaceChildren();updateQuizStats();updateQuizStorage();
- for(const id of ['quiz','quizQuestion','quizFeedback','quizOptions','quizNext','quizReset','quizExport','quizMode','quizModeLabel','quizHeading','quizNotice'])$(id).lang=quizLocale();
+ for(const id of ['quiz','quizQuestion','quizFeedback','quizOptions','quizNext','quizReset','quizExport','quizImportLabel','quizImport','quizImportStatus','quizMode','quizModeLabel','quizHeading','quizNotice'])$(id).lang=quizLocale();
  $('quizHeading').textContent=quizText('heading');$('quizNotice').textContent=quizText('notice');
  $('quizMode').options[0].textContent=quizText('region');
  $('quizMode').options[1].textContent=quizText('statistics');
@@ -79,6 +82,7 @@ function renderQuiz(){
  $('quizNext').textContent=quizText('next');
  $('quizReset').textContent=quizText('reset');
  $('quizExport').textContent=quizText('export');
+ $('quizImportLabel').textContent=quizText('import');$('quizImportStatus').textContent=quizImportResult?quizText(quizImportResult):'';
  $('quizFeedback').textContent='';
  if(!question){$('quizQuestion').textContent=quizExhausted?quizText('exhausted'):quizText('start');return;}
  if(statMode()){
@@ -98,9 +102,24 @@ function renderQuiz(){
  if(answered)$('quizFeedback').textContent=(quizCorrect?quizText('correct'):quizText('wrong'))+regionName(question.answer,quizLocale())+quizText('regionSource');
 }
 $('quizNext').onclick=()=>{question=statMode()?statQuiz.make(statMemory):makeQuestion(quizMemory);answered=false;quizCorrect=null;quizExhausted=!question;renderQuiz();};
-$('quizMode').onchange=()=>{question=null;answered=false;quizCorrect=null;quizExhausted=false;renderQuiz();};
+$('quizMode').onchange=()=>{quizImportEpoch++;quizImportResult='';question=null;answered=false;quizCorrect=null;quizExhausted=false;renderQuiz();};
 $('quizReset').onclick=()=>{if(!confirm(quizText('confirm')))return;if(statMode())statMemory=statQuiz.load(null);else quizMemory=loadMemory(null);question=null;answered=false;quizCorrect=null;quizExhausted=false;saveQuiz();renderQuiz();};
 $('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([statMode()?statQuiz.export(statMemory):quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=statMode()?'world-explorer-statistics-quiz.json':'world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+$('quizImport').onchange=async()=>{
+ const file=$('quizImport').files?.[0];$('quizImport').value='';
+ const epoch=++quizImportEpoch,statistics=statMode();quizImportResult='';$('quizImportStatus').textContent='';
+ if(!file)return;
+ try{
+  if(file.size>524288)throw new RangeError('Backup too large');
+  const raw=await file.text();
+  if(epoch!==quizImportEpoch)return;
+  const restored=importMemory(raw,statistics?'statistics':'region',statistics?statQuiz.load:loadMemory);
+  if(!confirm(quizText('importConfirm')))return;
+  if(statistics)statMemory=restored;else quizMemory=restored;
+  question=null;answered=false;quizCorrect=null;quizExhausted=false;saveQuiz();quizImportResult='importOk';
+ }catch{if(epoch!==quizImportEpoch)return;quizImportResult='importError';}
+ renderQuiz();
+};
 renderQuiz();
 const coverage=editorialCoverage(countries.map(c=>c.code));
 const coverageLocales={
