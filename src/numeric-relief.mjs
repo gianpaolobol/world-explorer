@@ -91,22 +91,28 @@ export function parseGlobalGrid(text){
  if(!count)throw new Error('No valid global samples');
  return {...layout,resolution:layout.stride/240,values:g.values,min,max,count};
 }
-export function globalMesh(g,exaggeration=1){
+export function validateGlobalExaggeration(exaggeration){
  if(![1,20,50].includes(exaggeration))throw new Error('Invalid global exaggeration');
+}
+// Shared native-grid topology for Canvas and Cesium. No spherical projection
+// or allocation of intermediate vertices is required to enumerate the faces.
+export function* globalFaces(g){
+ for(let row=0;row<g.rows-1;row++)for(let col=0;col<g.cols;col++){
+  const a=row*g.cols+col,b=row*g.cols+(col+1)%g.cols,c=a+g.cols,d=b+g.cols;
+  if(g.values[a]===null||g.values[b]===null||g.values[c]===null||g.values[d]===null)continue;
+  yield [a,b,c];yield [b,d,c];
+ }
+}
+export function globalMesh(g,exaggeration=1){
+ validateGlobalExaggeration(exaggeration);
  const vertices=g.values.map((z,i)=>{
   if(z===null)return null;
   const centre=globalCellCentre(g,i),lat=centre.lat*Math.PI/180,lon=centre.lon*Math.PI/180;
   const radius=1+z*exaggeration/6371008.8;
   return {x:radius*Math.cos(lat)*Math.cos(lon),y:radius*Math.cos(lat)*Math.sin(lon),z:radius*Math.sin(lat),height:z};
  });
- const faces=[];
- for(let row=0;row<g.rows-1;row++)for(let col=0;col<g.cols;col++){
-  const a=row*g.cols+col,b=row*g.cols+(col+1)%g.cols,c=a+g.cols,d=b+g.cols;
-  // Keep actual data gaps open; close the longitude seam, not the poles.
-  if([a,b,c,d].some(i=>vertices[i]===null))continue;
-  faces.push([a,b,c],[b,d,c]);
- }
- return {vertices,faces};
+ // Keep actual data gaps open; close the longitude seam, not the poles.
+ return {vertices,faces:Array.from(globalFaces(g))};
 }
 export function projectGlobalMesh(mesh,longitude=0,latitude=0){
  if(!Number.isFinite(longitude)||Math.abs(longitude)>180||!Number.isFinite(latitude)||Math.abs(latitude)>90)throw new Error('Invalid view');
