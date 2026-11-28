@@ -24,3 +24,13 @@ test('relief flight clearance never reduces normal country camera altitude',()=>
  assert.equal(safeReliefHeight(3000000,50),3000000);
  assert.equal(safeReliefHeight(18000,1),110000);
 });
+
+test('one-degree Earth-fixed batches use actual centres and partition the dense mesh',()=>{
+ const g=parseGlobalGrid(JSON.stringify({format:'gebco-2025-ice-surface-stride240-v1',rows:180,cols:360,values:Array(64800).fill(-4000)}));
+ const {vertices,buckets}=reliefBatches(g,20);
+ assert.equal(vertices.length,64800);
+ assert.ok(Math.abs(vertices[0].lon+179.50208333333333)<1e-9);
+ assert.ok(Math.abs(vertices[0].lat+89.50208333333333)<1e-9);
+ assert.equal(vertices[0].height,-80000);
+ assert.equal(buckets.reduce((n,b)=>n+b.faces.length,0),179*360*2);
+});

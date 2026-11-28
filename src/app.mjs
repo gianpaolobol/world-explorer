@@ -284,7 +284,7 @@ try{if(!window.Cesium)throw new Error('Cesium non disponibile');
  osm.errorEvent.addEventListener(()=>{$('status').textContent='Cartografia OSM: errore di rete o tessere';});
  viewer.imageryLayers.addImageryProvider(osm);$('status').textContent='Globo 3D · ellissoide · OSM';
  const scene=viewer.scene,controller=scene.screenSpaceCameraController;
- const credit=document.createElement('span');credit.id='mainReliefCredit';credit.hidden=true;credit.textContent='GEBCO 2025 · DOI 10.5285/37c52e96-24ea-67ce-e063-7086abc05f29 · griglia locale non autenticata, campioni 2°, non per navigazione';$('status').after(credit);
+ const credit=document.createElement('span');credit.id='mainReliefCredit';credit.hidden=true;credit.textContent='GEBCO 2025 · DOI 10.5285/37c52e96-24ea-67ce-e063-7086abc05f29 · griglia locale non autenticata, non per navigazione';$('status').after(credit);
  configureMainRelief((grid,ex)=>{
   if(!grid){if(!reliefMode)return;const m=reliefMode;reliefMode=null;m.removeListener?.();scene.primitives.remove(m.primitive);scene.globe.show=m.globe;controller.minimumZoomDistance=m.zoom;for(const [layer,shown] of m.layers)layer.show=shown;for(const [button,disabled] of m.buttons)button.disabled=disabled;credit.hidden=true;scene.requestRender();return;}
   if(scene.mode!==Cesium.SceneMode.SCENE3D||terrainBusy||boundaryBusy)throw new Error('Requires stable 3D view');
@@ -293,7 +293,7 @@ try{if(!window.Cesium)throw new Error('Cesium non disponibile');
   tour.stop();viewer.camera.cancelFlight();
   const m={primitive,ex,globe:scene.globe.show,zoom:controller.minimumZoomDistance,layers,buttons,removeListener:null};
   scene.primitives.add(primitive);reliefMode=m;scene.globe.show=false;controller.minimumZoomDistance=safeReliefHeight(0,ex);for(const [layer] of layers)layer.show=false;for(const [button] of buttons)button.disabled=true;
-  credit.hidden=false;credit.textContent='GEBCO 2025 · DOI 10.5285/37c52e96-24ea-67ce-e063-7086abc05f29 · campioni 2°, esagerazione '+ex+'× · griglia locale non autenticata, non per navigazione';
+  credit.hidden=false;credit.textContent='GEBCO 2025 · DOI 10.5285/37c52e96-24ea-67ce-e063-7086abc05f29 · campioni '+grid.resolution+'°, esagerazione '+ex+'× · griglia locale non autenticata, non per navigazione';
   const c=countries[index];viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(c.lon,c.lat,Math.max(2500000,flightHeight(c))),orientation:{heading:0,pitch:-Math.PI/2,roll:0}});
   m.removeListener=scene.postRender.addEventListener(()=>{if(primitive.ready){m.removeListener?.();m.removeListener=null;reportMainRelief('Geometria numerica Cesium pronta · cartografia e confini sospesi.');}});scene.requestRender();
  });

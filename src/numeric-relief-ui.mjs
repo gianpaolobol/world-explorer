@@ -11,7 +11,7 @@ function renderDestinationSample(){
  if(!destination)return;
  const {lon,lat,locale}=destination,fmt=(n,d=4)=>new Intl.NumberFormat(locale,{maximumFractionDigits:d}).format(n);
  const lines=[];
- for(const [grid,sample,label] of [[current,regionalSample,'GEBCO regionale 15″'],[globalGrid,globalSample,'GEBCO globale 2°']]){
+ for(const [grid,sample,label] of [[current,regionalSample,'GEBCO regionale 15″'],[globalGrid,globalSample,'GEBCO globale '+(globalGrid?.resolution??2)+'°']]){
   if(!grid)continue;const s=sample(grid,lon,lat);
   lines.push(s?label+': '+fmt(s.height,0)+' m · centro campione '+fmt(s.lat)+'°, '+fmt(s.lon)+'°':label+': nessun campione valido per il punto camera');
  }
@@ -53,8 +53,8 @@ reset();
 const globalPanel=document.createElement('details');
 globalPanel.id='globalRelief';
 function element(tag,text,parent=globalPanel){const e=document.createElement(tag);if(text)e.textContent=text;parent.append(e);return e;}
-element('summary','Globo numerico GEBCO (anteprima 2°)');
-element('p','Importa il JSON prodotto da scripts/acquire-ceda-relief.py (acquisizione selettiva) o scripts/prepare-global-relief.py (NetCDF locale). Puoi visualizzare quote e fondali campionati ogni 2° anche sul globo principale. Per una zona a 15 secondi d’arco, usa scripts/acquire-ceda-region.py e importa il file ASCII nel pannello regionale. File locali non autenticati; non per navigazione.');
+element('summary','Globo numerico GEBCO (anteprima 1° / 2°)');
+element('p','Importa il JSON prodotto da scripts/acquire-ceda-relief.py (acquisizione selettiva) o scripts/prepare-global-relief.py (NetCDF locale). Puoi visualizzare quote e fondali campionati ogni 1° o 2° anche sul globo principale. Per una zona a 15 secondi d’arco, usa scripts/acquire-ceda-region.py e importa il file ASCII nel pannello regionale. File locali non autenticati; non per navigazione.');
 const globalInput=element('input');globalInput.type='file';globalInput.accept='.json';globalInput.id='globalReliefFile';globalInput.setAttribute('aria-label','Griglia globale GEBCO JSON');
 const controls=element('div');
 function control(label,id,min,max,value,step){
@@ -91,7 +91,7 @@ function drawGlobal(rebuild=false){
   gc.beginPath();t.points.forEach((p,i)=>i?gc.lineTo(w/2+p.x*f,h/2-p.y*f):gc.moveTo(w/2+p.x*f,h/2-p.y*f));gc.closePath();gc.fill();
  }
  globalCanvas.hidden=false;
- globalStatus.textContent=globalGrid.count+'/'+globalGrid.values.length+' campioni validi; quota min '+globalGrid.min+' m, max '+globalGrid.max+' m; vista '+lon.value+'° / '+lat.value+'°; esagerazione '+ex.value+'×. Risoluzione campionata 2°, non nativa; dati locali dichiarati GEBCO 2025. I vuoti e i poli non sono interpolati.';
+ globalStatus.textContent=globalGrid.count+'/'+globalGrid.values.length+' campioni validi; quota min '+globalGrid.min+' m, max '+globalGrid.max+' m; vista '+lon.value+'° / '+lat.value+'°; esagerazione '+ex.value+'×. Risoluzione campionata '+globalGrid.resolution+'°, non nativa; dati locali dichiarati GEBCO 2025. I vuoti e i poli non sono interpolati.';
 }
 globalInput.onchange=async()=>{
  const epoch=++globalEpoch,file=globalInput.files?.[0];clearGlobal();globalStatus.textContent='';

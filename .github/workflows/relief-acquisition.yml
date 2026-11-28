@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-ceda-relief.py'
+      - 'scripts/prepare-global-relief.py'
       - 'tests/ceda_acquisition_test.py'
       - 'scripts/acquire-ceda-region.py'
       - 'tests/ceda_region_test.py'
@@ -27,7 +28,7 @@ jobs:
   live:
     needs: contract
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,12 +37,15 @@ jobs:
       - run: python -m pip install numpy==2.2.6 netCDF4==1.7.2
       - run: timeout 180s python scripts/acquire-ceda-relief.py global-relief.json > relief-report.json
       - run: timeout 180s python scripts/acquire-ceda-region.py 40.77 14.25 regional-relief.asc > regional-report.json
-      - run: cat relief-report.json regional-report.json
+      - run: timeout 180s python scripts/acquire-ceda-relief.py global-relief-1deg.json --degrees 1 > relief-report-1deg.json
+      - run: cat relief-report.json regional-report.json relief-report-1deg.json
       - uses: actions/upload-artifact@v4
         with:
           name: gebco-2025-coarse-validated
           path: |
             global-relief.json
+            global-relief-1deg.json
+            relief-report-1deg.json
             relief-report.json
             regional-relief.asc
             regional-report.json
@@ -50,7 +54,7 @@ jobs:
   real-browser:
     needs: live
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -69,6 +73,7 @@ jobs:
           name: gebco-real-render
           path: |
             global-render.png
+            global-render-1deg.png
             regional-render.png
           if-no-files-found: error
           retention-days: 7

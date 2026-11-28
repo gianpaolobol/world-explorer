@@ -70,5 +70,28 @@ class TestAcquisition(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Tibetan"):
             module.validate_subset(ds)
 
+    def test_one_degree_subset(self):
+        rows, cols, stride, first, query = module.layout(1)
+        self.assertEqual((rows, cols, stride, first), (180, 360, 240, 119))
+        self.assertEqual(module.layout(2)[4], module.QUERY)
+        self.assertIn("lat[119:240:43079]", query)
+        ds = Dataset()
+        a = np.ma.array(np.full((rows, cols), -4000, dtype=float), mask=False)
+        a[119,265] = 4500
+        a[113,193] = 200
+        ds.variables = {
+            "lat": Variable(-90+(first+.5+stride*np.arange(rows))/240, ("lat",)),
+            "lon": Variable(-180+(first+.5+stride*np.arange(cols))/240, ("lon",)),
+            "elevation": Variable(a, ("lat","lon"), "m"),
+        }
+        grid, report = module.validate_subset(ds, 1)
+        self.assertEqual(len(grid["values"]),64800)
+        self.assertEqual(report["sample_degrees"],1)
+        self.assertEqual(report["probes"]["Tibetan plateau"]["metres"],4500)
+        with self.assertRaisesRegex(ValueError,"bounded"):
+            module.validate_subset(ds, 2)
+        with self.assertRaises(ValueError):
+            module.layout(0)
+
 if __name__ == "__main__":
     unittest.main()
