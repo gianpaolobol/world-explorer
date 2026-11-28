@@ -8,7 +8,11 @@ import argparse
 import json
 from pathlib import Path
 
-def prepare(source, destination):
+def prepare(source, destination, degrees=2):
+    if degrees not in (1, 2):
+        raise ValueError('Expected 1 or 2 degree sampling')
+    rows, cols, stride = 180//degrees, 360//degrees, 240*degrees
+    first = stride//2-1
     import numpy as np
     from netCDF4 import Dataset
     with Dataset(source, "r") as ds:
@@ -25,8 +29,8 @@ def prepare(source, destination):
             raise ValueError("Unexpected GEBCO pixel-centre coordinates")
         # Read only the sampled rows; avoid loading the full 7.5GB array.
         values = []
-        for i in range(239, 43200, 480):
-            row = np.ma.asarray(z[i, 239:86400:480])
+        for i in range(first, 43200, stride):
+            row = np.ma.asarray(z[i, first:86400:stride])
             for v in row:
                 if np.ma.is_masked(v):
                     values.append(None)
@@ -35,9 +39,9 @@ def prepare(source, destination):
                     if not np.isfinite(n) or not n.is_integer() or not -12000 <= n <= 10000:
                         raise ValueError("Invalid elevation in input")
                     values.append(int(n))
-    if len(values) != 16200 or all(v is None for v in values):
+    if len(values) != rows*cols or all(v is None for v in values):
         raise ValueError("Unexpected sample count")
-    result = {"format":"gebco-2025-ice-surface-stride480-v1","rows":90,"cols":180,"values":values}
+    result = {"format":f"gebco-2025-ice-surface-stride{stride}-v1","rows":rows,"cols":cols,"values":values}
     # Never overwrite an existing file; operator chooses output path.
     with Path(destination).open("x", encoding="utf-8") as f:
         json.dump(result, f, separators=(",", ":"))
@@ -47,5 +51,6 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("source", type=Path, help="Official GEBCO 2025 ice-surface NetCDF")
     p.add_argument("destination", type=Path, help="New local JSON output")
+    p.add_argument('--degrees', type=int, choices=(1, 2), default=2)
     a = p.parse_args()
-    prepare(a.source, a.destination)
+    prepare(a.source, a.destination, a.degrees)
