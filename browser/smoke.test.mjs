@@ -52,7 +52,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.match(await page.locator('#narration').textContent(),/Monviso/);
   assert.match(await page.locator('#narration').textContent(),/Banca Mondiale, anno 2024/);
   assert.equal(await page.locator('#narrationCredits a[href^="https://data.worldbank.org/indicator/"]').count(),5);
-  await page.locator('#profile summary').click();
+  await page.locator('#profile > summary').click();
   assert.equal(await page.locator('#profileFacts a').count(),12);
   assert.match(await page.locator('#profileStatus').textContent(),/revisione indipendente mancante/);
   await page.locator('#editorialCoverage summary').click();
@@ -93,7 +93,7 @@ test('Chromium offline atlas: navigation, language, quiz, guide, relief and disa
   assert.match(await page.locator('#narrationCoverage').textContent(),/Nessun approfondimento/);
   assert.match(await page.locator('#profileMissing').textContent(),/Geografia fisica.*Geografia storica/);
   await page.locator('#place').selectOption(it);
-  await page.locator('#profile summary').click();
+  await page.locator('#profile > summary').click();
   await page.locator('#lang').selectOption('en');
   assert.equal(await page.locator('#name').textContent(),'Italy');
   await page.locator('#next').click();
