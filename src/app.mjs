@@ -103,28 +103,37 @@ $('quizReset').onclick=()=>{if(!confirm(quizText('confirm')))return;if(statMode(
 $('quizExport').onclick=()=>{const url=URL.createObjectURL(new Blob([statMode()?statQuiz.export(statMemory):quizExport(quizMemory)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=statMode()?'world-explorer-statistics-quiz.json':'world-explorer-quiz.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 renderQuiz();
 const coverage=editorialCoverage(countries.map(c=>c.code));
-const disciplineNames={it:['Geografia fisica','Orografia','Idrologia','Oceanografia','Geologia','Climatologia','Biogeografia','Geografia politica','Geografia umana','Geografia economica','Geografia urbana','Geografia storica'],en:['Physical geography','Orography','Hydrology','Oceanography','Geology','Climatology','Biogeography','Political geography','Human geography','Economic geography','Urban geography','Historical geography']};
-const disciplineName=d=>disciplineNames[lang==='it'?'it':'en'][disciplines.indexOf(d)];
+const coverageLocales={
+ it:{names:['Geografia fisica','Orografia','Idrologia','Oceanografia','Geologia','Climatologia','Biogeografia','Geografia politica','Geografia umana','Geografia economica','Geografia urbana','Geografia storica'],missing:'Discipline senza contenuto editoriale: ',complete:'Tutte le discipline hanno almeno un contenuto pilota.',heading:'Copertura delle dodici discipline',slots:' coppie Stato-disciplina con almeno un fatto pilota; non equivalgono a revisioni indipendenti. ',countries:' Stati con tutte le discipline.',filter:'Disciplina da esplorare',destination:'Destinazioni con contenuti',go:'Vai alla destinazione'},
+ en:{names:['Physical geography','Orography','Hydrology','Oceanography','Geology','Climatology','Biogeography','Political geography','Human geography','Economic geography','Urban geography','Historical geography'],missing:'Disciplines without editorial content: ',complete:'All disciplines have at least one pilot fact.',heading:'Coverage of the twelve disciplines',slots:' country-discipline slots with at least one pilot fact; not independent reviews. ',countries:' countries with all disciplines.',filter:'Discipline to explore',destination:'Destinations with content',go:'Go to destination'},
+ fr:{names:['Géographie physique','Orographie','Hydrologie','Océanographie','Géologie','Climatologie','Biogéographie','Géographie politique','Géographie humaine','Géographie économique','Géographie urbaine','Géographie historique'],missing:'Disciplines sans contenu éditorial : ',complete:'Toutes les disciplines ont au moins un fait pilote.',heading:'Couverture des douze disciplines',slots:' couples pays-discipline avec au moins un fait pilote ; ce ne sont pas des révisions indépendantes. ',countries:' pays couvrant toutes les disciplines.',filter:'Discipline à explorer',destination:'Destinations avec contenu',go:'Aller à la destination'},
+ de:{names:['Physische Geographie','Orographie','Hydrologie','Ozeanographie','Geologie','Klimatologie','Biogeographie','Politische Geographie','Humangeographie','Wirtschaftsgeographie','Stadtgeographie','Historische Geographie'],missing:'Disziplinen ohne redaktionelle Inhalte: ',complete:'Alle Disziplinen enthalten mindestens einen Pilotinhalt.',heading:'Abdeckung der zwölf Disziplinen',slots:' Land-Disziplin-Paare mit mindestens einem Pilotinhalt; keine unabhängigen Prüfungen. ',countries:' Länder mit allen Disziplinen.',filter:'Disziplin erkunden',destination:'Ziele mit Inhalten',go:'Zum Ziel'},
+ es:{names:['Geografía física','Orografía','Hidrología','Oceanografía','Geología','Climatología','Biogeografía','Geografía política','Geografía humana','Geografía económica','Geografía urbana','Geografía histórica'],missing:'Disciplinas sin contenido editorial: ',complete:'Todas las disciplinas tienen al menos un dato piloto.',heading:'Cobertura de las doce disciplinas',slots:' pares país-disciplina con al menos un dato piloto; no equivalen a revisiones independientes. ',countries:' países con todas las disciplinas.',filter:'Disciplina para explorar',destination:'Destinos con contenido',go:'Ir al destino'},
+ pt:{names:['Geografia física','Orografia','Hidrologia','Oceanografia','Geologia','Climatologia','Biogeografia','Geografia política','Geografia humana','Geografia económica','Geografia urbana','Geografia histórica'],missing:'Disciplinas sem conteúdo editorial: ',complete:'Todas as disciplinas têm pelo menos um dado piloto.',heading:'Cobertura das doze disciplinas',slots:' pares país-disciplina com pelo menos um dado piloto; não equivalem a revisões independentes. ',countries:' países com todas as disciplinas.',filter:'Disciplina a explorar',destination:'Destinos com conteúdo',go:'Ir para o destino'}
+};
+const coverageLocale=()=>quizLanguage(lang);
+const disciplineName=d=>coverageLocales[coverageLocale()].names[disciplines.indexOf(d)];
 function renderCoverageDestinations(){
  const d=$('editorialFilter').value,previous=$('editorialDestination').value;
  const choices=coverage.profiles.filter(p=>p.covered.includes(d)).map(p=>new Option(countryName(p.code,lang),p.code)).sort((a,b)=>a.text.localeCompare(b.text,lang));
+ $('editorialDestination').lang=lang;
  $('editorialDestination').replaceChildren(...choices);
  if(choices.some(c=>c.value===previous))$('editorialDestination').value=previous;
  $('editorialGo').disabled=!choices.length;
 }
 function renderEditorialCoverage(code){
- const it=lang==='it',locale=it?'it':'en',profile=coverage.profiles.find(p=>p.code===code);
- for(const id of ['profileMissing','editorialCoverageHeading','editorialCoverageStatus','editorialCoverageList','editorialFilterLabel','editorialDestinationLabel','editorialGo'])$(id).lang=locale;
- $('profileMissing').textContent=profile?.missing.length?(it?'Discipline senza contenuto editoriale: ':'Disciplines without editorial content: ')+profile.missing.map(disciplineName).join(', '):(it?'Tutte le discipline hanno almeno un contenuto pilota.':'All disciplines have at least one pilot fact.');
- $('editorialCoverageHeading').textContent=it?'Copertura delle dodici discipline':'Coverage of the twelve disciplines';
- $('editorialCoverageStatus').textContent=coverage.filled+' / '+coverage.totalSlots+(it?' coppie Stato-disciplina con almeno un fatto pilota; non equivalgono a revisioni indipendenti. ':' country-discipline slots with at least one pilot fact; not independent reviews. ')+coverage.complete+' / '+coverage.totalCountries+(it?' Stati con tutte le discipline.':' countries with all disciplines.');
+ const locale=coverageLocale(),messages=coverageLocales[locale],profile=coverage.profiles.find(p=>p.code===code);
+ for(const id of ['profileMissing','editorialCoverageHeading','editorialCoverageStatus','editorialCoverageList','editorialFilterLabel','editorialFilter','editorialDestinationLabel','editorialGo'])$(id).lang=locale;
+ $('profileMissing').textContent=profile?.missing.length?messages.missing+profile.missing.map(disciplineName).join(', '):messages.complete;
+ $('editorialCoverageHeading').textContent=messages.heading;
+ $('editorialCoverageStatus').textContent=coverage.filled+' / '+coverage.totalSlots+messages.slots+coverage.complete+' / '+coverage.totalCountries+messages.countries;
  $('editorialCoverageList').replaceChildren(...disciplines.map(d=>{const li=document.createElement('li');li.textContent=disciplineName(d)+': '+coverage.byDiscipline[d]+' / '+coverage.totalCountries;return li;}));
  const prev=$('editorialFilter').value;
  $('editorialFilter').replaceChildren(...disciplines.map(d=>new Option(disciplineName(d),d)));
  if(disciplines.includes(prev))$('editorialFilter').value=prev;
- $('editorialFilterLabel').textContent=it?'Disciplina da esplorare':'Discipline to explore';
- $('editorialDestinationLabel').textContent=it?'Destinazioni con contenuti':'Destinations with content';
- $('editorialGo').textContent=it?'Vai alla destinazione':'Go to destination';
+ $('editorialFilterLabel').textContent=messages.filter;
+ $('editorialDestinationLabel').textContent=messages.destination;
+ $('editorialGo').textContent=messages.go;
  renderCoverageDestinations();
 }
 $('editorialFilter').onchange=renderCoverageDestinations;
